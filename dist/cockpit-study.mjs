@@ -1,11 +1,14 @@
 import * as T from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
+import {createSteeringState,stepSteering,MAX_LOOK_DEGREES,MAX_WHEEL_DEGREES} from './cockpit-study-steering.mjs';
 
 const $=id=>document.getElementById(id);
 const REFERENCE_ASPECT=844/390;
 const BASE_FOV=T.MathUtils.radToDeg(2*Math.atan(Math.tan(T.MathUtils.degToRad(80)/2)/REFERENCE_ASPECT));
 const settings={height:0,foreAft:0,verticalFov:BASE_FOV,pitch:-4,glance:'forward'};
 const state={asset:'loading',reason:'',model:null,baseline:[],motion:'idle',elapsed:0,distance:0,speed:0,phase:'정지',paused:false,frameMs:16,slowFrames:0,frames:0};
+const steering=createSteeringState(),steeringSources=new Map();
+let followSteering=true;
 const scene=new T.Scene();
 scene.background=new T.Color('#b9c5cd');
 scene.fog=new T.Fog('#b9c5cd',75,190);
@@ -71,7 +74,7 @@ function failAsset(error){
  setStatus(pending?'missing':'error',pending?'원본 대기':'불러오기 실패');
  $('model-source').textContent='차량이 없는 배경 화면입니다.';
  setNotice(pending?'차량 원본을 기다리고 있어요':'차량 원본을 표시할 수 없어요',pending?'원본 파일이 준비되면 이 화면에서 실제 실내의 비례와 시선을 비교할 수 있습니다. 지금은 배경만 표시됩니다.':'원본 파일 준비 또는 불러오기 상태를 확인해 주세요. 지금 보이는 것은 배경뿐이며 차량 시안의 완성 화면이 아닙니다.',true);
- $('camera-controls').disabled=true;$('play-motion').disabled=true;$('reset-motion').disabled=true;
+ $('steering-controls').disabled=true;clearSteering(true);$('camera-controls').disabled=true;$('play-motion').disabled=true;$('reset-motion').disabled=true;
 }
 function invariantSnapshot(root){
  const result=[];
@@ -83,13 +86,14 @@ function checkInvariant(){
  const changed=[];
  for(const base of state.baseline){
   const object=base.object,attribute=object.geometry?.attributes.position;
-  if(!object.scale.equals(base.scale)||!object.position.equals(base.position)||!object.quaternion.equals(base.quaternion)||object.geometry!==base.geometry||attribute!==base.attribute||attribute?.version!==base.version||attribute?.count!==base.count)changed.push(object.name||object.type);
+  if(!object.scale.equals(base.scale)||!object.position.equals(base.position)||!(object===state.model.steeringPivot?state.model.steeringRotationValid?.():object.quaternion.equals(base.quaternion))||object.geometry!==base.geometry||attribute!==base.attribute||attribute?.version!==base.version||attribute?.count!==base.count)changed.push(object.name||object.type);
  }
  return{available:true,passed:changed.length===0,changed};
 }
 function updateCamera(){
  camera.position.copy(baseEye).addScaledVector(yAxis,settings.height).addScaledVector(baseForward,settings.foreAft);
- const yaw=settings.glance==='left'?T.MathUtils.degToRad(38):settings.glance==='right'?T.MathUtils.degToRad(-38):0;
+ const glanceYaw=settings.glance==='left'?38:settings.glance==='right'?-38:0;
+ const yaw=T.MathUtils.degToRad(glanceYaw-steering.lookDegrees);
  cameraForward.copy(baseForward).applyAxisAngle(yAxis,yaw).normalize();
  cameraForward.y=Math.sin(T.MathUtils.degToRad(settings.pitch));
  cameraForward.x*=Math.cos(T.MathUtils.degToRad(settings.pitch));cameraForward.z*=Math.cos(T.MathUtils.degToRad(settings.pitch));
@@ -99,6 +103,29 @@ function updateCamera(){
  camera.up.set(0,1,0);camera.lookAt(worldLook);
  camera.fov=settings.verticalFov;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
 }
+function steeringTarget(){
+ const values=[...steeringSources.values()];return Number(values.includes(1))-Number(values.includes(-1));
+}
+function refreshSteeringButtons(){
+ const values=[...steeringSources.values()];
+ document.querySelectorAll('[data-steer]').forEach(button=>button.setAttribute('aria-pressed',String(values.includes(Number(button.dataset.steer)))));
+}
+function setSteeringInput(source,value){
+ if(value&&state.asset==='ready'&&!$('qa-dialog').open)steeringSources.set(source,value<0?-1:1);else steeringSources.delete(source);
+ refreshSteeringButtons();
+}
+function advanceSteering(dt){
+ stepSteering(steering,steeringTarget(),dt,followSteering);
+ state.model?.setSteeringAngle?.(T.MathUtils.degToRad(steering.amount*MAX_WHEEL_DEGREES));
+ updateCamera();
+}
+function clearSteering(immediate=false){
+ steeringSources.clear();
+ document.querySelectorAll('[data-steer]').forEach(button=>{for(const id of capturedPointers.get(button)||[])if(button.hasPointerCapture?.(id))button.releasePointerCapture(id);});
+ capturedPointers.clear();refreshSteeringButtons();
+ if(immediate){Object.assign(steering,createSteeringState());state.model?.setSteeringAngle?.(0);updateCamera();}
+}
+function resetCamera(){clearSteering(true);setPose({height:0,foreAft:0,verticalFov:BASE_FOV,pitch:-4,glance:'forward'});}
 function updateControls(){
  $('eye-height').value=String(settings.height);$('eye-depth').value=String(settings.foreAft);$('lens-fov').value=String(settings.verticalFov);
  const centimeters=(value,positive,negative)=>Math.abs(value)<.001?'기본':(value>0?positive:negative)+' '+Math.abs(value*100).toFixed(1).replace(/\.0$/,'')+' cm';
@@ -139,7 +166,7 @@ async function loadCar(){
   motionForward.normalize();
   state.baseline=invariantSnapshot(result.root);
   setStatus('ready','원본 준비됨');$('model-source').textContent=sourceLabel(result.provenance);
-  $('load-notice').hidden=true;$('camera-controls').disabled=false;$('play-motion').disabled=false;$('reset-motion').disabled=false;
+  $('load-notice').hidden=true;$('steering-controls').disabled=false;$('camera-controls').disabled=false;$('play-motion').disabled=false;$('reset-motion').disabled=false;
   updateCamera();draw();renderReadout();
  }catch(error){failAsset(error);}
 }
@@ -197,24 +224,26 @@ function snapshot(){
   viewport:{width:innerWidth,height:innerHeight,pixelRatio:renderer?.getPixelRatio()||0},
   invariant:checkInvariant(),model:{meshes,triangles,nonFinite,adapter:rawModelStats()},
   camera:{eyeLocal:camera.position.toArray(),eyeWorld:camera.getWorldPosition(new T.Vector3()).toArray(),direction:camera.getWorldDirection(new T.Vector3()).toArray(),verticalFov:camera.fov,horizontalFov,near:camera.near,far:camera.far,verticalFovBeforeLastResize:projectionAtResize,referenceAspect:REFERENCE_ASPECT},
+  steering:{target:steeringTarget(),amount:steering.amount,lookDegrees:steering.lookDegrees,follow:followSteering,maxLookDegrees:MAX_LOOK_DEGREES,wheelDegrees:steering.amount*MAX_WHEEL_DEGREES,pivot:state.model?.steeringPivot?.name||null,rotationValid:state.model?.steeringRotationValid?.()??false},
   motion:{status:state.motion,phase:state.phase,elapsed:state.elapsed,speedKmh:state.speed*3.6,distance:state.distance,scripted:true},
   render:{drawCalls:renderer?.info.render.calls||0,triangles:renderer?.info.render.triangles||0,frameMs:state.frameMs,frames:state.frames},
   settings:{...settings}
  };
 }
 function runChecks(show=true){
- draw();const result=snapshot();
+ if(show)clearSteering(true);draw();const result=snapshot();
  if(show){
-  $('qa-overview').textContent=result.ready?(result.invariant.passed?'차량 부품의 크기와 상대 위치가 처음 불러온 상태로 유지됩니다.':'차량 부품의 크기 또는 상대 위치가 바뀐 항목이 있습니다.'):'차량 원본이 없어 실내 비례와 시야 검증은 아직 완료할 수 없습니다. 아래 렌더 수치는 배경 화면 기준입니다.';
+  $('qa-overview').textContent=result.ready?(result.invariant.passed?'차량 부품의 크기와 배치를 유지하며 핸들만 정해진 축으로 회전합니다.':'차량 부품의 크기 또는 상대 위치가 바뀐 항목이 있습니다.'):'차량 원본이 없어 실내 비례와 시야 검증은 아직 완료할 수 없습니다. 아래 렌더 수치는 배경 화면 기준입니다.';
   const rows=[
    ['차량 상태',result.ready?'불러오기 완료':'미완료'],
-   ['부품 비례·배치 고정',result.ready?(result.invariant.passed?'유지됨':'변경 감지'):'확인 불가'],
+   ['부품 비례·핸들 회전',result.ready?(result.invariant.passed?'유지됨':'변경 감지'):'확인 불가'],
    ['화면 크기',result.viewport.width+' × '+result.viewport.height],
    ['세로 / 가로 시야',result.camera.verticalFov.toFixed(1)+'° / '+result.camera.horizontalFov.toFixed(1)+'°'],
    ['눈 위치 (m)',result.camera.eyeLocal.map(n=>n.toFixed(3)).join(' / ')],
    ['차량 메시 / 삼각형',result.ready?result.model.meshes+' / '+Math.round(result.model.triangles).toLocaleString():'확인 불가'],
    ['화면 드로콜 / 삼각형',result.render.drawCalls+' / '+Math.round(result.render.triangles).toLocaleString()],
    ['프레임 간격',result.render.frames>5?result.render.frameMs.toFixed(1)+' ms':'측정 준비 중'],
+   ['조향 / 시선',result.steering.wheelDegrees.toFixed(1)+'° / '+result.steering.lookDegrees.toFixed(1)+'°'],
    ['이동 방식',result.motion.scripted?'가속·제동 스크립트':'—'],
    ['이동 / 속도',result.motion.distance.toFixed(1)+' m / '+result.motion.speedKmh.toFixed(1)+' km/h']
   ];
@@ -224,8 +253,37 @@ function runChecks(show=true){
  return result;
 }
 function toolsVisible(visible){
+ if(visible)clearSteering();
  document.body.classList.toggle('ui-hidden',!visible);$('show-tools').hidden=visible;
 }
+const capturedPointers=new Map();
+for(const button of document.querySelectorAll('[data-steer]')){
+ button.addEventListener('pointerdown',event=>{
+  if(event.button!==0||state.asset!=='ready')return;event.preventDefault();
+  try{button.setPointerCapture(event.pointerId);}catch{}
+  if(!capturedPointers.has(button))capturedPointers.set(button,new Set());capturedPointers.get(button).add(event.pointerId);
+  setSteeringInput('pointer:'+event.pointerId,Number(button.dataset.steer));
+ });
+ for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,event=>{
+  setSteeringInput('pointer:'+event.pointerId,0);capturedPointers.get(button)?.delete(event.pointerId);
+  if(button.hasPointerCapture?.(event.pointerId))button.releasePointerCapture(event.pointerId);
+ });
+ button.addEventListener('contextmenu',event=>event.preventDefault());
+ button.addEventListener('keydown',event=>{if(['Space','Enter'].includes(event.code)){event.preventDefault();setSteeringInput('button:'+event.code,Number(button.dataset.steer));}});
+ button.addEventListener('keyup',event=>{if(['Space','Enter'].includes(event.code)){event.preventDefault();setSteeringInput('button:'+event.code,0);}});
+ button.addEventListener('blur',()=>{setSteeringInput('button:Space',0);setSteeringInput('button:Enter',0);});
+}
+const steeringKeys={ArrowLeft:-1,KeyA:-1,ArrowRight:1,KeyD:1};
+addEventListener('keydown',event=>{
+ if(!steeringKeys[event.code]||event.altKey||event.ctrlKey||event.metaKey||!document.body.classList.contains('ui-hidden')||$('qa-dialog').open||event.target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
+ event.preventDefault();setSteeringInput('key:'+event.code,steeringKeys[event.code]);
+});
+addEventListener('keyup',event=>{if(steeringKeys[event.code])setSteeringInput('key:'+event.code,0);});
+addEventListener('pointerup',event=>setSteeringInput('pointer:'+event.pointerId,0));
+addEventListener('pointercancel',event=>setSteeringInput('pointer:'+event.pointerId,0));
+addEventListener('blur',()=>clearSteering(true));
+$('steering-follow').onchange=event=>{followSteering=event.target.checked;};
+$('try-steering').onclick=()=>toolsVisible(false);
 $('hide-tools').onclick=()=>toolsVisible(false);
 $('show-tools').onclick=()=>toolsVisible(true);
 $('reload-model').onclick=()=>location.reload();
@@ -237,12 +295,12 @@ $('eye-height').oninput=event=>setPose({height:Number(event.target.value)});
 $('eye-depth').oninput=event=>setPose({foreAft:Number(event.target.value)});
 $('lens-fov').oninput=event=>setPose({verticalFov:Number(event.target.value)});
 $('gaze-pitch').oninput=event=>setPose({pitch:Number(event.target.value)});
-$('reset-camera').onclick=()=>setPose({height:0,foreAft:0,verticalFov:BASE_FOV,pitch:-4,glance:'forward'});
+$('reset-camera').onclick=resetCamera;
 $('play-motion').onclick=toggleMotion;$('reset-motion').onclick=resetMotion;
-addEventListener('resize',resize);
+addEventListener('resize',()=>{clearSteering(true);resize();});
 addEventListener('keydown',event=>{if(event.code==='Escape'&&!$('qa-dialog').open)toolsVisible(true);});
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.motion==='playing'){state.motion='paused';state.paused=true;renderReadout();}last=performance.now();});
-window.__cockpitStudy={reviewAt:seconds=>{state.elapsed=clamp(Number(seconds)||0,0,11);state.motion='paused';state.paused=true;applyMotion();renderReadout();draw();return snapshot();},snapshot,runChecks:()=>runChecks(false),setPose,play:()=>{if(state.motion!=='playing')toggleMotion();},pause:()=>{if(state.motion==='playing')toggleMotion();},resetMotion,resetCamera:()=>setPose({height:0,foreAft:0,verticalFov:BASE_FOV,pitch:-4,glance:'forward'}),setToolsVisible:toolsVisible};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearSteering(true);if(document.hidden&&state.motion==='playing'){state.motion='paused';state.paused=true;renderReadout();}last=performance.now();});
+window.__cockpitStudy={reviewSteering:seconds=>{const count=Math.ceil(clamp(Number(seconds)||0,0,3)*120);for(let i=0;i<count;i++)advanceSteering(1/120);draw();return snapshot();},clearSteering,reviewAt:seconds=>{state.elapsed=clamp(Number(seconds)||0,0,11);state.motion='paused';state.paused=true;applyMotion();renderReadout();draw();return snapshot();},snapshot,runChecks:()=>runChecks(false),setPose,play:()=>{if(state.motion!=='playing')toggleMotion();},pause:()=>{if(state.motion==='playing')toggleMotion();},resetMotion,resetCamera,setToolsVisible:toolsVisible};
 updateControls();updateCamera();
 if(new URLSearchParams(location.search).get('view')==='clean')toolsVisible(false);
 try{
@@ -257,6 +315,7 @@ try{
    state.elapsed=Math.min(11,state.elapsed+dt);applyMotion();
    if(state.elapsed>=11){state.motion='finished';state.speed=0;renderReadout();}
   }
+  if(!document.hidden)advanceSteering(dt);
   draw();
   if(now-lastReadout>120){renderReadout();lastReadout=now;}
   if(!document.hidden&&state.frameMs>35)state.slowFrames++;else state.slowFrames=Math.max(0,state.slowFrames-1);
@@ -264,5 +323,5 @@ try{
   raf=requestAnimationFrame(frame);
  }
  raf=requestAnimationFrame(frame);
- $('study-world').addEventListener('webglcontextlost',event=>{event.preventDefault();cancelAnimationFrame(raf);state.motion='paused';setStatus('error','화면 연결 중단');setNotice('3D 화면 연결이 끊겼어요','다시 불러오면 시안을 처음부터 확인할 수 있습니다.',true);renderReadout();});
+ $('study-world').addEventListener('webglcontextlost',event=>{event.preventDefault();cancelAnimationFrame(raf);clearSteering(true);$('steering-controls').disabled=true;state.motion='paused';setStatus('error','화면 연결 중단');setNotice('3D 화면 연결이 끊겼어요','다시 불러오면 시안을 처음부터 확인할 수 있습니다.',true);renderReadout();});
 }catch(error){failAsset(error);setNotice('이 브라우저에서 3D 화면을 열 수 없어요','WebGL을 사용할 수 있는 브라우저에서 다시 열어 주세요.',true);}

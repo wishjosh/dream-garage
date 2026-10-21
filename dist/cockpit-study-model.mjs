@@ -29,9 +29,26 @@ export async function loadStudyCar(loader) {
     meshes++;
     const g=object.geometry;triangles+=(g.index?.count??g.attributes.position?.count??0)/3;
   });
+  // Circle is the source wheel alone. Circle.004 (column cover) and .005
+  // (stalks) stay fixed. Source origin and its 21-degree column axis were
+  // mapped through the same uniform source-to-glTF transform as the mesh.
+  const wheel=root.getObjectByName('source_Circle');
+  if(!wheel)throw new Error('원본 핸들 부품을 찾을 수 없습니다.');
+  const steeringPivot=new T.Group();steeringPivot.name='study-steering-pivot';
+  steeringPivot.position.set(-0.3995926288,0.7638591121,-0.4459867420);
+  root.add(steeringPivot);root.updateMatrixWorld(true);steeringPivot.attach(wheel);
+  const steeringAxis=new T.Vector3(0,0.3583680987,0.9335803986).normalize();
+  const expectedRotation=new T.Quaternion();
+  const setSteeringAngle=radians=>{
+    // Input convention: negative left, positive right. The driver-facing
+    // axis has a positive counterclockwise (left) rotation.
+    expectedRotation.setFromAxisAngle(steeringAxis,-radians);
+    steeringPivot.quaternion.copy(expectedRotation);
+  };
+  const steeringRotationValid=()=>steeringPivot.quaternion.angleTo(expectedRotation)<1e-7;
   // Meter scale, orientation and part proportions are baked by the source
   // conversion. Do not normalize individual components or resize for aspect.
-  return {root,eye,forward,steeringPivot:m.steeringNode?root.getObjectByName(m.steeringNode):null,
+  return {root,eye,forward,steeringPivot,setSteeringAngle,steeringRotationValid,
     mirrorSurface:m.mirrorNode?root.getObjectByName(m.mirrorNode):null,
     stats:{meshes,triangles,bounds:{min:bounds.min.toArray(),max:bounds.max.toArray()},sourceSha256:m.sourceSha256},
     provenance:m.provenance};
