@@ -1,0 +1,23 @@
+Lamborghini Gallardo + Interior + Cycles
+Original model: Neubi / Neubi3D
+Source: https://blendswap.com/blend/8686
+Original permalink: http://www.blendswap.com/blends/view/67469
+
+The license included with the downloaded ZIP is Creative Commons
+Attribution-ShareAlike 3.0 (CC BY-SA 3.0):
+https://creativecommons.org/licenses/by-sa/3.0/
+The archived source-license.html also marks the model as Fan Art and states
+that commercial use is not allowed. That notice is retained for this study.
+See source-readme.txt for the original author and vehicle-design notices.
+
+Modified GLB: cockpit spatial study for Dream Garage (2026-10-22).
+Changes: selected original interior/body meshes; one common uniform scale
+and axis transform; neutral materials instead of original textures; reduced
+high-density small controls and seat-base meshes; no exterior wheels/engine.
+The derivative model is distributed under CC BY-SA 3.0 with the original
+noncommercial Fan Art notice retained. No endorsement is claimed.
+The measured 4.30 m body-length convention and driver eye anchor are study
+settings, not a claim of surveyed real-car or original-model accuracy.
+Original part shapes, sizes and positions remain linked by one common scale.
+
+This asset notice applies to the model, not to all code in the game repository.

@@ -5,6 +5,7 @@ import path from 'node:path';
 const root=path.resolve(fileURLToPath(new URL('../dist',import.meta.url)));
 const reviewPage=fileURLToPath(new URL('./cockpit-review.html',import.meta.url));
 const saveReviewPage=fileURLToPath(new URL('./save-review.html',import.meta.url));
+const studyReviewPage=fileURLToPath(new URL('./study-review.html',import.meta.url));
 const port=Number(process.env.PORT||4177);
 const types={'.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.glb':'model/gltf-binary','.png':'image/png','.webp':'image/webp','.txt':'text/plain; charset=utf-8'};
 // This fixture is injected only by the local server's explicit review query.
@@ -29,7 +30,9 @@ http.createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://localhost'),pathname=decodeURIComponent(url.pathname);
   let file,body,type;
-  if(pathname==='/__qa__/save-review.html'){
+  if(pathname==='/__qa__/study-review.html'){
+   file=studyReviewPage;type=types['.html'];body=await readFile(file);
+  }else if(pathname==='/__qa__/save-review.html'){
    file=saveReviewPage;type=types['.html'];body=await readFile(file);
   }else if(pathname==='/__qa__/cockpit-review.html'){
    file=reviewPage;type=types['.html'];body=await readFile(file);

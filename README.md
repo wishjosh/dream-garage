@@ -42,6 +42,26 @@ npm test
 
 기본 검사는 물리 주행·전후진·드리프트·상금·구매·저장·바퀴·후방 카메라를 확인합니다. 로컬 운전석 검토는 합성 입력과 화면 크기 재현을 사용하며 실제 휴대폰의 멀티터치 하드웨어·성능·조작감을 대신하지 않습니다.
 
+## 원본 실내 공간 시안
+
+[이전 화면과 비교](https://wishjosh.github.io/dream-garage/cockpit-comparison.html) · [실내에서 직접 둘러보기](https://wishjosh.github.io/dream-garage/cockpit-study.html?view=clean)
+
+Gallardo 원본의 44개 실내·차체 부품을 사용하는 별도 공간 시안입니다. 모든 부품에 같은 배율과 축 변환을 적용하고, 화면 크기에 따라 핸들이나 필러를 개별 변형하지 않습니다. 왼쪽 좌석의 눈높이·앞뒤 위치, 시선의 기울기와 시야각을 조절할 수 있습니다. 기본값은 수직 42.39°(844×390에서 수평 80°), 아래로 4°의 시선입니다. 원본 좌석에 맞춰 정한 검토값이며 실차 측정값은 아닙니다.
+
+재질은 공간 형태를 보기 위한 중립색입니다. 작은 스위치·좌석 밑부분의 면 수를 줄인 GLB는 4.15MB, 202,182삼각형입니다. 가속·제동은 11초 동안 56m를 이동하는 정해진 재생이며, 본 게임 물리를 연결한 운전 모드는 아닙니다. 원본은 미완성 모델이고 시안의 실시간 미러·작동 계기·본 경주 연결은 후속 범위입니다. 기존 Tavaculo/F2002 주행과 상금·저장 기능은 유지됩니다.
+
+원본 ZIP에 동봉된 라이선스는 **CC BY-SA 3.0**이며 팬아트의 비상업 이용 고지가 있습니다. Neubi / Neubi3D의 이름, 원본 고지와 수정 내용을 [에셋 이용 조건](dist/assets/cockpit-study/gallardo/LICENSE.txt)에 보존했습니다. 공개 웹페이지의 버전 없는 CC-BY-SA 표시보다 동봉 문서를 우선했습니다.
+
+`/__qa__/study-review.html`이 로컬 검토 도구입니다. 실제 모델로 좌석·시선·시야 변경, 844×390·568×320·390×844·320×568 크기, 0/4/7/11초 이동의 19개 검사를 실행합니다. 원본 비례 검사는 아래 명령으로 실제 GLB 좌표와 변환 보고서를 대조합니다.
+
+```sh
+node scripts/verify-study-asset.mjs dist/assets/cockpit-study/gallardo/conversion-report.json
+```
+
+19개 브라우저 검사, GLB의 44개 부품 검사와 기존 76개 검사를 통과했습니다. 정면·좌우·높은 눈 위치·세로 화면을 실제 렌더로 확인했습니다. 이는 브라우저 화면 크기 재현이며 실제 스마트폰 하드웨어의 성능·조작감은 검토 전입니다. 특히 세로 화면은 좌우 시야가 좁아 가로 화면을 권장합니다.
+
+원본을 다시 변환할 때에는 `scripts/inspect-cockpit-source.py`와 `scripts/convert-gallardo-study.py`를 Blender의 `--factory-startup --disable-autoexec` 옵션으로 실행합니다. 원본을 덮어쓰지 않고 별도 GLB·좌표 보고서를 만듭니다. 다운로드 ZIP 자체는 저장소에 포함하지 않습니다.
+
 ## 사용한 자료
 
 - [Tavaculo](https://blendswap.com/blend/22872): 제작자 선언 CC0. GLB 변환·크기 정규화·바퀴 분리와 축 보정.
@@ -50,6 +70,6 @@ npm test
 - [ambientCG Asphalt012](https://ambientcg.com/view?id=Asphalt012): CC0. [재질 출처](dist/assets/materials/LICENSE.txt).
 - Three.js: MIT. [라이선스](dist/vendor/THREE-LICENSE.txt).
 - cannon-es: MIT. [라이선스](dist/vendor/CANNON-LICENSE.txt).
-- [Neubi의 Gallardo 실내 렌더](https://blendswap.com/blend/8686): 운전석 형상 참고. 원본 메시·텍스처는 포함하지 않습니다.
+- [Neubi의 Gallardo](https://blendswap.com/blend/8686): 본 게임은 공개 렌더를 참고한 자체 형상이며, 별도 공간 시안에는 실제 원본 메시의 변환본을 사용합니다. CC BY-SA 3.0과 비상업 팬아트 고지는 위 에셋 이용 조건을 따릅니다.
 
 자료별 이용 조건은 해당 자료에 적용합니다. 게임 원래 코드 전체의 공개 라이선스는 아직 선택하지 않았습니다.

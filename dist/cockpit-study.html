@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#e9ece9">
+  <title>운전석 공간 시안 · 드림 개러지</title>
+  <meta name="description" content="차량의 실제 비례를 고정하고 좌석 위치와 시선을 비교하는 드림 개러지의 별도 운전석 시안입니다.">
+  <link rel="stylesheet" href="./cockpit-study.css?v=spatial-study-1">
+</head>
+<body>
+  <canvas id="study-world" aria-label="차량 실내와 직선 도로를 보여 주는 3D 화면"></canvas>
+  <header class="study-header">
+    <div class="heading"><span class="eyebrow">드림 개러지 · 공간 검토</span><h1>운전석에 앉아 보기</h1></div>
+    <div class="header-actions"><a href="./" class="quiet-link">본 게임</a><button id="hide-tools" class="secondary" type="button">도구 숨기기</button></div>
+  </header>
+  <div id="load-notice" class="load-notice" role="status" aria-live="polite">
+    <span class="notice-mark" aria-hidden="true"></span>
+    <div><strong id="load-title">차량 원본을 확인하고 있어요</strong><p id="load-description">실내를 불러오면 좌석과 시선을 조절할 수 있습니다.</p></div>
+    <button id="reload-model" class="secondary" type="button" hidden>다시 불러오기</button>
+  </div>
+  <aside id="study-tools" class="tools-panel" aria-label="운전석 비교 도구">
+    <div class="panel-heading"><div><span class="eyebrow">고정된 차체 · 달라지는 시선</span><h2>어디에서 바라볼까요?</h2></div><span id="model-status" class="status-pill" data-state="loading">확인 중</span></div>
+    <p id="model-source" class="source-note">원본 메시를 기다리고 있습니다.</p><p class="source-note">비상업 공간 시안 · <a href="./assets/cockpit-study/gallardo/LICENSE.txt" target="_blank" rel="noopener">원본 출처와 이용 조건</a></p>
+    <fieldset id="camera-controls" disabled>
+      <legend class="sr-only">시선과 좌석</legend>
+      <div class="glance-group" role="group" aria-label="바라보는 방향">
+        <button type="button" data-glance="left" aria-pressed="false">← 왼쪽</button>
+        <button type="button" data-glance="forward" aria-pressed="true">앞 보기</button>
+        <button type="button" data-glance="right" aria-pressed="false">오른쪽 →</button>
+      </div>
+      <label class="range-row" for="eye-height"><span>눈높이 <output id="height-value" for="eye-height">기본</output></span><input id="eye-height" type="range" min="-0.07" max="0.06" step="0.005" value="0"><span class="range-ends"><span>낮게</span><span>높게</span></span></label>
+      <label class="range-row" for="eye-depth"><span>좌석 앞뒤 <output id="depth-value" for="eye-depth">기본</output></span><input id="eye-depth" type="range" min="-0.10" max="0.08" step="0.01" value="0"><span class="range-ends"><span>뒤로</span><span>앞으로</span></span></label>
+      <label class="range-row" for="gaze-pitch"><span>시선 기울기 <output id="pitch-value" for="gaze-pitch">아래로 4°</output></span><input id="gaze-pitch" type="range" min="-9" max="3" step="0.5" value="-4"><span class="range-ends"><span>아래로</span><span>위로</span></span></label>
+      <label class="range-row" for="lens-fov"><span>시야 넓이 <output id="fov-value" for="lens-fov">42.4°</output></span><input id="lens-fov" type="range" min="30" max="65" step="0.1" value="42.4"><span class="range-ends"><span>좁게</span><span>넓게</span></span></label>
+      <p class="control-hint">차체 크기는 그대로입니다. 넓은 시야에서는 가장자리 원근감이 더 커집니다.</p>
+      <button id="reset-camera" class="secondary full" type="button">좌석과 시선 기본값</button>
+    </fieldset>
+    <div class="motion-section">
+      <div class="motion-heading"><h3>짧게 움직여 보기</h3><span id="speed-readout"><b>0</b> km/h</span></div>
+      <p>정해진 가속·제동을 재생하는 시안입니다. 경주용 주행 물리는 적용하지 않았습니다.</p>
+      <div class="motion-buttons"><button id="play-motion" class="primary" type="button" disabled>가속·제동 미리보기</button><button id="reset-motion" class="secondary" type="button" disabled>처음</button></div>
+      <span id="motion-state" class="motion-state" aria-live="polite">정지 · 출발 위치</span>
+    </div>
+    <button id="run-qa" class="qa-button" type="button">시안 확인 결과 보기 <span aria-hidden="true">↗</span></button>
+  </aside>
+  <div class="view-caption"><span id="view-caption">앞 보기</span><span>좌석과 시야를 비교하는 별도 시안</span></div>
+  <button id="show-tools" class="restore-tools secondary" type="button" hidden>도구 보기</button>
+  <dialog id="qa-dialog" aria-labelledby="qa-title">
+    <div class="dialog-heading"><div><span class="eyebrow">현재 화면 기준</span><h2 id="qa-title">시안 확인 결과</h2></div><button id="close-qa" class="secondary" type="button">닫기</button></div>
+    <p id="qa-overview"></p>
+    <dl id="qa-results"></dl>
+    <p class="dialog-note">브라우저 수치는 실제 스마트폰에서 느끼는 조작감이나 성능을 보장하지 않습니다.</p>
+  </dialog>
+  <noscript><p class="noscript">운전석 시안을 보려면 JavaScript를 사용할 수 있는 브라우저에서 열어 주세요.</p></noscript>
+  <script type="module" src="./cockpit-study.mjs?v=spatial-study-1"></script>
+</body>
+</html>

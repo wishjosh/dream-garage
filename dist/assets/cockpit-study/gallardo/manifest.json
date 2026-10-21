@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "sourceInspected": true,
+  "asset": "gallardo-interior.glb",
+  "sourceSha256": "fd410d44f373104539cd87b9cbb29ceaecc467f5318dd4da1c65f80dbe9bfd55",
+  "eye": [
+    -0.39959266548058525,
+    1.024040214187445,
+    0
+  ],
+  "forward": [
+    0,
+    0,
+    -1
+  ],
+  "provenance": {
+    "label": "Gallardo 원본 실내 · Neubi / Neubi3D",
+    "source": "https://blendswap.com/blend/8686",
+    "license": "CC BY-SA 3.0; source Fan Art noncommercial notice retained",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "changes": "Common uniform scale/axis transform; neutral materials; reduced small control meshes; no original textures. Spatial prototype only."
+  }
+}

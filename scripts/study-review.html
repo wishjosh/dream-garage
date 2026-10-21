@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>운전석 공간 시안 · 로컬 검사</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:16px;background:#101c24;color:#e8f0ef;font:14px/1.5 system-ui,sans-serif}h1{font-size:22px;margin:0 0 8px}p{max-width:1050px}button,select{font:inherit;padding:10px 12px;border:1px solid #698178;border-radius:8px;background:#243b3c;color:inherit;min-height:44px}button{cursor:pointer}button:disabled{opacity:.5}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}#run-study{background:#92dec2;color:#132f28;font-weight:700}.note{padding:10px 14px;border-left:4px solid #e5bb71;background:#273438}#study-status{padding:8px 12px;border-radius:8px;background:#263f43}#study-status[data-state=passed]{background:#1e6147}#study-status[data-state=failed]{background:#703b3e}#stage{max-width:100%;overflow:auto;padding:8px;background:#02080c}#wrap{position:relative}iframe{display:block;border:0;transform-origin:top left;background:#b9c5cd}pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:16px;background:#09141b;max-height:560px;overflow:auto;font-size:12px}.pass{color:#9ae0c1}.fail{color:#ffb9ad}.capture-only{margin:0;padding:0;overflow:hidden}.capture-only header,.capture-only .toolbar,.capture-only #results,.capture-only details{display:none}.capture-only #stage{margin:0;padding:0;overflow:hidden}.capture-only #study-frame{position:fixed;left:0;top:0;transform:none!important;z-index:9999}
+</style></head><body>
+<header><h1>운전석 공간 시안 · 로컬 검사</h1><p class="note">실제 시안의 QA API로 좌석·시선·화면 크기와 정해진 이동 시점을 검사합니다. 부품 변환 유지 검사는 공간감의 시각적 품질이나 실제 스마트폰의 손 조작·성능 확인을 대신하지 않습니다. 게임 저장은 사용하지 않으며 결과 파일을 자동 저장하지 않습니다.</p></header>
+<div class="toolbar"><button id="run-study">공간 시안 검사 시작</button><span id="study-status" role="status" data-state="idle">실행 대기</span></div>
+<div class="toolbar"><label>화면 <select id="view-size"><option>844x390</option><option>568x320</option><option>390x844</option><option>320x568</option></select></label><label>장면 <select id="view-pose"><option value="forward">앞 보기</option><option value="left">왼쪽</option><option value="right">오른쪽</option><option value="low">낮은 좌석</option><option value="high">높은 좌석</option><option value="front">좌석 앞으로</option><option value="back">좌석 뒤로</option><option value="wide">넓은 시야</option><option value="narrow">좁은 시야</option></select></label><button id="show-study">선택 장면 보기</button><button id="capture-study">게임 화면만 보기</button><label><input id="fit" type="checkbox" checked>화면에 맞춤</label><small>화면만 보기에서 Esc로 돌아옵니다.</small></div>
+<div id="stage"><div id="wrap"><iframe id="study-frame" title="실제 운전석 공간 시안" width="844" height="390" src="about:blank"></iframe></div></div>
+<section id="results"><ol id="study-results"></ol><p id="study-error" role="alert"></p></section>
+<details open><summary>검사 결과 JSON</summary><pre id="study-report-json">아직 실행하지 않았습니다.</pre></details>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),frame=$('study-frame'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let size=[844,390],busy=false,deadline=Infinity,report=null,defaults=null;
+const win=()=>frame.contentWindow,api=()=>win().__cockpitStudy;
+const assert=(condition,message)=>{if(!condition)throw Error(message);};
+const near=(a,b,tolerance=1e-5)=>Math.abs(a-b)<=tolerance;
+const status=(text,state='running')=>{$('study-status').textContent=text;$('study-status').dataset.state=state;};
+const publish=()=>{$('study-report-json').textContent=JSON.stringify(report,null,2);};
+function fit(){const scale=$('fit').checked?Math.min(1,Math.max(1,$('stage').clientWidth-16)/size[0]):1;frame.style.transform=`scale(${scale})`;$('wrap').style.width=size[0]*scale+'px';$('wrap').style.height=size[1]*scale+'px';}
+function resize(width,height){size=[width,height];frame.width=width;frame.height=height;frame.style.width=width+'px';frame.style.height=height+'px';fit();}
+function lock(value){busy=value;for(const id of ['run-study','show-study','view-size','view-pose'])$(id).disabled=value;}
+async function settle(){await sleep(65);assert(performance.now()<deadline,'검사 시간이 45초를 넘었습니다.');win().dispatchEvent(new (win().Event)('resize'));return api().runChecks();}
+async function load(){
+ let ready=false;try{ready=api()?.snapshot().ready===true;}catch{}
+ if(!ready){
+  const nonce=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);frame.src='../cockpit-study.html?review=1&run='+nonce;
+  const until=Math.min(deadline,performance.now()+30000);
+  while(performance.now()<until){
+   let same=false;try{same=new URL(win().location.href).searchParams.get('run')===nonce;}catch{}
+   if(same&&api()){
+    const snapshot=api().snapshot();if(snapshot.ready){ready=true;break;}
+    if(['missing','error'].includes(snapshot.asset))throw Error(snapshot.error||'실제 차량 모델을 준비하지 못했습니다.');
+   }
+   await sleep(40);
+  }
+  assert(ready,'실제 차량 모델 로딩 시간 초과');
+ }
+ assert(typeof api().reviewAt==='function','__cockpitStudy.reviewAt(seconds)가 필요합니다.');
+ api().pause();api().resetMotion();api().resetCamera();api().setToolsVisible(false);defaults={...api().snapshot().settings};
+ for(const [id,key,lower,upper] of [['eye-height','height','low','high'],['eye-depth','foreAft','back','front'],['lens-fov','verticalFov','narrow','wide'],['gaze-pitch','pitch','down','up']]){const control=frame.contentDocument.getElementById(id);assert(control,'시안 조절 요소 없음: '+id);poses[lower]={[key]:Number(control.min)};poses[upper]={[key]:Number(control.max)};}
+ return api().runChecks();
+}
+function fixed(snapshot){assert(snapshot.ready,'실제 모델 준비 상태가 아닙니다.');assert(snapshot.model.meshes>0&&snapshot.model.triangles>0,'차량 geometry가 없습니다.');assert(snapshot.model.nonFinite===0,'유효하지 않은 모델 변환');assert(snapshot.invariant.available&&snapshot.invariant.passed,'포즈/화면 변경으로 부품 geometry 또는 상대 변환이 달라졌습니다.');}
+function capture(snapshot){return{viewport:snapshot.viewport,model:snapshot.model,camera:snapshot.camera,settings:snapshot.settings,motion:snapshot.motion,invariant:snapshot.invariant};}
+function add(name,snapshot){fixed(snapshot);report.checks.push({name,passed:true,evidence:capture(snapshot)});const li=document.createElement('li');li.className='pass';li.textContent='통과 · '+name;$('study-results').append(li);publish();}
+const poses={forward:{glance:'forward'},left:{glance:'left'},right:{glance:'right'},low:{height:-.07},high:{height:.06},front:{foreAft:.08},back:{foreAft:-.10},wide:{verticalFov:65},narrow:{verticalFov:30},down:{pitch:-9},up:{pitch:3}};
+function pose(values){api().setPose({...defaults,...values});return api().runChecks();}
+function inputPose(name){api().setPose({...defaults});const [key,value]=Object.entries(poses[name])[0];if(key==='glance')frame.contentDocument.querySelector(`[data-glance="${value}"]`).click();else{const ids={height:'eye-height',foreAft:'eye-depth',verticalFov:'lens-fov',pitch:'gaze-pitch'},element=frame.contentDocument.getElementById(ids[key]);element.value=String(value);element.dispatchEvent(new (win().Event)('input',{bubbles:true}));}const s=api().runChecks();assert(typeof value==='string'?s.settings[key]===value:near(s.settings[key],value),'조절 UI 연결 오류: '+name);return s;}
+async function run(){
+ if(busy)return;lock(true);deadline=performance.now()+45000;report={startedAt:new Date().toISOString(),method:'One actual-model iframe; QA setPose and deterministic reviewAt. No synthetic car, no phone/hardware or FPS claim.',checks:[],visualReview:'pending: inspect real cockpit geometry and sightlines',fileWrites:false,passed:false};$('study-results').textContent='';$('study-error').textContent='';publish();
+ try{
+  status('실제 모델 준비 중');resize(844,390);const initial=await load();fixed(initial);report.provenance=initial.provenance;const baseEye=initial.camera.eyeLocal,baseFov=initial.camera.verticalFov;add('실제 모델과 기본 좌석',initial);
+  for(const name of ['left','right','low','high','front','back','wide','narrow','down','up']){
+   status('포즈 검사 · '+name);const s=inputPose(name);
+   if(name==='left')assert(s.camera.direction[0]<-.1,'왼쪽 시선 방향 오류');if(name==='right')assert(s.camera.direction[0]>.1,'오른쪽 시선 방향 오류');
+   if(name==='low'||name==='high')assert(near(s.camera.eyeLocal[1]-baseEye[1],poses[name].height),'눈높이 이동 오류');
+   if(name==='front'||name==='back')assert(near(s.camera.eyeLocal[2]-baseEye[2],-poses[name].foreAft),'좌석 앞뒤 방향 오류');
+   if(name==='wide'||name==='narrow')assert(near(s.camera.verticalFov,poses[name].verticalFov),'시야각 반영 오류');
+   add(name,s);
+  }
+  pose({});
+  for(const [width,height] of [[568,320],[390,844],[320,568],[844,390]]){
+   status('화면 회전 · '+width+'×'+height);resize(width,height);const s=await settle();assert(s.viewport.width===width&&s.viewport.height===height,'iframe 화면 크기 불일치');assert(near(s.camera.verticalFov,baseFov),'회전으로 세로 시야각 변경');assert(s.camera.eyeLocal.every((v,i)=>near(v,baseEye[i])),'회전으로 눈 위치 변경');add(width+'×'+height,s);
+  }
+  for(const [seconds,expectedDistance,expectedSpeed] of [[0,0,0],[4,16,28.8],[7,40,28.8],[11,56,0]]){
+   status('이동 확인 · '+seconds+'초');api().reviewAt(seconds);const s=api().runChecks();assert(near(s.motion.elapsed,seconds),'정해진 시점 불일치');assert(near(s.motion.distance,expectedDistance)&&near(s.motion.speedKmh,expectedSpeed),'가속·제동 거리/속도 불일치');
+   assert(near(s.camera.eyeWorld[0]-s.camera.eyeLocal[0],0)&&near(s.camera.eyeWorld[1]-s.camera.eyeLocal[1],0)&&near(s.camera.eyeWorld[2]-s.camera.eyeLocal[2],-expectedDistance),'차체와 카메라 이동 불일치');add(seconds+'초 재생 위치',s);
+  }
+  api().resetMotion();pose({});report.passed=true;report.completedAt=new Date().toISOString();status('통과 · '+report.checks.length+'개 · 실제 화면 판독 별도','passed');
+ }catch(error){report.error=error.message;report.completedAt=new Date().toISOString();$('study-error').textContent=error.message;const li=document.createElement('li');li.className='fail';li.textContent='실패 · '+error.message;$('study-results').append(li);status('확인 필요','failed');}
+ finally{deadline=Infinity;lock(false);publish();}
+}
+$('run-study').onclick=run;
+$('show-study').onclick=async()=>{if(busy)return;lock(true);deadline=performance.now()+45000;try{await load();const [w,h]=$('view-size').value.split('x').map(Number);resize(w,h);await settle();fixed(pose(poses[$('view-pose').value]));status('선택한 실제 장면 준비됨','idle');}catch(error){$('study-error').textContent=error.message;status('장면 준비 실패','failed');}finally{deadline=Infinity;lock(false);}};
+function exitCapture(event){if(event.key==='Escape'&&document.body.classList.contains('capture-only')){event.preventDefault();event.stopImmediatePropagation();document.body.classList.remove('capture-only');fit();}}
+addEventListener('keydown',exitCapture,true);$('capture-study').onclick=()=>{document.body.classList.add('capture-only');win().addEventListener('keydown',exitCapture,true);};$('fit').onchange=fit;addEventListener('resize',fit);fit();
+</script></body></html>
