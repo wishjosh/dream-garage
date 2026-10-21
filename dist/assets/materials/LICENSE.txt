@@ -1,0 +1,24 @@
+Asphalt 012 by ambientCG
+License: Creative Commons CC0 1.0 Universal (public-domain dedication).
+Commercial use, modification and redistribution are permitted. Attribution is not required.
+Asset page: https://ambientcg.com/view?id=Asphalt012
+Official license: https://docs.ambientcg.com/license/
+License legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+Official download: https://ambientcg.com/get?file=Asphalt012_1K-JPG.zip
+Resolved download: https://acg-download.struffelproductions.com/file/ambientCG-Web/download/Asphalt012_KBZIdFew/Asphalt012_1K-JPG.zip
+Downloaded and verified: 2026-10-20
+
+The three JPEG files are unchanged 1024 x 1024 originals from the official 1K-JPG package,
+renamed for this project. No resampling, compression or artistic modification was applied.
+asphalt-normal.jpg uses the OpenGL normal-map convention (NormalGL).
+Source ZIP SHA256: C077E5D1B21A4333829BB655043EE6A45DDCF82FEF850528F91F4305AC11193D
+
+asphalt-color.jpg <- Asphalt012_1K-JPG_Color.jpg
+Bytes: 1009615; SHA256: C7A142A1C12F517024D1B4C92472C700AF86CFE3BFC12263C4260E414D4C2C59
+
+asphalt-normal.jpg <- Asphalt012_1K-JPG_NormalGL.jpg
+Bytes: 2149012; SHA256: 4E1D22A2216769D575D3481C548555AB955F7E6D7CB06F0C5EDA99835612DEB1
+
+asphalt-roughness.jpg <- Asphalt012_1K-JPG_Roughness.jpg
+Bytes: 744991; SHA256: 0F3BDC4408C43FB8CFBEF8089EA6AA9DBFBD104FCFC0EA7A63200FED79CB395C
+

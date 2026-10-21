@@ -1,0 +1,148 @@
+/* Dream Garage — performance cockpit / thumb controls. */
+:root{--mint:#8ff4d1;--ice:#deeff4;--ink:#09141f;--gold:#f8d491;--panel:#101d2b;--edge:#b9dbe529}
+body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",sans-serif;background:#080f1b}
+button{transition:background .14s,border-color .14s,box-shadow .14s,transform .1s}
+.primary{background:var(--mint);color:#09241f;border-radius:8px;min-height:52px;box-shadow:0 4px 0 #213c39,0 10px 30px #0004;letter-spacing:.01em}
+.primary:hover{background:#b9ffe6}.primary:active{transform:translateY(3px);box-shadow:0 1px 0 #213c39}
+.secondary{border-radius:8px;border:1px solid var(--edge);background:#243544}
+.eyebrow{font-size:10px;color:var(--mint);letter-spacing:.2em;display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:"";width:19px;height:3px;background:var(--mint);transform:skew(-28deg)}
+.overlay{background:linear-gradient(100deg,#050b14e8,#06131e44)}
+.panel{border-radius:15px;background:#0c1725f5;border-color:#bad6e32b;box-shadow:0 24px 80px #0008}
+.welcome-overlay{padding:5vw;background:linear-gradient(90deg,#060d18f5 0%,#060d18ce 30%,#060d1820 68%);align-items:center}
+.welcome-card{max-width:510px;padding:18px 12px}
+.welcome-card h1{font-size:clamp(46px,5.8vw,80px);letter-spacing:-.065em;font-weight:850;line-height:1.08;margin:24px 0 22px}
+.welcome-card h1 span{font-size:.34em;letter-spacing:.04em;font-weight:600;margin-top:16px;color:#c2e8e5}
+.tagline{font-size:clamp(18px,2vw,25px);font-weight:500;color:#f5f5ee;letter-spacing:-.025em}
+.invitation{font-size:13px;color:#acbcc8;line-height:1.8;margin:20px 0 28px}
+.welcome-card .primary{background:var(--mint);width:295px;max-width:100%;font-size:15px}
+.welcome-loop{font-size:11px;color:#d1dbe3;margin-top:25px}.welcome-loop span{color:#657d91}
+.save-note,#welcome-status{font-size:11px;color:#8295a6}
+.welcome-card::after{content:"BAYFRONT  /  NIGHT RACE";display:block;position:absolute;right:4vw;bottom:27px;font-size:10px;letter-spacing:.22em;color:#bdceda80}
+.garage-overlay{grid-template-columns:minmax(0,1fr) minmax(350px,400px);padding:20px;gap:16px;background:linear-gradient(90deg,#020b1300 32%,#07121aa6 72%,#07121aee)}
+.garage-heading{background:none;border-radius:0;padding:8px 0;margin:10px 12px}
+.garage-heading h2{font-size:25px;font-weight:750}.garage-heading p{color:#b8c7d2}
+.preview-label{bottom:24px;left:24px;gap:8px}.preview-label strong{font-size:34px;font-weight:750;letter-spacing:-.04em}.preview-label>span{color:#bcd3dc}
+.rotate-buttons button{background:#0b1729ce;border:1px solid #b8cfde30;border-radius:50%;min-width:44px;min-height:44px;color:#d9eaf2}
+.garage-panel{border-radius:14px;padding:20px 20px 100px;max-height:calc(100dvh - 40px);background:#0c1726f2;backdrop-filter:blur(18px)}
+.garage-top{margin-bottom:16px}.wallet{background:#20312f;border:1px solid #f8d49125;border-radius:9px;padding:8px 12px}.wallet strong{font-size:20px;color:var(--gold)}.wallet small{font-size:10px;color:#b3c4c7}
+.car-picker{gap:8px}.garage-panel .car-picker button{border-radius:9px;background:#131f30;border:1px solid #3b4a5a;padding:12px;min-height:95px;position:relative;overflow:hidden;gap:6px}
+.garage-panel .car-picker button.selected{border-color:var(--mint);background:linear-gradient(125deg,#203d40,#15252f);box-shadow:inset 0 0 0 1px #8ff4d132}
+.car-picker .selected::after{content:"✓";position:absolute;right:10px;top:10px;color:var(--mint);font-size:12px}
+.car-mark{font-size:17px!important;font-style:italic;color:#8ff4d1}.car-mark.formula{color:#f2b7b5}.car-picker strong{letter-spacing:-.02em}
+.garage-panel .car-picker small{font-size:10px;color:#a8bdca}
+.garage-story{border:0;border-left:2px solid #8ff4d1;background:#162d2e80;padding:9px 11px;color:#c6dfd9}
+.tuning-stats{gap:5px}.tuning-stats span{border:0;background:#1b2b3a;border-radius:4px;color:#b1c7d4;font-size:10px;padding:5px 8px}
+.shop-title{font-size:14px;margin:22px 0 10px}
+.shop-tabs{gap:0;border-bottom:1px solid #354657;padding-bottom:0;margin-bottom:13px;overflow:visible}
+.shop-tabs button{background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;color:#a2b6c9;padding:10px 5px;font-size:12px;min-height:44px}
+.shop-tabs button.selected{background:transparent;color:var(--mint);border-color:var(--mint)}
+.shop-items{gap:9px}.shop-item{border:1px solid #344554;background:linear-gradient(130deg,#1a2b3b,#142130);border-radius:10px;padding:12px;position:relative}
+.shop-item.equipped{background:linear-gradient(140deg,#1c3b3a,#172c32);border-color:#7de6c67a}
+.item-title{font-size:12px;gap:9px;min-height:26px}.swatch{width:25px;height:25px;border:2px solid #ffffff44;box-shadow:inset 3px 4px 6px #ffffff28,2px 2px 7px #0005}
+.wheel-swatch{border-width:5px;background:radial-gradient(circle,#94a2aa 0 13%,#101c28 16% 37%,#73818b 40% 45%,#08121c 48%)}
+.shop-item p{font-size:11px;color:#b0c1ce;line-height:1.5}.item-price{font-size:12px;margin-top:3px}
+.shop-item button{min-height:41px;font-size:11px;border-radius:5px;background:#2a5558;color:#e0fff2;border-color:#7ee2c33d}
+.shop-item button[data-poor="true"]{background:#243344;color:#93a7b9;opacity:1}
+.shop-item button:disabled{cursor:default}.shop-item.equipped button{background:#203e3d;color:#aad5c7}
+.race-setup{padding-top:10px;border-top:1px solid #aac4dd20}
+select{background:#172b3c;border:1px solid #42566a;border-radius:6px;min-height:44px}
+.race-setup .options{font-size:12px}.options input{accent-color:var(--mint)}
+.launch-bar{right:40px;bottom:28px;width:360px;background:linear-gradient(0deg,#0c1726 70%,#0c172600);padding-top:16px}
+.launch-bar .primary{background:var(--mint);font-size:15px}
+.menu-footer button{min-height:44px;color:#a9becd}.garage-panel #load-status{color:#8da9b7}
+.compact{position:relative;overflow:hidden}.compact::before{content:"";position:absolute;left:0;top:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--mint),transparent)}
+.compact .eyebrow{justify-content:center}#result-rank{color:var(--mint);font-size:68px;font-style:italic}
+.prize{background:linear-gradient(115deg,#273b39,#152a30);border:1px solid #f8d49133;border-radius:8px}.prize strong{color:var(--gold)}
+/* Racing HUD: compact corners and an unobstructed road. */
+.race-stats{top:max(14px,env(safe-area-inset-top));left:max(16px,env(safe-area-inset-left));gap:20px;padding:9px 15px 11px;border-radius:10px;background:#091523d9;border:1px solid #e0f4ff24;box-shadow:0 8px 20px #0002}
+.race-stats small{font-size:10px;color:#a0b6c7;letter-spacing:.06em}.race-stats strong{font-size:25px;font-weight:750}.race-stats #rank{color:var(--mint)}#time{font-size:18px;line-height:30px}
+.race-progress{position:absolute;bottom:0;left:0;height:2px;max-width:100%;width:0;background:var(--mint);box-shadow:0 0 8px #8ff4d180;border-radius:2px}
+.top-actions{right:max(16px,env(safe-area-inset-right));top:max(14px,env(safe-area-inset-top));gap:8px}
+.top-actions button{border:1px solid #d0ebff30;border-radius:10px;background:#0b1725dd;min-height:44px;padding:8px 12px;font-size:11px;color:#deedf3}
+.top-actions #pause{width:44px;padding:9px;font-size:18px}
+#map{width:103px;height:86px;top:70px;right:max(16px,env(safe-area-inset-right));background:#071321b8;border:1px solid #c6e2f22b;border-radius:12px}
+#speedometer{bottom:calc(26px + env(safe-area-inset-bottom));left:50%;padding:13px 26px 11px;min-width:126px;background:linear-gradient(180deg,#09172505,#091725d9);border-bottom:2px solid #8ff4d180;border-radius:70px 70px 8px 8px}
+#speedometer strong{font-size:49px;font-weight:750;font-style:italic;letter-spacing:-.07em;line-height:.95}#speedometer small{font-size:10px;margin-top:7px;letter-spacing:.18em}
+#gear{left:auto;right:-13px;top:24px;padding:5px 8px;border-radius:5px;background:#15283bd9;color:var(--mint);font-weight:700;font-size:14px}
+#drive-state{top:auto;bottom:137px;position:absolute;left:50%;transform:translateX(-50%);font-size:11px;background:#0c1d2ce8;color:#e9fbff;padding:7px 12px;border:1px solid #afdbf129;border-radius:20px;white-space:nowrap}
+#drive-state.drifting{background:#342652e8;color:#e4c8ff;border-color:#b68beb80}
+#drive-state:empty{display:none}
+body[data-view="cockpit"] #speedometer{visibility:hidden}
+body[data-view="cockpit"] #drive-state{bottom:calc(147px + env(safe-area-inset-bottom))}
+#toast{top:23%;border-radius:7px;background:#0b1729e8;border:1px solid #d0e9ff22;font-weight:500;font-size:13px}
+#controls{left:max(20px,env(safe-area-inset-left));right:max(20px,env(safe-area-inset-right));bottom:calc(21px + env(safe-area-inset-bottom));gap:12px}
+.steering{gap:12px}
+#controls button{color:#dceef5;background:linear-gradient(145deg,#2c4056d9,#0a192be8);border:1px solid #b2d1e34d;backdrop-filter:blur(6px);box-shadow:inset 0 1px 0 #e0faff25,0 5px 0 #030c16a8,0 9px 21px #0004;transition:transform .08s,box-shadow .1s,background .1s,border-color .1s;-webkit-tap-highlight-color:transparent}
+#controls .steering button{width:72px;height:74px;min-width:48px;min-height:48px;padding:0;border-radius:23px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.steering .control-icon{width:36px;height:36px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.steering .control-label{font-size:10px;font-weight:600;letter-spacing:.1em}
+#controls .steering button.pressed{color:#062622;background:#9cf5d8;border-color:#c6ffed;transform:translateY(4px) scale(.98);box-shadow:0 0 0 4px #8ff4d115,0 0 24px #8ff4d14d,inset 0 2px 7px #14392d33}
+.pedals{display:block;position:relative;width:190px;height:172px}
+#controls .pedals button{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:48px;min-height:48px;padding:0;font-size:11px!important;grid-area:auto}
+#controls .pedals button span{display:block;margin:0;font-size:11px;font-weight:600;opacity:1}
+#controls .pedals .throttle{right:0;bottom:0;width:100px!important;height:100px!important;border-radius:50%!important;border:3px solid #8ff4d1aa!important;background:radial-gradient(circle at 35% 25%,#30585edb,#0a242fe8 80%);box-shadow:inset 0 0 0 5px #0b1d2b,inset 0 0 0 6px #8ff4d133,0 6px 0 #030b12b0,0 10px 25px #0005;color:#b0ffe4}
+#controls .pedals .throttle .pedal-pattern{width:31px;height:37px;margin:0 0 3px;transform:skew(-8deg);border:2px solid currentColor;border-radius:8px 8px 5px 5px;background:repeating-linear-gradient(0deg,transparent 0 5px,currentColor 5px 7px,transparent 7px 10px)}
+#controls .pedals .brake{left:0;bottom:0;width:68px!important;height:67px!important;border-radius:18px!important;color:#ffd5c5;border:1px solid #e7ad9766!important;background:linear-gradient(145deg,#493e49e8,#221f2de8)}
+.brake-pattern{width:29px;height:15px;border:2px solid currentColor;border-radius:4px;background:repeating-linear-gradient(90deg,transparent 0 4px,currentColor 4px 6px);margin-bottom:3px!important}
+#controls .pedals .reverse{left:8px;top:29px;width:49px!important;height:49px!important;border-radius:50%!important;color:#cadce9;background:linear-gradient(145deg,#2c4054de,#132538e8)}
+#controls .pedals .reverse b{font-size:19px;line-height:1;font-weight:700}#controls .pedals .reverse span{font-size:9px;line-height:1.1}
+#controls .pedals .drift{right:4px;top:0;width:85px!important;height:49px!important;border-radius:18px!important;color:#dec8ff;border:1px solid #cba9f366!important;background:linear-gradient(145deg,#423655df,#211f38eb);flex-direction:row;gap:5px}
+.drift .control-icon{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#controls .pedals .throttle.pressed{background:#9df6d8;border-color:#d5fff1!important;color:#0b332d;box-shadow:inset 0 0 0 5px #70c4ad,inset 0 3px 9px #13433744,0 0 27px #87f5cf65;transform:translateY(4px) scale(.97)}
+#controls .pedals .brake.pressed{background:#ffbca4;color:#3a1f20;border-color:#ffe2d4!important;box-shadow:0 0 22px #ffa07c55,inset 0 3px 8px #33152333;transform:translateY(3px)}
+#controls .pedals .reverse.pressed{background:#bcdcf5;color:#102f47;border-color:#e5f5ff!important;transform:translateY(3px)}
+#controls .pedals .drift.pressed{background:#d1b2ff;color:#2e164d;border-color:#e9d6ff!important;box-shadow:0 0 22px #b388ef66;transform:translateY(3px)}
+#rescue{left:max(20px,env(safe-area-inset-left));bottom:calc(112px + env(safe-area-inset-bottom));border-radius:8px;min-height:44px;font-size:10px;padding:8px 10px;background:#0b1b2ad4;border:1px solid #bedbe52c;color:#c4d7e4}
+#countdown{font-size:100px;font-style:italic;color:#b8ffe5;text-shadow:0 4px 0 #10392f,0 0 40px #8ff4d155;font-weight:850}
+@media(max-width:700px) and (orientation:portrait){
+ .welcome-overlay{padding:14px;align-items:end;background:linear-gradient(0deg,#060d18 0%,#060d18f2 39%,#060d1830 75%)}
+ .welcome-card{padding:12px 8px 20px;max-width:500px}.welcome-card h1{font-size:47px;margin:13px 0 15px}.welcome-card h1 span{font-size:.36em;margin-top:11px}.tagline{font-size:20px;margin:10px 0}.invitation{font-size:12px;margin:13px 0 20px}.welcome-card::after{display:none}.welcome-loop{font-size:10px;margin-top:18px}.welcome-card .eyebrow{font-size:9px;letter-spacing:.13em}
+ .garage-overlay{display:block;padding:0 12px 18px;overflow-y:auto;background:linear-gradient(0deg,#07121ab0,#07121a00)}
+ .garage-stage{height:270px}.garage-heading{margin:0;padding:18px 9px}.garage-heading h2{font-size:21px}.preview-label{left:10px;bottom:10px}.preview-label strong{font-size:25px}.rotate-buttons{left:210px}.garage-panel{max-height:none;max-width:480px;padding:17px 16px 100px;margin:auto}
+ .launch-bar{right:28px;left:28px;bottom:calc(12px + env(safe-area-inset-bottom));width:auto;padding-top:16px}
+ .race-stats{top:calc(12px + env(safe-area-inset-top));left:12px;gap:16px;padding:9px 13px}.race-stats strong{font-size:23px}#time{font-size:17px}
+ .top-actions{top:calc(86px + env(safe-area-inset-top));right:12px}#map{top:calc(141px + env(safe-area-inset-top));right:12px;width:96px;height:80px}
+ #speedometer{bottom:calc(204px + env(safe-area-inset-bottom));padding:9px 22px;min-width:110px}#speedometer strong{font-size:43px}#gear{top:17px}
+ #drive-state,body[data-view="cockpit"] #drive-state{bottom:calc(298px + env(safe-area-inset-bottom));max-width:calc(100% - 20px);font-size:10px}
+ #controls{left:12px;right:12px;bottom:calc(23px + env(safe-area-inset-bottom));gap:8px}
+ #controls .steering{gap:7px}#controls .steering button{width:54px;height:67px;border-radius:18px!important}
+ .steering .control-icon{width:31px;height:31px}
+ .pedals{width:157px;height:165px}
+ #controls .pedals .throttle{width:84px!important;height:84px!important}
+ #controls .pedals .brake{width:60px!important;height:60px!important}
+ #controls .pedals .drift{width:84px!important;height:48px!important;right:0;top:6px}
+ #controls .pedals .reverse{left:4px;top:35px;width:48px!important;height:48px!important}
+ /* Keep the formula steering-wheel gear visible on portrait screens. */
+ body[data-view="cockpit"][data-car="f2002"] #controls .pedals .reverse{left:auto;right:0;top:-54px}
+ #rescue{left:12px;bottom:calc(109px + env(safe-area-inset-bottom))}#toast{top:36%;font-size:12px}
+}
+@media(max-width:350px) and (orientation:portrait){
+ #controls{left:10px;right:10px}#controls .steering{gap:5px}#controls .steering button{width:48px}
+ .pedals{width:148px}#controls .pedals .throttle{width:80px!important;height:80px!important}#controls .pedals .brake{width:56px!important;height:58px!important}
+ .welcome-card h1{font-size:40px}.welcome-loop{font-size:9px}.rotate-buttons{left:177px}
+}
+@media(orientation:landscape) and (max-height:600px){
+ .welcome-overlay{padding:12px 4vw;align-items:center}.welcome-card{max-width:420px;padding:8px}.welcome-card h1{font-size:43px;margin:12px 0}.welcome-card h1 span{margin-top:8px}.welcome-card .tagline{font-size:17px;margin:10px 0}.invitation{font-size:12px;margin:12px 0 17px}.welcome-loop{margin-top:16px}.save-note,#welcome-status{font-size:10px}.welcome-card::after{bottom:15px;font-size:9px}.welcome-card .primary{min-height:46px}
+ .garage-overlay{display:grid;grid-template-columns:minmax(0,1fr) 348px;padding:10px;gap:8px;overflow:hidden}.garage-stage{height:auto}.garage-panel{max-height:calc(100dvh - 20px);padding:14px 14px 90px}.garage-heading{margin:8px 3px;padding:0}.garage-heading h2{font-size:18px}.garage-heading p{font-size:11px}.preview-label{left:10px;bottom:15px}.preview-label strong{font-size:25px}.preview-label>span{display:none}.rotate-buttons{position:static}.launch-bar{right:24px;bottom:20px;width:320px}.garage-panel .car-picker button{min-height:84px}
+ .race-stats{top:max(12px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));gap:15px;padding:7px 12px 9px}.race-stats strong{font-size:23px}#time{font-size:17px;line-height:29px}
+ .top-actions{top:max(12px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right))}#map{width:84px;height:70px;top:66px;right:max(14px,env(safe-area-inset-right))}
+ #controls{left:max(18px,env(safe-area-inset-left));right:max(18px,env(safe-area-inset-right));bottom:calc(17px + env(safe-area-inset-bottom))}
+ #controls .steering button{width:68px;height:67px}.steering{gap:10px}
+ .pedals{width:178px;height:164px}#controls .pedals .throttle{width:94px!important;height:94px!important}#controls .pedals .brake{width:66px!important;height:63px!important}#controls .pedals .drift{width:82px!important;height:48px!important;top:0;right:3px}#controls .pedals .reverse{top:24px;left:7px;width:48px!important;height:48px!important}
+ #speedometer{bottom:calc(18px + env(safe-area-inset-bottom))}#speedometer strong{font-size:46px}#drive-state,body[data-view="cockpit"] #drive-state{bottom:calc(139px + env(safe-area-inset-bottom))}
+ #rescue{left:max(18px,env(safe-area-inset-left));bottom:calc(100px + env(safe-area-inset-bottom));min-height:44px}
+ #toast{top:24%;font-size:12px}#countdown{font-size:90px}
+}
+@media(orientation:landscape) and (max-width:650px){
+ .garage-overlay{grid-template-columns:minmax(0,1fr) 310px}.launch-bar{width:282px}
+ .garage-heading h2{font-size:15px}.garage-heading p{display:none}.preview-label strong{font-size:19px}
+ .welcome-card{max-width:370px}.welcome-card h1{font-size:34px}.welcome-card .tagline{font-size:16px}.welcome-card .invitation{font-size:11px;margin:7px 0 12px}.welcome-loop{margin:12px 0 5px}.welcome-card .eyebrow{font-size:9px}.welcome-card .save-note{margin:5px 0}.welcome-card::after{display:none}
+ .race-stats{gap:12px}.race-stats strong{font-size:21px}#time{font-size:15px}
+ #controls .steering button{width:56px;height:61px}.steering .control-icon{width:30px;height:30px}
+ .pedals{width:156px;height:149px}#controls .pedals .throttle{width:80px!important;height:80px!important}#controls .pedals .brake{width:60px!important;height:60px!important}#controls .pedals .drift{width:80px!important;height:48px!important}#controls .pedals .reverse{top:19px;left:4px}
+ #map{width:73px;height:61px}#speedometer strong{font-size:37px}#speedometer{min-width:98px;padding:9px 20px}#gear{top:16px}#rescue{bottom:calc(93px + env(safe-area-inset-bottom))}
+}
+
+/* Transient race notices stay below the Tavaculo rear-view mirror. */
+@media(orientation:landscape){body[data-view="cockpit"][data-car="tavaculo"] #toast{top:34%}}

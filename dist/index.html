@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#08192c">
+  <meta name="description" content="꿈꾸던 차를 만들고, 도시를 달려라! 차고에서 차를 고르고 경주 상금으로 도색·휠·파츠를 꾸미는 스마트폰 레이싱.">
+  <title>드림 개러지: 스피드 그랑프리</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='16' width='64' height='64' fill='%230b2035'/%3E%3Cpath d='M10 44V20h9v8h12v-8h9v24h-9v-9H19v9M48 20h6v24h-6' fill='%235de6ed'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css?v=wheels-1">
+  <link rel="stylesheet" href="./design-v1.css?v=precision-cockpit-1">
+  <script type="module" src="./game.mjs?v=2026-10-21-gallardo-cockpit-1"></script>
+</head>
+<body>
+  <canvas id="world" aria-label="수변 야간 도심 레이싱 코스"></canvas>
+  <div id="hud" hidden>
+    <div class="race-stats"><div><small>순위</small><strong id="rank">4<span>/ 4</span></strong></div><div><small>한 바퀴</small><strong id="progress">0<span>%</span></strong></div><div><small>기록</small><strong id="time">0:00.00</strong></div><div class="race-progress" id="race-progress"></div></div>
+    <div class="top-actions"><button id="camera" aria-label="운전석 시점으로 전환">운전석</button><button id="pause" aria-label="일시정지">Ⅱ</button></div>
+    <canvas id="map" width="240" height="200" aria-label="코스와 차량 위치"></canvas>
+    <div id="speedometer"><strong id="speed">0</strong><small>km/h</small><div id="gear">N</div></div><div id="drive-state" role="status" aria-live="polite"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <div id="controls" aria-label="운전 조작">
+      <div class="steering"><button data-control="left" aria-label="왼쪽으로 조향" aria-pressed="false"><svg class="control-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M23 16H8M15 7l-9 9 9 9"/></svg><span class="control-label">왼쪽</span></button><button data-control="right" aria-label="오른쪽으로 조향" aria-pressed="false"><svg class="control-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M9 16H24M17 7l9 9 -9 9"/></svg><span class="control-label">오른쪽</span></button></div>
+      <div class="pedals" aria-label="오른손 주행 버튼">
+        <button data-control="brake" class="brake" aria-label="브레이크" aria-pressed="false"><span class="brake-pattern" aria-hidden="true"></span><span>브레이크</span></button>
+        <button data-control="drift" class="drift" aria-label="드리프트와 가속" aria-pressed="false"><svg class="control-icon" viewBox="0 0 28 28" aria-hidden="true"><path d="m11 4 10 3-3 10-10-3zM7 17c-6 1-6 5-1 5M13 20c-5 1-5 5 0 5"/></svg><span>드리프트</span></button>
+        <button data-control="reverse" class="reverse" aria-label="후진" aria-pressed="false"><b>R</b><span>후진</span></button>
+        <button data-control="throttle" class="throttle" aria-label="가속" aria-pressed="false"><span class="pedal-pattern" aria-hidden="true"></span><span>가속</span></button>
+      </div>
+    </div>
+    <button id="rescue">도로로 복귀 ↗</button>
+  </div>
+  <div id="countdown" hidden aria-live="assertive"></div>
+  <main id="welcome" class="overlay welcome-overlay">
+    <section class="welcome-card">
+      <div class="eyebrow">YOUR GARAGE. YOUR GRAND PRIX.</div>
+      <h1>드림 개러지<span>스피드 그랑프리</span></h1>
+      <p class="tagline">꿈꾸던 차를 만들고,<br>도시를 달려라!</p>
+      <p class="invitation">수변 도시에서 초대장이 도착했어요.<br>너만의 차로 첫 번째 그랑프리에 도전해 봐!</p>
+      <button id="enter-garage" class="primary" disabled>차고를 준비하고 있어요…</button>
+      <p class="welcome-loop">나만의 차고 <span>→</span> 도시 레이스 <span>→</span> 상금으로 꾸미기</p>
+      <p class="save-note">로그인 없이 바로 플레이 · 진행은 이 브라우저에 저장돼요</p>
+      <div id="welcome-status" role="status">도시와 자동차를 불러오는 중</div>
+    </section>
+  </main>
+  <main id="menu" class="overlay garage-overlay" hidden>
+    <div class="garage-stage">
+      <div class="garage-heading"><div class="eyebrow">DREAM GARAGE</div><h2>나만의 드림 개러지</h2><p>오늘은 어떤 차로 달려 볼까?</p></div>
+      <div class="preview-label"><strong id="preview-name">Tavaculo</strong><span id="preview-style">나만의 레이스를 준비해요</span><div class="rotate-buttons"><button id="rotate-left" aria-label="차량 왼쪽 모습 보기">↶</button><button id="rotate-right" aria-label="차량 오른쪽 모습 보기">↷</button></div></div>
+    </div>
+    <section class="panel garage-panel" aria-label="차고와 꾸미기 상점">
+      <div class="garage-top"><button id="title-back" class="text-button">‹ 시작 화면</button><div class="wallet"><small>모은 상금</small><strong id="wallet">0 C</strong></div></div>
+      <div class="car-picker" role="group" aria-label="차량 선택">
+        <button data-car="tavaculo" class="selected" aria-pressed="true"><span class="car-mark">01</span><strong>Tavaculo</strong><small>슈퍼카 · 나만의 스타일</small></button>
+        <button data-car="f2002" aria-pressed="false"><span class="car-mark formula">02</span><strong>클래식 F2002</strong><small>포뮬러 · 빠른 가속</small></button>
+      </div>
+      <p id="garage-story" class="garage-story">첫 번째 완주가 꿈의 시작! 경주에서 상금을 모아 봐요.</p>
+      <div id="tuning-stats" class="tuning-stats" aria-label="장착한 성능 파츠"></div>
+      <h3 class="shop-title">꾸미고, 바꾸고, 달려 보기</h3>
+      <div id="shop-tabs" class="shop-tabs" role="group" aria-label="꾸미기 종류"></div>
+      <div id="shop-items" class="shop-items"></div>
+      <div id="shop-status" role="status" aria-live="polite">구매한 물건은 두 차량에서 계속 쓸 수 있어요.</div>
+      <div class="race-setup"><label>시점<select id="view-select"><option value="chase">차 뒤에서 보기</option><option value="cockpit">운전석에서 보기</option></select></label><div class="options"><label><input type="checkbox" id="assist" checked> 쉬운 조향</label><label><input type="checkbox" id="auto-throttle"> 자동 가속</label></div></div>
+      <div id="load-status" role="status">도시와 차량 불러오는 중</div>
+      <div id="best"></div>
+      <div class="menu-footer"><button id="help-open">조작 방법</button><button id="credits-open">만든 자료</button><button id="fullscreen">전체화면</button></div>
+    </section>
+      <div class="launch-bar"><button id="start" class="primary" disabled>차량을 준비하고 있어요…</button></div>
+  </main>
+  <div id="pause-menu" class="overlay" hidden>
+    <section class="panel compact"><div class="eyebrow">PIT STOP</div><h2>잠깐 쉬어요</h2><p>달리던 자리에서 이어갈 수 있어요.</p><button id="resume" class="primary">계속 달리기</button><button id="restart" class="secondary">처음부터 다시</button><button id="back-menu" class="text-button">차고로 돌아가기</button></section>
+  </div>
+  <div id="result" class="overlay" hidden>
+    <section class="panel compact"><div class="eyebrow">RACE COMPLETE</div><h2 id="result-title">완주했어요!</h2><div id="result-rank"></div><p id="result-time"></p><div class="prize"><small>이번 상금</small><strong id="prize"></strong></div><p id="total-prize"></p><p id="record-note"></p><p id="result-story">상금으로 우리 차를 더 멋지게 만들어 볼까?</p><button id="result-menu" class="primary">차고에서 꾸미기 →</button><button id="again" class="secondary">한 번 더 달리기</button></section>
+  </div>
+  <dialog id="help"><h2>두 엄지로 달려요</h2>
+  <p><b>왼손은 방향, 오른손은 가속·브레이크·후진·드리프트.</b> 버튼 사이로 손가락을 밀어 옮겨도 돼요. 손가락을 떼면 입력이 풀려요.</p>
+  <p><b>가속:</b> 누르면 달리고, 떼면 관성으로 굴러가요. <b>브레이크:</b> 코너 전에 속도를 줄여요. 가속과 겹치면 브레이크가 우선이에요.</p>
+  <p><b>후진:</b> 멈춘 상태에서 누르면 천천히 뒤로 가요. 달리는 중 누르면 먼저 멈춰요. 손을 떼었다 다시 눌러야 후진해요. 자동 가속도 후진 버튼을 누르는 동안 멈춰요.</p>
+  <p><b>드리프트는 선택 기술!</b> 속도가 붙었을 때 방향과 드리프트를 함께 누르면 차가 옆으로 미끄러져요. 드리프트 버튼은 가속도 겸하므로 오른손을 가속에서 옮기면 돼요. 놓고 가속으로 돌아오면 다시 접지하며 달려요. 부스터는 없으며 보통 주행만으로도 완주할 수 있어요.</p>
+  <p>쉬운 조향·자동 가속은 차고에서 골라요. 도로 복귀는 차가 끼었을 때 사용해요. 운전석에서도 같은 버튼으로 조작해요. 슈퍼카의 룸미러로 뒤따라오는 차와 도로를 볼 수 있어요.</p>
+  <p>PC: 방향키/WASD · 브레이크 ↓/S/Space · 후진 X · 드리프트 Shift · 시점 C · 일시정지 P · 복귀 R</p>
+  <p>순위별 상금 1,000 / 650 / 400 / 150 C. 차고에서 도색·휠·성능 파츠를 사고 두 차에서 다시 장착해요. 진행은 이 브라우저에 저장돼요.</p>
+  <button class="primary" data-close="help">알겠어요</button></dialog>
+  <dialog id="credits"><h2>함께 만든 도시</h2><p>차량은 선택한 원본 모델을 사용했어요. 운전석은 이 게임에 맞춰 새로 구성한 디자인이에요.</p><ul><li><a href="https://blendswap.com/blend/22872" target="_blank" rel="noopener">Tavaculo · BlendSwap</a> — CC0</li><li><a href="https://som-natalino.itch.io/iconic-open-wheelers-low-poly-car-pack" target="_blank" rel="noopener">F2002 · som_natalino</a> — CC0 무료 차량</li><li><a href="https://kenney.nl/assets/city-kit-commercial" target="_blank" rel="noopener">City Kit Commercial · Kenney</a> — CC0</li><li><a href="https://kenney.nl/assets/nature-kit" target="_blank" rel="noopener">Nature Kit · Kenney</a> — CC0</li><li><a href="https://github.com/pmndrs/cannon-es" target="_blank" rel="noopener">cannon-es · 차량 물리</a> — MIT</li><li><a href="https://ambientcg.com/view?id=Asphalt012" target="_blank" rel="noopener">Asphalt012 · ambientCG</a> — CC0 도로 재질</li><li><a href="https://threejs.org/" target="_blank" rel="noopener">Three.js</a> — MIT</li></ul><p>싱가포르의 수변 야간 경주에서 영감을 얻은 가상의 코스예요.</p><button class="primary" data-close="credits">닫기</button></dialog>
+  <div id="fatal" class="overlay" hidden><section class="panel compact"><h2>게임을 열지 못했어요</h2><p id="fatal-message"></p><button class="primary" onclick="location.reload()">다시 열기</button></section></div>
+</body>
+</html>
