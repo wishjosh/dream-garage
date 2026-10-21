@@ -1,3 +1,5 @@
+import {installSaveTransfer} from './save-transfer-ui.mjs?v=save-transfer-1';
+import {SAVE_KEY} from './save-transfer.mjs?v=save-transfer-1';
 import {createCockpit} from './cockpit-visual.mjs?v=gallardo-cockpit-1';
 import {createRearView} from './rear-view.mjs?v=precision-cockpit-1';
 import {splitWheelVisuals,syncWheelVisuals} from './wheel-visual.mjs?v=wheels-1';
@@ -10,10 +12,13 @@ import {CATALOG,CATEGORIES,normalizeSave,transact,tuning,itemById} from './garag
 import {dressCar,disposeDress,buildGarage} from './garage-visual.mjs?v=design-1';
 
 const $=id=>document.getElementById(id),canvas=$('world');
-const SAVE='hojin-city-gp:save:v1';
+const SAVE=SAVE_KEY;
 let save=normalizeSave(null),storageOK=true;
 try{save=normalizeSave(JSON.parse(localStorage.getItem(SAVE)||'null'));}catch{storageOK=false;}
 function persist(){try{localStorage.setItem(SAVE,JSON.stringify(save));}catch{storageOK=false;}}
+// The transfer tools work before the 3D assets finish loading.
+let refreshTransferredSave=null;
+installSaveTransfer({getSave:()=>save,onSaveChanged:next=>{save=next;storageOK=true;refreshTransferredSave?.();}});
 function fail(message){$('fatal-message').textContent=message;$('fatal').hidden=false;}
 let renderer;
 try{renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});}catch{fail('Safari 또는 Chrome 최신 버전에서 다시 열어 주세요.');}
@@ -216,6 +221,7 @@ async function boot(){
  for(const name of ['help','credits']){$(name+'-open').onclick=()=>$(name).showModal();document.querySelector('[data-close="'+name+'"]').onclick=()=>$(name).close();}
  $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{$('load-status').textContent='이 브라우저에서는 가로로 돌려서 플레이해 주세요.';}};
  addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();});
+ refreshTransferredSave=()=>{selected=save.car;view=save.view;toMenu();$('shop-status').textContent='저장 기록을 반영했어요. 옮겨 온 차로 달려 보세요.';};
  syncOptions();$('enter-garage').disabled=false;$('enter-garage').textContent='차고 문 열기 →';$('welcome-status').textContent='준비 완료 · 너만의 레이스를 시작해 봐!';$('start').disabled=false;$('start').textContent='레이스 출발  →';$('load-status').textContent='준비 완료 · 스마트폰은 가로 화면을 추천해요';
  let last=performance.now(),lastDt=1/60,frameCount=0,avgFrame=16,poorFrames=0;
  function frame(now){lastDt=clamp((now-last)/1000,0,.05);last=now;step(lastDt);if(mode!=='menu'){syncVisuals();if(frameCount%3===0)updateHUD();}updateCamera();wheel.rotation.z+=lastDt*.035;capsules.forEach(c=>c.rotation.z=-wheel.rotation.z);if(toastTime>0){toastTime-=lastDt;if(toastTime<=0)$('toast').classList.remove('visible');}renderScene(false,now);frameCount++;
