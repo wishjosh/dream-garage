@@ -19,12 +19,20 @@ $('#run').onclick=async()=>{try{await ready();report.checks=[];for(const size of
  finger(2,'gas');click('pause');assert(qa.snapshot().paused&&qa.snapshot().input.held.length===0,'일시정지 입력 해제');click('resume');finger(2,'gas');const other=mode==='buttons'?'slide':'buttons';click(other+'-mode');assert(!qa.snapshot().running&&qa.snapshot().input.held.length===0&&qa.snapshot().state.time===0,'방식 변경 시 같은 출발로 복원');click(mode+'-mode');click('start');finger(2,'gas');w.dispatchEvent(new w.Event('blur'));assert(qa.snapshot().paused&&qa.snapshot().input.held.length===0,'창 전환 입력 해제');
  click('retry');click('view');assert(qa.snapshot().view==='chase','외부 시점');click('view');assert(qa.snapshot().view==='cockpit','실내 시점');const last=canvasCheck(width,height);report.checks.push({size,mode,passed:true,bounds,initial:{x:initial.state.x,z:initial.state.z,u:initial.state.u},camera:last.camera,sourceInvariant:last.original.invariant});publish();
  }$('#summary').textContent='12 / 12 조합 통과';}catch(error){report.error=error.stack;$('#summary').textContent='실패: '+error.message;}publish();};
-$('#scenario').onclick=async()=>{try{await ready();report.physics=[];await resize('844x390');for(const scenario of [{name:'저속 관성',speed:40,gas:0},{name:'고속 관성',speed:100,gas:0},{name:'가속 회전',speed:60,gas:1}]){
- d.querySelector('input[name=speed][value="'+scenario.speed+'"]').click();start('slide');qa.restorePose({z:0});qa.advance(1,{steer:.25,throttle:scenario.gas});const a=qa.snapshot();report.physics.push({scenario:scenario.name,state:a.state});}
- const [low,fast,power]=report.physics.map(a=>a.state);assert(low.underTime===0&&Math.abs(low.beta)<.04,'저속 접지');assert(fast.underTime>.7&&fast.frontSlip>low.frontSlip*3,'고속 앞 접지 한계');assert(power.overTime>.1&&Math.abs(power.beta)>.15,'가속 뒤 접지 한계');assert(report.physics.every(a=>a.state.hits===0),'물리 장면 충돌 없음');
- d.querySelector('input[name=speed][value="60"]').click();start('slide');qa.restorePose({x:-4});qa.advance(.85,{steer:.25,throttle:1});const before=qa.snapshot().state;for(let i=0;i<240;i++){const s=qa.snapshot().state;qa.advance(1/120,{steer:Math.max(-.6,Math.min(.6,s.beta*2-s.yawRate*.3-s.heading))});}const recovered=qa.snapshot().state;assert(Math.abs(recovered.beta)<Math.abs(before.beta)*.1,'미끄러짐 회복');assert(recovered.hits===0,'접촉 없이 자세 회복');report.recovery={passed:true,before,after:recovered};
- start('buttons');finger(1,'left');finger(2,'gas');await resize('390x844');assert(qa.snapshot().paused&&qa.snapshot().input.held.length===0,'회전 시 정지·입력 해제');canvasCheck(390,844);report.rotation={passed:true};
- report.physicsPassed=true;$('#summary').textContent='주행 반응·회복·회전 검사 통과';}catch(error){report.error=error.stack;$('#summary').textContent='실패: '+error.message;}publish();};
+$('#scenario').onclick=async()=>{try{await ready();delete report.error;report.physics=[];report.recoveries=[];await resize('844x390');
+ for(const scenario of [{name:'저속 관성',speed:40,gas:0,seconds:1},{name:'고속 관성',speed:100,gas:0,seconds:1},{name:'강한 가속 회전',speed:60,gas:1,seconds:1.5}]){
+  d.querySelector('input[name=speed][value="'+scenario.speed+'"]').click();start('slide');qa.restorePose({z:0});qa.advance(scenario.seconds,{steer:.25,throttle:scenario.gas});report.physics.push({scenario:scenario.name,state:qa.snapshot().state});
+ }
+ const [low,fast,power]=report.physics.map(a=>a.state);assert(low.underTime===0&&Math.abs(low.beta)<.04,'저속 접지');assert(fast.underTime>.7&&fast.frontSlip>low.frontSlip*3,'고속 앞 접지 한계');assert(power.overTime>.3&&Math.abs(power.beta)>.08&&Math.abs(power.beta)<.20,'점진적인 가속 뒤 미끄러짐');assert(report.physics.every(a=>a.state.hits===0),'물리 장면 충돌 없음');
+ for(const size of ['844x390','390x844'])for(const mode of ['buttons','slide'])for(const c of [{brake:0,steer:0},{brake:.4,steer:0},{brake:1,steer:0},{brake:.4,steer:.25},{brake:1,steer:.25}]){
+  await resize(size);d.querySelector('input[name=speed][value="60"]').click();start(mode);qa.restorePose({z:0});qa.advance(1.5,{steer:.25,throttle:1});const before=qa.snapshot().state;
+  qa.advance(1.5,c);const after=qa.snapshot();assert(Math.abs(before.beta)>.08,'회복 전 실제 미끄러짐');assert(Math.abs(after.state.beta)<.02&&Math.abs(after.state.v)<.25&&Math.abs(after.state.yawRate)<.6,'입력 해제·감속 후 접지 회복');
+  if(!c.steer)assert(Math.abs(after.state.yawRate)<.04,'정면 조향 회복');assert(after.state.hits===0,'벽 접촉 없이 회복');assert(after.original.invariant.passed,'원본 실내 비례');assert(!after.storageUsed,'저장 기록 미사용');
+  report.recoveries.push({size,mode,input:c,before,after:after.state,passed:true});publish();
+ }
+ start('buttons');finger(1,'left');finger(2,'gas');await resize('844x390');assert(qa.snapshot().paused&&qa.snapshot().input.held.length===0,'회전 시 정지·입력 해제');canvasCheck(844,390);report.rotation={passed:true};
+ report.physicsPassed=true;$('#summary').textContent='접지·한계 주행·20개 회복·회전 검사 통과';
+ }catch(error){report.error=error.stack;$('#summary').textContent='실패: '+error.message;}publish();};
 $('#brake-check').onclick=async()=>{try{await ready();report.brakeSteering=[];delete report.error;
  for(const size of ['844x390','390x844'])for(const mode of ['buttons','slide'])for(const speed of [40,60,100])for(const side of ['left','right']){
   $('#summary').textContent=size+' / '+mode+' / '+speed+' / '+side;

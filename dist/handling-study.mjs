@@ -5,7 +5,7 @@ import {createOriginalCockpit} from './original-cockpit.mjs?v=original-city-1';
 import {createRearView} from './rear-view.mjs?v=handling-1';
 import {splitWheelVisuals} from './wheel-visual.mjs?v=wheels-1';
 import {createSteeringState,stepSteering} from './cockpit-study-steering.mjs?v=steering-look-1';
-import {DT,CAR,CORNER,clamp,createCar,stepCar,cornerPoint,nearestCorner} from './handling-physics.mjs?v=brake-steering-1';
+import {DT,CAR,CORNER,clamp,createCar,stepCar,cornerPoint,nearestCorner} from './handling-physics.mjs?v=grip-recovery-1';
 import {createControls,clearControls,setControlMode,slideValue,pressControl,moveSlide,releaseControl,readControls} from './handling-input.mjs?v=handling-1';
 const $=id=>document.getElementById(id),controls=createControls(),attempts=new Map(),trace=[];
 let state=createCar(),ready=false,running=false,paused=false,view='cockpit',accumulator=0,averageMs=16,oldLandscape=innerWidth>innerHeight;

@@ -23,20 +23,14 @@ export function nearestCorner(x,z){
 export function createCar(speedKmh=60){return{x:0,z:CORNER.startZ,heading:0,u:speedKmh/3.6,v:0,yawRate:0,
   steer:0,ax:0,ay:0,time:0,hits:0,collisionCooldown:0,wheelAngle:0,frontSlip:0,rearSlip:0,
   frontUse:0,rearUse:0,beta:0,handling:'grip',gas:0,braking:0,reverse:false,frontForce:0,rearForce:0,
-  frontCapacity:1,rearCapacity:1,frontLoad:0,rearLoad:0,peakLateral:0,underTime:0,overTime:0,done:false,reverseDown:false,reverseAllowed:false,reverseBlocked:false};}
-function tyre(alpha,stiffness,capacity){
-  const demand=stiffness*alpha;
-  // Progressive saturation and a gentle post-peak falloff make loss/recovery continuous.
-  const loss=.18*clamp((Math.abs(alpha)-.14)/.30,0,1);
-  return capacity*Math.tanh(demand/Math.max(1,capacity))*(1-loss);
-}
-function combinedFrontTyre(alpha,capacity,longitudinalDemand){
-  // Scale both slip demands together. Giving braking the whole friction circle
-  // first erased cornering force and left only an outward brake-force component.
-  const lateralDemand=CAR.frontStiffness*alpha;
+  frontCapacity:1,rearCapacity:1,frontLoad:0,rearLoad:0,peakLateral:0,underTime:0,overTime:0,done:false,powerSlip:0,reverseDown:false,reverseAllowed:false,reverseBlocked:false};}
+function combinedTyre(alpha,stiffness,capacity,longitudinalDemand){
+  // Both axles share longitudinal/lateral demand continuously within one limit.
+  // Neither drive nor braking can erase the entire lateral-force budget first.
+  const lateralDemand=stiffness*alpha;
   const ratio=Math.hypot(longitudinalDemand,lateralDemand)/Math.max(1,capacity);
   const scale=ratio>1e-10?Math.tanh(ratio)/ratio:1;
-  const loss=.18*clamp((Math.abs(alpha)-.14)/.30,0,1);
+  const loss=.08*clamp((Math.abs(alpha)-.14)/.30,0,1);
   return{longitudinal:longitudinalDemand*scale,lateral:lateralDemand*scale*(1-loss)};
 }
 export function stepCar(s,input={},dt=DT,{walls=true}={}){
@@ -49,23 +43,29 @@ export function stepCar(s,input={},dt=DT,{walls=true}={}){
   if(reverse&&!s.reverseDown)s.reverseAllowed=Math.abs(s.u)<.45&&Math.abs(s.v)<.7;
   if(!reverse)s.reverseAllowed=false;s.reverseDown=reverse;s.reverseBlocked=reverse&&!s.reverseAllowed;
   if(s.reverseBlocked)gas=0;
-  s.gas=brake||s.reverseBlocked?0:mix(s.gas,gas,1-Math.exp(-dt*5));s.braking=brake;s.reverse=reverse&&s.reverseAllowed;
+  s.gas=brake||s.reverseBlocked?0:mix(s.gas,gas,1-Math.exp(-dt*(gas>s.gas?5:12)));s.braking=brake;s.reverse=reverse&&s.reverseAllowed;
   const acceleration=clamp(s.ax,-9,7),transfer=c.mass*acceleration*c.height/L;
   const frontLoad=clamp(c.mass*9.81*c.b/L-transfer,2000,c.mass*9.81-2000);
-  const rearLoad=c.mass*9.81-frontLoad,frontCap=frontLoad*c.frontMu,rearCap=rearLoad*c.rearMu;
+  const rearLoad=c.mass*9.81-frontLoad,frontCap=frontLoad*c.frontMu,rearBase=rearLoad*c.rearMu;
   const drive=(s.reverse?-c.engine*.32:s.u<-.2?0:c.engine)*s.gas*clamp(1-(speed/c.maxSpeed)**4,0,1);
   const stopping=brake||(s.reverseBlocked?1:0)||(!reverse&&s.u<-.2&&gas ? .65 : 0);
   const brakeForce=stopping*c.brake*Math.tanh(s.u*3);
-  const fxRear=clamp(drive-brakeForce*.36,-rearCap,rearCap);
-  const rearAvailable=Math.sqrt(Math.max(0,rearCap**2-fxRear**2));
+  // Game-tuned driven-tyre post-peak loss: build progressively only under high
+  // drive demand and recover promptly on lift. Not wheel/RPM slip simulation.
+  const powerDemand=clamp((Math.abs(drive)/rearBase-.65)/.35,0,1);
+  s.powerSlip=mix(s.powerSlip||0,powerDemand,1-Math.exp(-dt*(powerDemand>(s.powerSlip||0)?3:7)));
+  const rearCap=rearBase*(1-0.18*s.powerSlip);
+  const rearDemand=drive-brakeForce*.36;
   const divisor=Math.max(2.5,speed);
   const alphaF=s.steer*direction-Math.atan((s.v+c.a*s.yawRate)/divisor);
   const alphaR=-Math.atan((s.v-c.b*s.yawRate)/divisor);
-  const front=combinedFrontTyre(alphaF,frontCap,-brakeForce*.64);
-  // Taper both front components together near rest, keeping their direction.
-  const contact=clamp(speed/2,0,1);
+  const front=combinedTyre(alphaF,c.frontStiffness,frontCap,-brakeForce*.64);
+  // Sideways motion still needs tyre force when forward speed approaches zero.
+  // Include axle rotation; fade only near actual rest, without changing the pose.
+  const groundSpeed=Math.hypot(s.u,s.v),contact=clamp(Math.max(groundSpeed,Math.abs(s.yawRate)*L/2)/2,0,1);
   const fxFront=front.longitudinal*contact,fyFront=front.lateral*contact;
-  const fyRear=tyre(alphaR,c.rearStiffness,rearAvailable)*contact;
+  const rear=combinedTyre(alphaR,c.rearStiffness,rearCap,rearDemand);
+  const fxRear=rear.longitudinal,fyRear=rear.lateral*contact;
   const lateralFront=fyFront*Math.cos(s.steer)+fxFront*Math.sin(s.steer);
   const longitudinalFront=fxFront*Math.cos(s.steer)-fyFront*Math.sin(s.steer);
   const drag=-s.u*(c.mass*.018+.46*speed);
@@ -75,8 +75,8 @@ export function stepCar(s,input={},dt=DT,{walls=true}={}){
   const yawAcceleration=(c.a*lateralFront-c.b*fyRear)/c.inertia;
   const oldU=s.u;
   s.u+=du*dt;s.v+=dv*dt;s.yawRate+=yawAcceleration*dt;
-  if(speed<2){s.v*=Math.exp(-dt*8*(1-contact));s.yawRate*=Math.exp(-dt*8*(1-contact));}
-  if(stopping&&!s.gas&&oldU*s.u<0)s.u=0;
+  if(groundSpeed<2){s.v*=Math.exp(-dt*8*(1-contact));s.yawRate*=Math.exp(-dt*8*(1-contact));}
+  if(stopping&&!s.gas&&((oldU>=0&&s.u<0)||(oldU<=0&&s.u>0)))s.u=0;
   s.u=clamp(s.u,-5,55);
   s.heading+=s.yawRate*dt;
   const sh=Math.sin(s.heading),ch=Math.cos(s.heading);
@@ -97,7 +97,7 @@ export function stepCar(s,input={},dt=DT,{walls=true}={}){
   s.rearUse=Math.hypot(c.rearStiffness*alphaR,fxRear)/Math.max(1,rearCap);
   s.frontForce=fyFront;s.rearForce=fyRear;s.frontCapacity=frontCap;s.rearCapacity=rearCap;s.frontLoad=frontLoad;s.rearLoad=rearLoad;
   const desiredYaw=s.u*Math.tan(s.steer)/L;
-  const over=Math.abs(alphaR)>.08&&s.rearUse>1.05&&Math.abs(s.beta)>.05&&Math.abs(alphaR)>Math.abs(alphaF)*.88;
+  const over=Math.abs(alphaR)>.08&&s.rearUse>1.05&&Math.abs(s.beta)>.07&&(Math.abs(alphaR)>Math.abs(alphaF)*.88||s.powerSlip>.5);
   const under=Math.abs(alphaF)>.08&&s.frontUse>1.08&&Math.abs(desiredYaw)>Math.abs(s.yawRate)*1.25;
   s.handling=over?'oversteer':under?'understeer':'grip';
   if(s.handling==='oversteer')s.overTime+=dt;if(s.handling==='understeer')s.underTime+=dt;

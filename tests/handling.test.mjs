@@ -9,17 +9,39 @@ test('higher speed at the same wheel angle produces a wider path and front satur
  assert.ok(Math.abs(fast.yawRate/fast.u)<Math.abs(slow.yawRate/slow.u)*.35);
  assert.ok(Math.abs(fast.frontSlip)>Math.abs(slow.frontSlip)*4);assert.ok(Math.abs(fast.steer-slow.steer)<1e-10);
 });
-test('power consumes rear grip and creates actual yaw and sideways motion without a drift button',()=>{
- const coast=advance(createCar(60),1.5,{steer:.25}),power=advance(createCar(60),1.5,{steer:.25,throttle:1});
- assert.equal(coast.overTime,0);assert.ok(power.overTime>.5);assert.ok(Math.abs(power.beta)>Math.abs(coast.beta)*8);
- assert.ok(power.yawRate>coast.yawRate*1.7);assert.ok(Math.abs(power.v)>3);assert.notEqual(power.x,coast.x);
- assert.ok(power.rearLoad>coast.rearLoad);assert.ok(power.frontLoad<coast.frontLoad);
+test('ordinary cornering remains planted with coasting and moderate acceleration',()=>{
+ for(const speed of [40,60])for(const throttle of [0,.3])for(const sign of [-1,1]){
+  const s=advance(createCar(speed),2,{steer:sign*.12,throttle});
+  assert.ok(Math.abs(s.beta)<.06,JSON.stringify({speed,throttle,beta:s.beta}));
+  assert.equal(s.overTime,0);assert.ok(s.heading*sign>0);
+ }
 });
-test('early throttle release and countersteer recover the slide without snapping the pose',()=>{
- const s=advance(createCar(60),.85,{steer:.25,throttle:1});const beta=Math.abs(s.beta),before={x:s.x,z:s.z,h:s.heading};assert.ok(beta>.08);
- stepCar(s,{steer:-.3},DT,{walls:false});assert.ok(Math.hypot(s.x-before.x,s.z-before.z)<.3);assert.ok(Math.abs(s.heading-before.h)<.02);
- advance(s,2,s=>({steer:Math.max(-.45,Math.min(.45,s.beta*2-s.yawRate*.18))}));
- assert.ok(Math.abs(s.beta)<beta*.1);assert.ok(Math.abs(s.yawRate)<.04);assert.ok(s.u>10);
+test('sustained hard corner acceleration produces progressive, bounded rear slip',()=>{
+ const s=createCar(60),samples=[];
+ for(let i=0;i<180;i++){const previous=s.beta;stepCar(s,{steer:.25,throttle:1},DT,{walls:false});assert.ok(Math.abs(s.beta-previous)<.01);if(i%30===29)samples.push(Math.abs(s.beta));}
+ assert.ok(s.overTime>.3);assert.ok(Math.abs(s.beta)>.08&&Math.abs(s.beta)<.20);assert.ok(Math.abs(s.v)>1.5&&Math.abs(s.v)<3.5);
+ assert.ok(samples.at(-1)>samples[1]*2);
+ const matched=advance(createCar(Math.hypot(s.u,s.v)*3.6),1.5,{steer:.25});
+ assert.ok(s.yawRate>matched.yawRate*1.1,'rear slip increases rotation at comparable speed');
+});
+test('lifting or braking recovers a developed slide without scripted countersteering or pose snapping',()=>{
+ for(const brake of [0,.4,1])for(const sign of [-1,1]){
+  const s=advance(createCar(60),1.5,{steer:sign*.25,throttle:1}),beta=Math.abs(s.beta),before={x:s.x,z:s.z,h:s.heading};
+  stepCar(s,{brake},DT,{walls:false});assert.ok(Math.hypot(s.x-before.x,s.z-before.z)<.3);assert.ok(Math.abs(s.heading-before.h)<.02);
+  advance(s,1.5,{brake});assert.ok(Math.abs(s.beta)<beta*.1,JSON.stringify({brake,beta:s.beta}));assert.ok(Math.abs(s.v)<.15);assert.ok(Math.abs(s.yawRate)<.04);
+  assert.equal(s.hits,0);assert.ok(s.powerSlip<.001);
+ }
+});
+test('slowing also recovers a longer three-second power slide',()=>{
+ const s=advance(createCar(60),3,{steer:.25,throttle:1});assert.ok(Math.abs(s.beta)>.20);const initialSpeed=Math.hypot(s.u,s.v);
+ advance(s,2,{brake:.4});assert.ok(Math.abs(s.beta)<.015);assert.ok(Math.abs(s.v)<.2);assert.ok(Math.abs(s.yawRate)<.04);
+ assert.ok(Math.hypot(s.u,s.v)<initialSpeed);assert.ok(s.u>5,'recovery occurs while still moving');
+});
+test('sideways momentum dissipates even with zero or very low forward speed',()=>{
+ for(const speed of [0,5,20])for(const sign of [-1,1]){
+  const s=createCar(speed);s.v=sign*3;s.yawRate=-sign*.3;advance(s,1.5,{brake:.4});
+  assert.ok(Math.abs(s.v)<.03);assert.ok(Math.abs(s.yawRate)<.03);assert.ok(s.u>=0);assert.ok(Object.values(s).filter(v=>typeof v==='number').every(Number.isFinite));
+ }
 });
 test('straight full acceleration does not invent a lateral force or a spin',()=>{const s=advance(createCar(60),4,{throttle:1});assert.equal(s.x,0);assert.equal(s.v,0);assert.equal(s.heading,0);assert.equal(s.overTime,0);assert.ok(s.u>30);});
 test('braking sheds momentum without reversing, reverse requires a fresh press at rest',()=>{
@@ -60,5 +82,12 @@ test('braking into a turn and holding steering through a stop preserve the inten
   const slow=advance(createCar(5),3,{steer:sign,brake:1});
   assert.ok(slow.heading*sign>=0);assert.ok(slow.u>=0&&slow.u<.03);
   assert.ok(Math.abs(slow.v)<.01&&Math.abs(slow.yawRate)<.01);
+ }
+});
+
+test('braking restores rear grip while the driver keeps a cornering angle',()=>{
+ for(const brake of [.4,1])for(const sign of [-1,1]){
+  const s=advance(createCar(60),1.5,{steer:sign*.25,throttle:1});const beta=Math.abs(s.beta);advance(s,1.5,{steer:sign*.25,brake});
+  assert.ok(Math.abs(s.beta)<.02&&Math.abs(s.beta)<beta*.2);assert.ok(s.u>5);assert.ok(s.yawRate*sign>0,'continues steering in the requested direction');
  }
 });
