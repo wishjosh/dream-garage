@@ -151,7 +151,7 @@ function sourceLabel(provenance){
 }
 async function loadCar(){
  try{
-  const {loadStudyCar}=await import('./cockpit-study-model.mjs');
+  const {loadStudyCar}=await import('./cockpit-study-model.mjs?v=steering-look-1');
   if(typeof loadStudyCar!=='function')throw Error('The model adapter does not export loadStudyCar.');
   const result=await loadStudyCar(new GLTFLoader());
   if(!result?.root?.isObject3D||!finiteVector(result.eye)||!finiteVector(result.forward)||result.forward.lengthSq()<.001)throw Error('The model adapter must return a root and valid local eye/forward vectors.');
