@@ -20,6 +20,19 @@ const reviewBootstrap=`<script>
  addEventListener('error',event=>{window.__cockpitReviewErrors.push(event.message||('Resource error: '+(event.target?.src||event.target?.href||'unknown')));},true);
  addEventListener('unhandledrejection',event=>window.__cockpitReviewErrors.push(String(event.reason?.stack||event.reason)));
  const error=console.error.bind(console);console.error=(...args)=>{window.__cockpitReviewErrors.push(args.map(String).join(' '));error(...args);};
+ // Test-only loading pause: enabled solely inside an isolated local review.
+ if(new URLSearchParams(location.search).get('slow-assets')==='1'){
+  const originalFetch=window.fetch.bind(window);
+  const state=window.__cockpitReviewSlowAsset={enabled:true,started:false,completed:false,url:null,delayMs:1000};
+  window.fetch=async(input,options)=>{
+   const url=typeof input==='string'?input:input.url||String(input);
+   if(!state.started&&new URL(url,location.href).pathname.endsWith('.glb')){
+    state.started=true;state.url=new URL(url,location.href).pathname;state.startedAt=performance.now();
+    await new Promise(resolve=>setTimeout(resolve,state.delayMs));state.completed=true;state.completedAt=performance.now();
+   }
+   return originalFetch(input,options);
+  };
+ }
  const request=requestAnimationFrame.bind(window),waiting=new Set();let frozen=false;
  function schedule(callback){return request(time=>{if(frozen)waiting.add(callback);else callback(time);});}
  window.requestAnimationFrame=schedule;

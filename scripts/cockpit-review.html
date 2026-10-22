@@ -11,7 +11,7 @@ body.capture-only{padding:0;margin:0;overflow:hidden;background:#020810}body.cap
 <section class="intro">
 <h1>드림 개러지 · 운전석과 미러 검사</h1>
 <p class="notice">로컬 전용 검사 페이지입니다. <b>합성 PointerEvent와 QA 물리 진행</b>을 사용하며 실제 손가락·포인터 캡처·iPhone/Android 성능을 검증하지 않습니다. 합성 포인터에는 활성 캡처가 없으므로 검사 iframe의 버튼에만 capture 보조 처리를 적용합니다. 저장은 메모리로 격리하며 결과 파일을 자동 저장하지 않습니다.</p>
-<div class="row"><button id="run-all" class="primary">12개 화면 전체 검사 시작</button><button id="run-flow">자동 조향·상금 별도 검사</button><button id="stop" disabled>검사 중단</button><span id="summary" class="badge" role="status" aria-live="polite" data-state="idle">실행 대기</span></div>
+<div class="row"><button id="run-all" class="primary">12개 화면 전체 검사 시작</button><button id="run-flow">자동 조향·상금 별도 검사</button><button id="run-startup">로딩 중 화면 회전 검사</button><button id="stop" disabled>검사 중단</button><span id="summary" class="badge" role="status" aria-live="polite" data-state="idle">실행 대기</span></div>
 </section>
 <div class="workspace">
 <section class="preview-panel">
@@ -253,7 +253,7 @@ async function oneCase(car,width,height){
   }catch(error){error.evidence=evidence;throw error;}
 }
 function addResult(name,passed,evidence,error){const item={name,passed,evidence,error};report.checks.push(item);const li=document.createElement('li');li.className=passed?'pass':'fail';li.textContent=(passed?'통과 · ':'실패 · ')+name+(error?' — '+error:'');$('checks').append(li);updateReport();}
-function lock(value){running=value;for(const id of ['run-all','run-flow','show-scene','car','size','scene','rotate','freeze'])$(id).disabled=value;$('stop').disabled=!value;}
+function lock(value){running=value;for(const id of ['run-all','run-flow','run-startup','show-scene','car','size','scene','rotate','freeze'])$(id).disabled=value;$('stop').disabled=!value;}
 async function runAll(){if(running)return;stopRequested=false;mirrorOriginReference=null;lock(true);$('checks').textContent='';$('errors').textContent='';report={startedAt:new Date().toISOString(),method:'In-page synthetic PointerEvent + button capture no-op fixture; QA.advance(seconds,null) reads the app input state; requestAnimationFrame is paused only during each maneuver so paint waiting adds no hidden physics time. No native/hardware touch claim.',storage:'One iframe and GPU context reused through the garage UI; localStorage replaced with an in-memory store by the local review response',sizes,checks:[],visualReview:'pending: inspect actual iframe views; strict mirror frame and HUD checks retained',coverage:'6 viewport sizes × 2 cars; source invariant and fixed eye; physical steering and ±6° gaze; gaze setting/release/reset; acceleration/brake/reverse/drift; resize; camera ownership; rendered rear world',fileWrites:false};updateReport();try{for(const car of ['tavaculo','f2002'])for(const[width,height]of sizes){const name=`${car} ${width}×${height}`;setStatus('검사 중 · '+name);try{addResult(name,true,await oneCase(car,width,height));}catch(error){addResult(name,false,error.evidence||null,error.message);try{release();}catch{}if(stopRequested)throw error;}}report.completedAt=new Date().toISOString();report.passed=report.checks.length===sizes.length*2&&report.checks.every(x=>x.passed);setStatus(`${report.passed?'통과':'확인 필요'} · ${report.checks.filter(x=>x.passed).length}/${report.checks.length} · 실제 화면 판독 별도`,report.passed?'passed':'failed');}catch(error){report.stopped=true;report.passed=false;$('errors').textContent=error.message;setStatus('검사 중단','failed');}finally{lock(false);updateReport();}}
 async function assistedRaceFlow(){
   await load('tavaculo',844,390);const gazePreferenceEvidence=await gazePreference();
@@ -290,8 +290,56 @@ async function runFlow(){
   catch(error){report.flow={passed:false,error:error.message,evidence:error.evidence||null};$('errors').textContent=error.message;setStatus('자동 조향·상금 검사 확인 필요','failed');}
   finally{try{release();}catch{}lock(false);updateReport();}
 }
+function startupCanvasMetrics(){
+  const canvas=q('#world'),r=canvas.getBoundingClientRect();
+  return{viewport:{width:win().innerWidth,height:win().innerHeight},inline:{width:Number.parseFloat(canvas.style.width),height:Number.parseFloat(canvas.style.height)},client:{width:canvas.clientWidth,height:canvas.clientHeight},buffer:{width:canvas.width,height:canvas.height},bounds:{x:r.x,y:r.y,width:r.width,height:r.height}};
+}
+function startupCanvasCheck(width,height){
+  const m=startupCanvasMetrics(),s=snap();
+  assert(m.viewport.width===width&&m.viewport.height===height,'회전 후 iframe 크기 불일치');
+  for(const kind of ['inline','client','bounds'])assert(Math.abs(m[kind].width-width)<.5&&Math.abs(m[kind].height-height)<.5,'로딩 중 회전 뒤 canvas '+kind+' 크기가 이전 화면에 남음');
+  assert(Math.abs(m.buffer.width-Math.floor(width*s.pixelRatio))<=1&&Math.abs(m.buffer.height-Math.floor(height*s.pixelRatio))<=1,'로딩 중 회전 뒤 렌더 해상도 불일치');
+  assert(Math.abs(s.cameraAspect-width/height)<1e-7,'로딩 중 회전 뒤 카메라 화면 비율 불일치');
+  return{...m,pixelRatio:s.pixelRatio,cameraAspect:s.cameraAspect};
+}
+async function startupRotationFlow(){
+  const evidence={fixture:'local qa=1&review=1&slow-assets=1; first GLB fetch delayed 1000ms',initialViewport:{width:844,height:390},rotatedViewport:{width:390,height:844},extraResizeAfterReady:false};
+  try{
+    setFrozen(false);try{release('pointercancel');}catch{pointers.clear();}resize(844,390);
+    const nonce='startup-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+    frame.src='../?qa=1&review=1&slow-assets=1&run='+nonce;
+    await waitFor(()=>{try{return new URL(win().location.href).searchParams.get('run')===nonce&&win().__cockpitReviewSlowAsset?.started;}catch{return false;}},'로컬 GLB 지연 fixture가 시작되지 않음. 서버를 재시작했는지 확인하세요.',60000);
+    evidence.beforeRotation=startupCanvasMetrics();
+    assert(!win().__cockpitReviewSlowAsset.completed&&!win().__raceQA&&q('#enter-garage').disabled,'회전 전에 모델 로딩이 이미 완료됨');
+    assert(evidence.beforeRotation.inline.width===844&&evidence.beforeRotation.inline.height===390,'검사 시작 canvas가 844×390이 아님');
+    resize(390,844);
+    await waitFor(()=>win().innerWidth===390&&win().innerHeight===844,'모델 로딩 중 실제 iframe 회전 실패',5000);
+    assert(!win().__cockpitReviewSlowAsset.completed,'GLB 지연 중 화면 회전을 확인하지 못함');
+    evidence.rotatedWhileLoading=true;
+    await waitFor(()=>!!win().__raceQA&&!q('#enter-garage').disabled,'회전 후 게임 준비 실패',60000);
+    evidence.delay={...win().__cockpitReviewSlowAsset};evidence.readyCanvas=startupCanvasCheck(390,844);
+    assert(win().__cockpitReviewStorageIsolated===true,'시작 검사 저장소가 격리되지 않음');
+    // Do not call load() or dispatch resize here: either would repair the exact
+    // startup regression under test before the measurements are taken.
+    for(const button of doc().querySelectorAll('[data-control]')){button.setPointerCapture=()=>{};button.releasePointerCapture=()=>{};}
+    click('#enter-garage');click('[data-car=tavaculo]');selected('#view-select','cockpit');checked('#assist',false);checked('#auto-throttle',false);checked('#gaze-follow',true);click('#start');
+    qa().advance(3.5,null);qa().advance(1,{brake:true});
+    assert(snap().mode==='race','로딩 중 회전 후 실제 경주 출발 실패');
+    evidence.raceCanvas=startupCanvasCheck(390,844);evidence.camera=cameraCheck('tavaculo');evidence.controls=controlLayout();
+    evidence.runtimeErrors=win().__cockpitReviewErrors||[];assert(evidence.runtimeErrors.length===0,'시작 검사 실행 오류: '+evidence.runtimeErrors.join(' / '));
+    evidence.passed=true;evidence.storageIsolated=true;evidence.nativePhoneVerified=false;
+    $('screen-label').textContent='Tavaculo · 로딩 중 844×390 → 390×844 회전 · 실제 출발 화면';setFrozen(true);return evidence;
+  }catch(error){error.evidence=evidence;throw error;}
+}
+async function runStartup(){
+  if(running)return;stopRequested=false;lock(true);$('errors').textContent='';
+  if(!report)report={checks:[],method:'Isolated local startup rotation; no hardware claim'};
+  try{setStatus('모델 로딩 중 화면 회전 검사');report.startup=await startupRotationFlow();setStatus('로딩 중 화면 회전 검사 통과','passed');}
+  catch(error){report.startup={passed:false,error:error.message,evidence:error.evidence||null};$('errors').textContent=error.message;setStatus('로딩 중 화면 회전 검사 확인 필요','failed');}
+  finally{lock(false);updateReport();}
+}
 async function showScene(){if(running)return;stopRequested=false;lock(true);const car=$('car').value,[width,height]=$('size').value.split('x').map(Number),scene=$('scene').value;try{setStatus('장면 준비 · '+scene);await load(car,width,height);if(['straight','chase'].includes(scene)){await drive(['throttle'],2);await clear();}else if(scene==='corner'){qa().setAssist(true);await drive(['throttle'],7);await clear();}else if(['left','right'].includes(scene)){await recover();await drive([scene,'brake'],.75);}else if(scene==='reverse'){await recover();await drive(['reverse'],1);}else if(scene==='drift'){await drive(['throttle'],2);await drive(['left','drift'],.5);}else if(scene.startsWith('mirror-')){assert(car==='tavaculo','실내 미러는 Tavaculo 전용입니다.');qa().mirrorProbe({behind:scene!=='mirror-front',x:scene==='mirror-left'?-3:scene==='mirror-right'?3:0,distance:12});await tick(100);}else if(scene==='restored'){resize(height,width);await tick(140);win().dispatchEvent(new (win().Event)('resize'));qa().advance(0,null);resize(width,height);await tick(140);win().dispatchEvent(new (win().Event)('resize'));}if(scene==='chase')click('#camera');qa().advance(0,null);setFrozen(true);$('screen-label').textContent=`${car} · ${width} × ${height} · ${$('scene').selectedOptions[0].text} · 실제 렌더 정지 화면`;setStatus('선택 장면 준비 완료','idle');}catch(error){$('errors').textContent=error.message;setStatus('장면 준비 실패','failed');}finally{lock(false);}}
-$('run-all').onclick=runAll;$('run-flow').onclick=runFlow;$('stop').onclick=()=>{stopRequested=true;};$('show-scene').onclick=showScene;
+$('run-all').onclick=runAll;$('run-flow').onclick=runFlow;$('run-startup').onclick=runStartup;$('stop').onclick=()=>{stopRequested=true;};$('show-scene').onclick=showScene;
 $('rotate').onclick=async()=>{if(!win().__raceQA)return;setFrozen(false);const[width,height]=currentSize;resize(height,width);await tick(140);win().dispatchEvent(new (win().Event)('resize'));qa().advance(0,null);setFrozen(true);$('screen-label').textContent=`${snap().car} · ${height} × ${width} · 회전 화면`;};
 $('freeze').onclick=()=>setFrozen(!frozen);$('expand').onclick=()=>{document.body.classList.toggle('preview-only');$('expand').textContent=document.body.classList.contains('preview-only')?'검사 결과 보기':'화면 크게 보기';fit();};$('fit').onchange=fit;addEventListener('resize',fit);fit();
 function exitCapture(event){if(event.key==='Escape'&&document.body.classList.contains('capture-only')){event.preventDefault();event.stopImmediatePropagation();document.body.classList.remove('capture-only');fit();}}
