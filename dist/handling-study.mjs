@@ -5,12 +5,16 @@ import {createOriginalCockpit} from './original-cockpit.mjs?v=original-city-1';
 import {createRearView} from './rear-view.mjs?v=handling-1';
 import {splitWheelVisuals} from './wheel-visual.mjs?v=wheels-1';
 import {createSteeringState,stepSteering} from './cockpit-study-steering.mjs?v=steering-look-1';
-import {DT,CAR,CORNER,clamp,createCar,stepCar,cornerPoint,nearestCorner} from './handling-physics.mjs?v=grip-recovery-1';
+import * as revisedPhysics from './handling-physics.mjs?v=source-audit-1';
+import * as baselinePhysics from './handling-baseline.mjs?v=25afbf5';
+const baselineMode=new URLSearchParams(location.search).get('model')==='before';
+const {DT,CAR,CORNER,clamp,createCar,stepCar,cornerPoint,nearestCorner}=baselineMode?baselinePhysics:revisedPhysics;
 import {createControls,clearControls,setControlMode,slideValue,pressControl,moveSlide,releaseControl,readControls} from './handling-input.mjs?v=handling-1';
 const $=id=>document.getElementById(id),controls=createControls(),attempts=new Map(),trace=[];
 let state=createCar(),ready=false,running=false,paused=false,view='cockpit',accumulator=0,averageMs=16,oldLandscape=innerWidth>innerHeight;
 const gaze=createSteeringState(),bodyQuaternion=new T.Quaternion(),bodyEuler=new T.Euler(0,0,0,'YXZ');
 let renderer,scene,camera,original,rear,body,wheelParts,rig,previousSkid=null,skidCount=0,skidIndex=0,lastSample=0,hudTime=0;
+$('model-label').textContent=baselineMode?'수정 전 모델':'개선 후 모델';
 const speedChoice=()=>Number(document.querySelector('input[name=speed]:checked').value);
 function setPanel(show,title,copy){$('panel').hidden=!show;if(title)$('panel-title').textContent=title;if(copy)$('panel-copy').textContent=copy;}
 function saveAttempt(){if(state.time<.5)return;attempts.set(controls.mode+':'+speedChoice(),{mode:controls.mode,speed:speedChoice(),time:state.time,hits:state.hits,under:state.underTime,over:state.overTime,trace:trace.map(p=>({...p}))});}

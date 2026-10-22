@@ -24,7 +24,7 @@ export function createCar(speedKmh=60){return{x:0,z:CORNER.startZ,heading:0,u:sp
   steer:0,ax:0,ay:0,time:0,hits:0,collisionCooldown:0,wheelAngle:0,frontSlip:0,rearSlip:0,
   frontUse:0,rearUse:0,beta:0,handling:'grip',gas:0,braking:0,reverse:false,frontForce:0,rearForce:0,
   frontCapacity:1,rearCapacity:1,frontLoad:0,rearLoad:0,peakLateral:0,underTime:0,overTime:0,done:false,powerSlip:0,reverseDown:false,reverseAllowed:false,reverseBlocked:false};}
-function combinedTyre(alpha,stiffness,capacity,longitudinalDemand){
+export function combinedTyre(alpha,stiffness,capacity,longitudinalDemand){
   // Both axles share longitudinal/lateral demand continuously within one limit.
   // Neither drive nor braking can erase the entire lateral-force budget first.
   const lateralDemand=stiffness*alpha;
@@ -33,9 +33,15 @@ function combinedTyre(alpha,stiffness,capacity,longitudinalDemand){
   const loss=.08*clamp((Math.abs(alpha)-.14)/.30,0,1);
   return{longitudinal:longitudinalDemand*scale,lateral:lateralDemand*scale*(1-loss)};
 }
-export function stepCar(s,input={},dt=DT,{walls=true}={}){
+export function stepCar(s,input={},dt=DT,options={}){
   if(!Number.isFinite(dt)||dt<=0||s.done)return s;
-  const c=CAR,L=c.a+c.b,speed=Math.abs(s.u),direction=s.u<-.15?-1:1;
+  const count=Math.ceil(dt/(1/240));
+  for(let i=0;i<count;i++)substep(s,input,dt/count,options);
+  return s;
+}
+function substep(s,input={},dt=DT,{walls=true}={}){
+  if(!Number.isFinite(dt)||dt<=0||s.done)return s;
+  const c=CAR,L=c.a+c.b,speed=Math.abs(s.u);
   const steerTarget=clamp(Number(input.steer)||0,-1,1)*c.maxSteer;
   s.steer=mix(s.steer,steerTarget,1-Math.exp(-dt*9));
   const brake=clamp(Number(input.brake)||0,0,1),reverse=!!input.reverse;
@@ -57,12 +63,15 @@ export function stepCar(s,input={},dt=DT,{walls=true}={}){
   const rearCap=rearBase*(1-0.18*s.powerSlip);
   const rearDemand=drive-brakeForce*.36;
   const divisor=Math.max(2.5,speed);
-  const alphaF=s.steer*direction-Math.atan((s.v+c.a*s.yawRate)/divisor);
-  const alphaR=-Math.atan((s.v-c.b*s.yawRate)/divisor);
-  const front=combinedTyre(alphaF,c.frontStiffness,frontCap,-brakeForce*.64);
-  // Sideways motion still needs tyre force when forward speed approaches zero.
-  // Include axle rotation; fade only near actual rest, without changing the pose.
-  const groundSpeed=Math.hypot(s.u,s.v),contact=clamp(Math.max(groundSpeed,Math.abs(s.yawRate)*L/2)/2,0,1);
+  const frontVx=s.u*Math.cos(s.steer)+(s.v+c.a*s.yawRate)*Math.sin(s.steer);
+  const frontVy=-s.u*Math.sin(s.steer)+(s.v+c.a*s.yawRate)*Math.cos(s.steer);
+  const alphaF=-Math.atan2(frontVy,Math.max(2.5,Math.abs(frontVx)));
+  const rearVy=s.v-c.b*s.yawRate;
+  const alphaR=-Math.atan(rearVy/divisor);
+  const front=combinedTyre(alphaF,c.frontStiffness,frontCap,-stopping*c.brake*.64*Math.tanh(frontVx*3));
+  // A loaded tyre does not lose contact simply because the car is slow.
+  // Local slip regularization and <= 1/240 s substeps keep rest stable.
+  const contact=1;
   const fxFront=front.longitudinal*contact,fyFront=front.lateral*contact;
   const rear=combinedTyre(alphaR,c.rearStiffness,rearCap,rearDemand);
   const fxRear=rear.longitudinal,fyRear=rear.lateral*contact;
@@ -71,14 +80,19 @@ export function stepCar(s,input={},dt=DT,{walls=true}={}){
   const drag=-s.u*(c.mass*.018+.46*speed);
   const ax=(longitudinalFront+fxRear+drag)/c.mass;
   const ay=(lateralFront+fyRear)/c.mass;
-  const du=ax+s.v*s.yawRate,dv=ay-s.u*s.yawRate;
+
   const yawAcceleration=(c.a*lateralFront-c.b*fyRear)/c.inertia;
   const oldU=s.u;
-  s.u+=du*dt;s.v+=dv*dt;s.yawRate+=yawAcceleration*dt;
-  if(groundSpeed<2){s.v*=Math.exp(-dt*8*(1-contact));s.yawRate*=Math.exp(-dt*8*(1-contact));}
+  // Rotate the force-updated velocity into the new body frame exactly.
+  // Coriolis terms change coordinates, not kinetic energy.
+  const turn=(s.yawRate+.5*yawAcceleration*dt)*dt;
+  const forward=s.u+ax*dt,lateral=s.v+ay*dt;
+  s.u=forward*Math.cos(turn)+lateral*Math.sin(turn);
+  s.v=lateral*Math.cos(turn)-forward*Math.sin(turn);
+  s.yawRate+=yawAcceleration*dt;
   if(stopping&&!s.gas&&((oldU>=0&&s.u<0)||(oldU<=0&&s.u>0)))s.u=0;
   s.u=clamp(s.u,-5,55);
-  s.heading+=s.yawRate*dt;
+  s.heading+=turn;
   const sh=Math.sin(s.heading),ch=Math.cos(s.heading);
   let vx=s.u*sh+s.v*ch,vz=s.u*ch-s.v*sh;
   s.x+=vx*dt;s.z+=vz*dt;s.time+=dt;s.wheelAngle+=s.u*dt/.33;
@@ -95,6 +109,9 @@ export function stepCar(s,input={},dt=DT,{walls=true}={}){
   s.frontSlip=alphaF;s.rearSlip=alphaR;s.beta=Math.atan2(s.v,Math.max(1,Math.abs(s.u)));
   s.frontUse=Math.hypot(c.frontStiffness*alphaF,fxFront)/Math.max(1,frontCap);
   s.rearUse=Math.hypot(c.rearStiffness*alphaR,fxRear)/Math.max(1,rearCap);
+  s.frontLongitudinal=fxFront;s.rearLongitudinal=fxRear;
+  s.frontContactLongitudinal=frontVx;s.frontContactLateral=frontVy;
+  s.rearContactLateral=rearVy;
   s.frontForce=fyFront;s.rearForce=fyRear;s.frontCapacity=frontCap;s.rearCapacity=rearCap;s.frontLoad=frontLoad;s.rearLoad=rearLoad;
   const desiredYaw=s.u*Math.tan(s.steer)/L;
   const over=Math.abs(alphaR)>.08&&s.rearUse>1.05&&Math.abs(s.beta)>.07&&(Math.abs(alphaR)>Math.abs(alphaF)*.88||s.powerSlip>.5);
