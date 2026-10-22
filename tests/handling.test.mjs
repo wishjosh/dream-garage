@@ -41,3 +41,24 @@ test('button steering ramps up, can be trimmed, and unwinds after release',()=>{
 test('thumb position holds an intermediate angle and ignores a second steering finger',()=>{const c=createControls('slide');assert.ok(pressControl(c,1,'slide',.32));assert.equal(pressControl(c,2,'slide',-1),false);for(let i=0;i<120;i++)readControls(c,DT);assert.equal(c.value,.32);moveSlide(c,2,-1);assert.equal(c.target,.32);moveSlide(c,1,.38);for(let i=0;i<30;i++)readControls(c,DT);assert.equal(c.value,.38);releaseControl(c,1);for(let i=0;i<120;i++)readControls(c,DT);assert.equal(c.value,0);});
 test('steering and pedals work together; cancelling one finger keeps the other',()=>{const c=createControls('slide');pressControl(c,1,'slide',.3);pressControl(c,2,'gas');assert.equal(readControls(c,.1).throttle,1);releaseControl(c,2);assert.equal(readControls(c,.1).throttle,0);assert.equal(c.target,.3);assert.equal(c.sliderId,1);clearControls(c);const r=readControls(c,.1);assert.equal(r.steer,0);assert.equal(r.throttle,0);assert.equal(c.sliderId,null);});
 test('switching control modes clears keys and touches and maps slider edges correctly',()=>{const c=createControls();pressControl(c,1,'gas');c.keys.add('ArrowLeft');setControlMode(c,'slide');assert.equal(c.held.size,0);assert.equal(c.keys.size,0);assert.equal(c.value,0);assert.equal(slideValue(10,10,100),1);assert.equal(slideValue(60,10,100),0);assert.equal(slideValue(110,10,100),-1);assert.equal(slideValue(-100,10,100),1);});
+
+test('braking and steering together turn toward the input on both sides at every start speed',()=>{
+ for(const speed of [10,40,60,100])for(const brake of [.3,1])for(const amount of [.25,1]){
+  const left=advance(createCar(speed),1,{steer:amount,brake}),right=advance(createCar(speed),1,{steer:-amount,brake});
+  const context=JSON.stringify({speed,brake,amount});
+  assert.ok(left.heading>0&&left.x>0,'left turns left '+context);
+  assert.ok(right.heading<0&&right.x<0,'right turns right '+context);
+  assert.ok(Math.abs(left.heading+right.heading)<1e-10,'mirrored yaw '+context);
+  assert.ok(Math.abs(left.x+right.x)<1e-10,'mirrored path '+context);
+  assert.ok(left.u<speed/3.6&&right.u<speed/3.6,'still decelerates '+context);
+ }
+});
+test('braking into a turn and holding steering through a stop preserve the intended direction',()=>{
+ for(const sign of [-1,1]){
+  const s=advance(createCar(60),.4,{steer:sign*.25});const start=s.heading;
+  advance(s,.6,{steer:sign*.25,brake:1});assert.ok((s.heading-start)*sign>0);
+  const slow=advance(createCar(5),3,{steer:sign,brake:1});
+  assert.ok(slow.heading*sign>=0);assert.ok(slow.u>=0&&slow.u<.03);
+  assert.ok(Math.abs(slow.v)<.01&&Math.abs(slow.yawRate)<.01);
+ }
+});

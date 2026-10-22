@@ -30,6 +30,15 @@ function tyre(alpha,stiffness,capacity){
   const loss=.18*clamp((Math.abs(alpha)-.14)/.30,0,1);
   return capacity*Math.tanh(demand/Math.max(1,capacity))*(1-loss);
 }
+function combinedFrontTyre(alpha,capacity,longitudinalDemand){
+  // Scale both slip demands together. Giving braking the whole friction circle
+  // first erased cornering force and left only an outward brake-force component.
+  const lateralDemand=CAR.frontStiffness*alpha;
+  const ratio=Math.hypot(longitudinalDemand,lateralDemand)/Math.max(1,capacity);
+  const scale=ratio>1e-10?Math.tanh(ratio)/ratio:1;
+  const loss=.18*clamp((Math.abs(alpha)-.14)/.30,0,1);
+  return{longitudinal:longitudinalDemand*scale,lateral:lateralDemand*scale*(1-loss)};
+}
 export function stepCar(s,input={},dt=DT,{walls=true}={}){
   if(!Number.isFinite(dt)||dt<=0||s.done)return s;
   const c=CAR,L=c.a+c.b,speed=Math.abs(s.u),direction=s.u<-.15?-1:1;
@@ -47,16 +56,16 @@ export function stepCar(s,input={},dt=DT,{walls=true}={}){
   const drive=(s.reverse?-c.engine*.32:s.u<-.2?0:c.engine)*s.gas*clamp(1-(speed/c.maxSpeed)**4,0,1);
   const stopping=brake||(s.reverseBlocked?1:0)||(!reverse&&s.u<-.2&&gas ? .65 : 0);
   const brakeForce=stopping*c.brake*Math.tanh(s.u*3);
-  const fxFront=clamp(-brakeForce*.64,-frontCap,frontCap);
   const fxRear=clamp(drive-brakeForce*.36,-rearCap,rearCap);
-  const frontAvailable=Math.sqrt(Math.max(0,frontCap**2-fxFront**2));
   const rearAvailable=Math.sqrt(Math.max(0,rearCap**2-fxRear**2));
   const divisor=Math.max(2.5,speed);
   const alphaF=s.steer*direction-Math.atan((s.v+c.a*s.yawRate)/divisor);
   const alphaR=-Math.atan((s.v-c.b*s.yawRate)/divisor);
-  let fyFront=tyre(alphaF,c.frontStiffness,frontAvailable),fyRear=tyre(alphaR,c.rearStiffness,rearAvailable);
-  // Blend at walking speed to avoid an unstable slip-angle singularity at rest.
-  const contact=clamp(speed/2,0,1);fyFront*=contact;fyRear*=contact;
+  const front=combinedFrontTyre(alphaF,frontCap,-brakeForce*.64);
+  // Taper both front components together near rest, keeping their direction.
+  const contact=clamp(speed/2,0,1);
+  const fxFront=front.longitudinal*contact,fyFront=front.lateral*contact;
+  const fyRear=tyre(alphaR,c.rearStiffness,rearAvailable)*contact;
   const lateralFront=fyFront*Math.cos(s.steer)+fxFront*Math.sin(s.steer);
   const longitudinalFront=fxFront*Math.cos(s.steer)-fyFront*Math.sin(s.steer);
   const drag=-s.u*(c.mass*.018+.46*speed);
