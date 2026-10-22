@@ -20,7 +20,7 @@ function resetRun({archive=true}={}){
  original?.reset();$('resume').hidden=true;$('pause').textContent='Ⅱ';$('start').textContent=speedChoice()+' km/h로 출발';
  const prior=attempts.get((controls.mode==='buttons'?'slide':'buttons')+':'+speedChoice());
  $('last-run').textContent=prior?`${prior.mode==='buttons'?'좌우 버튼':'엄지 슬라이드'} 주행선이 지도에 남아 있어요 · 벽 접촉 ${prior.hits}회`:'조향 방식을 바꿔도 같은 출발 조건으로 시작합니다.';
- setPanel(true,'핸들을 얼마나 꺾을까요?','가속을 놓고 코너를 돌아 본 뒤, 가속하면서 다시 달려 보세요. 빠르면 먼저 감속하고 조금씩 핸들을 조절해 보세요.');
+ setPanel(true,'핸들을 얼마나 꺾을까요?','먼저 40으로 코너를 돌아 보고, 60에서 가속하며 비교해 보세요. 뒤가 흐르면 가속을 놓거나 브레이크로 감속해 보세요.');
  updateVisuals(true);paintControls();
 }
 function startRun(){if(!ready)return;clearControls(controls);running=true;paused=false;setPanel(false);$('resume').hidden=true;}
