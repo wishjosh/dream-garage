@@ -6,7 +6,7 @@
 
 ## 코너 주행 비교 시안
 
-[스마트폰에서 비교하기](https://wishjosh.github.io/dream-garage/handling-study.html?v=handling-1)
+[스마트폰에서 비교하기](https://wishjosh.github.io/dream-garage/handling-study.html?v=handling-2)
 
 2026-10-22 사용자 요청으로 만든 별도 도시 코너 시안입니다. 같은 Tavaculo 실내·왼쪽 90도 코너에서 **좌우 버튼 / 엄지 슬라이드**를 선택하고 출발 속도 40·60·100 km/h를 비교합니다. 방식 변경과 ↻는 같은 출발 위치·방향·속도로 복원합니다. 왼손은 조향, 오른손은 가속·브레이크·후진이며 A/D·방향키·W·Space·X도 지원합니다. 슬라이드는 손가락을 놓은 위치에서 중간 조향각을 유지하고, 손을 떼면 정면으로 풀립니다. 주행 중 P/Esc 또는 Ⅱ로 멈출 수 있습니다. 지도에서 이번 주행은 민트, 같은 출발 속도의 다른 조작 기록은 주황으로 표시합니다.
 
