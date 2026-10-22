@@ -11,7 +11,8 @@ that commercial use is not allowed. That notice is retained for the spatial stud
 See source-readme.txt for the original author and vehicle-design notices.
 
 Modified GLB: original cockpit for Dream Garage, used in the spatial study
-and the main Tavaculo city race (2026-10-22).
+and the main Tavaculo city race (2026-10-22). The handling comparison
+prototype reuses this same converted model and notices.
 Changes: selected original interior/body meshes; one common uniform scale
 and axis transform; neutral materials instead of original textures; reduced
 high-density small controls and seat-base meshes; no exterior wheels/engine.

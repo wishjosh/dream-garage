@@ -19,9 +19,9 @@ export function createRearView({renderer,scene,camera,cockpit,surface}) {
  const display=new T.Mesh(overlayGeometry,new T.MeshBasicMaterial({map:target.texture,color:'#c8d7dd',depthTest:false,depthWrite:false,fog:false,toneMapped:false}));
  border.renderOrder=999;display.renderOrder=1000;overlay.add(border,display);
  let presentation='physical';
- function layoutOverlay(width,height){
+ function layoutOverlay(width,height,overlayY=88){
   const distance=.2,h=2*distance*Math.tan(T.MathUtils.degToRad(camera.fov/2)),w=h*camera.aspect;
-  const px=12,py=88,pw=148,ph=37;
+  const px=12,py=overlayY,pw=148,ph=37;
   display.position.set(((px+pw/2)/width-.5)*w,(.5-(py+ph/2)/height)*h,-distance);
   display.scale.set(pw/width*w,ph/height*h,1);
   border.position.copy(display.position);border.scale.set((pw+4)/width*w,(ph+4)/height*h,1);
@@ -29,11 +29,11 @@ export function createRearView({renderer,scene,camera,cockpit,surface}) {
  const savedViewport=new T.Vector4(),savedScissor=new T.Vector4();
  let frames=0,lastRender=-Infinity,wasActive=false,active=false,low=false,slowFrames=0,disposed=false,lastMs=0,totalMs=0,drawCalls=0,triangles=0;
  surface.material.map=target.texture;surface.material.toneMapped=false;surface.material.needsUpdate=true;
- function update({player,enabled=false,paused=false,now=performance.now(),force=false,frameMs=16,hide=[],portrait=false,viewportWidth=0,viewportHeight=0}={}) {
+ function update({player,enabled=false,paused=false,now=performance.now(),force=false,frameMs=16,hide=[],portrait=false,viewportWidth=0,viewportHeight=0,overlayY=88}={}) {
   if(disposed)return;
   active=!!(enabled&&player);
   overlay.visible=active&&portrait;presentation=overlay.visible?'portrait-overlay':'physical';
-  if(overlay.visible)layoutOverlay(viewportWidth,viewportHeight);
+  if(overlay.visible)layoutOverlay(viewportWidth,viewportHeight,overlayY);
   if(!active){wasActive=false;return;}
   if(!paused){slowFrames=frameMs>40?slowFrames+1:Math.max(0,slowFrames-1);if(slowFrames>=90&&!low){low=true;target.setSize(288,72);}}
   const hz=low?12:20;

@@ -43,7 +43,9 @@ http.createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://localhost'),pathname=decodeURIComponent(url.pathname);
   let file,body,type;
-  if(pathname==='/__qa__/study-review.html'){
+  if(pathname==='/__qa__/handling-review.html'){
+   file=fileURLToPath(new URL('./handling-review.html',import.meta.url));type=types['.html'];body=await readFile(file);
+  }else if(pathname==='/__qa__/study-review.html'){
    file=studyReviewPage;type=types['.html'];body=await readFile(file);
   }else if(pathname==='/__qa__/save-review.html'){
    file=saveReviewPage;type=types['.html'];body=await readFile(file);
