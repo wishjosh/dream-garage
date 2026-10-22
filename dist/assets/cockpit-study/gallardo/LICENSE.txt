@@ -7,10 +7,11 @@ The license included with the downloaded ZIP is Creative Commons
 Attribution-ShareAlike 3.0 (CC BY-SA 3.0):
 https://creativecommons.org/licenses/by-sa/3.0/
 The archived source-license.html also marks the model as Fan Art and states
-that commercial use is not allowed. That notice is retained for this study.
+that commercial use is not allowed. That notice is retained for the spatial study and the main racing game.
 See source-readme.txt for the original author and vehicle-design notices.
 
-Modified GLB: cockpit spatial study for Dream Garage (2026-10-22).
+Modified GLB: original cockpit for Dream Garage, used in the spatial study
+and the main Tavaculo city race (2026-10-22).
 Changes: selected original interior/body meshes; one common uniform scale
 and axis transform; neutral materials instead of original textures; reduced
 high-density small controls and seat-base meshes; no exterior wheels/engine.
@@ -19,5 +20,12 @@ noncommercial Fan Art notice retained. No endorsement is claimed.
 The measured 4.30 m body-length convention and driver eye anchor are study
 settings, not a claim of surveyed real-car or original-model accuracy.
 Original part shapes, sizes and positions remain linked by one common scale.
+
+Main-game integration reuses the same converted GLB without resizing source
+parts or changing their mesh data. The source steering wheel rotates around
+its mapped original axis; the column cover and stalks remain fixed. Separate
+live mirror and speed/gear display geometry is added by the game. Driver-eye
+position and the camera follow the car body, with a small steering-linked
+look direction. These additions do not replace the original source notices.
 
 This asset notice applies to the model, not to all code in the game repository.

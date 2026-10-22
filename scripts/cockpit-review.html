@@ -11,7 +11,7 @@ body.capture-only{padding:0;margin:0;overflow:hidden;background:#020810}body.cap
 <section class="intro">
 <h1>드림 개러지 · 운전석과 미러 검사</h1>
 <p class="notice">로컬 전용 검사 페이지입니다. <b>합성 PointerEvent와 QA 물리 진행</b>을 사용하며 실제 손가락·포인터 캡처·iPhone/Android 성능을 검증하지 않습니다. 합성 포인터에는 활성 캡처가 없으므로 검사 iframe의 버튼에만 capture 보조 처리를 적용합니다. 저장은 메모리로 격리하며 결과 파일을 자동 저장하지 않습니다.</p>
-<div class="row"><button id="run-all" class="primary">8개 화면 전체 검사 시작</button><button id="stop" disabled>검사 중단</button><span id="summary" class="badge" role="status" aria-live="polite" data-state="idle">실행 대기</span></div>
+<div class="row"><button id="run-all" class="primary">12개 화면 전체 검사 시작</button><button id="run-flow">자동 조향·상금 별도 검사</button><button id="stop" disabled>검사 중단</button><span id="summary" class="badge" role="status" aria-live="polite" data-state="idle">실행 대기</span></div>
 </section>
 <div class="workspace">
 <section class="preview-panel">
@@ -30,8 +30,8 @@ body.capture-only{padding:0;margin:0;overflow:hidden;background:#020810}body.cap
 <script>
 'use strict';
 const $=id=>document.getElementById(id),frame=$('game-frame');
-const sizes=[[844,390],[740,360],[390,844],[360,740]];
-let currentSize=[844,390],running=false,stopRequested=false,frozen=false,report=null,pointers=new Map();
+const sizes=[[844,390],[740,360],[390,844],[360,740],[320,568],[568,320]];
+let currentSize=[844,390],running=false,stopRequested=false,frozen=false,report=null,pointers=new Map(),mirrorOriginReference=null;
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const assert=(condition,message)=>{if(!condition)throw Error(message);};
 const win=()=>frame.contentWindow,doc=()=>frame.contentDocument,qa=()=>win().__raceQA,snap=()=>qa().snapshot();
@@ -69,7 +69,7 @@ async function load(car,width,height){
   if(snap().screen==='welcome')click('#enter-garage');
   assert(snap().screen==='garage','검사 사이 차고 복귀 실패');
   await tick(70);win().dispatchEvent(new (win().Event)('resize'));
-  click(`[data-car="${car}"]`);selected('#view-select','cockpit');checked('#assist',false);checked('#auto-throttle',false);click('#start');
+  click(`[data-car="${car}"]`);selected('#view-select','cockpit');checked('#assist',false);checked('#auto-throttle',false);checked('#gaze-follow',true);click('#start');
   qa().advance(3.5,null);qa().advance(4,{brake:true});await tick(130);
   assert(snap().mode==='race','경주 시작 실패');
   $('screen-label').textContent=`${car} · ${width} × ${height} · 실제 게임 iframe / 합성 입력 검사`;
@@ -77,44 +77,221 @@ async function load(car,width,height){
 function point(button){const r=button.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};}
 function down(key,id){const button=q(`[data-control="${key}"]`);assert(button,'버튼 없음: '+key);const p=point(button);button.dispatchEvent(new (win().PointerEvent)('pointerdown',{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',isPrimary:id===1,button:0,buttons:1,clientX:p.x,clientY:p.y}));pointers.set(id,button);}
 function release(type='pointerup'){for(const[id,button]of pointers){const p=point(button);button.dispatchEvent(new (win().PointerEvent)(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',button:0,buttons:0,clientX:p.x,clientY:p.y}));}pointers.clear();}
-async function drive(keys,seconds){release();keys.forEach((key,i)=>down(key,i+1));qa().advance(1/60,null);for(const key of keys){assert(snap().input[key],`합성 입력 반영 실패: ${key}`);assert(q(`[data-control="${key}"]`).getAttribute('aria-pressed')==='true',`눌림 표시 실패: ${key}`);}qa().advance(seconds,null);await tick(120);qa().advance(0,null);return snap();}
+async function drive(keys,seconds){
+  // QA.advance owns elapsed physics time during this maneuver. Paint waiting
+  // must not silently add more driving before the snapshot is captured.
+  const wasFrozen=frozen;setFrozen(true);
+  try{
+    release();keys.forEach((key,i)=>down(key,i+1));qa().advance(1/60,null);
+    for(const key of keys){assert(snap().input[key],'합성 입력 반영 실패: '+key);assert(q('[data-control='+key+']').getAttribute('aria-pressed')==='true','눌림 표시 실패: '+key);}
+    qa().advance(seconds,null);await tick(60);qa().advance(0,null);return snap();
+  }finally{setFrozen(wasFrozen);}
+}
 async function clear(type='pointerup'){release(type);qa().advance(1/60,null);assert(snap().touches===0&&Object.values(snap().input).every(v=>!v),'입력 해제 실패');}
-async function recover(){await clear();click('#rescue');qa().advance(.15,{brake:true});await tick(70);}
+async function recover(){await clear();click('#rescue');if(snap().car==='tavaculo')gazeCleared('차량 복구');qa().advance(.15,{brake:true});await tick(70);}
 function controlLayout(){const[width,height]=currentSize;const controls=[...doc().querySelectorAll('[data-control]')].map(button=>{const r=button.getBoundingClientRect();return{id:button.dataset.control,x:r.x,y:r.y,width:r.width,height:r.height,hit:doc().elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('[data-control]')?.dataset.control};});assert(controls.length===6,'조작 버튼은 6개여야 합니다.');for(const b of controls){assert(b.x>=-.5&&b.y>=-.5&&b.x+b.width<=width+.5&&b.y+b.height<=height+.5,'화면 밖 버튼: '+b.id);assert(b.width>=48&&b.height>=48,'48px 미만 버튼: '+b.id);assert(b.hit===b.id,'다른 요소가 버튼을 덮음: '+b.id);}for(let i=0;i<controls.length;i++)for(const b of controls.slice(i+1)){const a=controls[i];assert(a.x+a.width<=b.x+.5||b.x+b.width<=a.x+.5||a.y+a.height<=b.y+.5||b.y+b.height<=a.y+.5,`버튼 겹침: ${a.id}/${b.id}`);}return controls;}
-function cameraCheck(car){const s=snap(),p=s.player,h=p.heading,dx=s.camera[0]-p.x,dz=s.camera[2]-p.z;const result={height:s.camera[1]-p.y,left:dx*Math.cos(h)-dz*Math.sin(h),forward:dx*Math.sin(h)+dz*Math.cos(h),fov:s.cameraFov,direction:s.cameraDirection};if(car==='f2002'){assert(Math.abs(result.left)<.01,'F1 카메라가 중앙에서 벗어남');assert(Math.abs(result.height-1.03)<.01,'F1 카메라 높이 변경');assert(Math.abs(result.forward+.28)<.01,'F1 카메라 앞뒤 위치 변경');assert(result.fov===75,'F1 시야각 변경');assert(s.cockpitStats.activeCar==='f2002'&&!s.mirrorStats.active,'F1 실내 또는 미러 활성 상태 오류');}return result;}
-function mirrorCheck(car){const m=snap().mirrorStats;assert(m.active===(car==='tavaculo'),'차종/시점과 미러 활성 상태 불일치');if(m.active){const b=m.bounds;assert(m.frames>0&&m.width<=384&&m.height<=128&&m.hz<=20,'미러 해상도·갱신 상한 또는 프레임 오류');assert(b&&b.x>=-.005&&b.y>=-.005&&b.x+b.width<=1.005&&b.y+b.height<=1.005,'미러 영상이 화면 밖으로 잘림');}return m;}
+function length3(value){return Math.hypot(...value);}
+function difference3(a,b){return a.map((value,index)=>value-b[index]);}
+// World-to-body measurements establish that steering rotates the view without
+// moving the eye or scaling the actual source geometry to fit the viewport.
+function inBodyFrame(vector,quaternion){
+  const[x,y,z]=vector,[qx,qy,qz,qw]=quaternion,ix=-qx,iy=-qy,iz=-qz;
+  const tx=2*(iy*z-iz*y),ty=2*(iz*x-ix*z),tz=2*(ix*y-iy*x);
+  return[x+qw*tx+iy*tz-iz*ty,y+qw*ty+iz*tx-ix*tz,z+qw*tz+ix*ty-iy*tx];
+}
+function bodyCamera(s){const p=s.player,q=p.quaternion;assert(q?.length===4,'차체 회전 측정값 없음');return{eye:inBodyFrame(difference3(s.camera,[p.x,p.y,p.z]),q),direction:inBodyFrame(s.cameraDirection,q)};}
+function signedDegrees(a,b){let delta=(a-b)*180/Math.PI;while(delta>180)delta-=360;while(delta< -180)delta+=360;return delta;}
+function originalCheck(s=snap()){
+  const c=s.cockpitStats;
+  assert(c.construction==='original-gallardo','원본 Gallardo 실내가 활성화되지 않음');
+  assert(c.sceneOwned===true&&c.cameraOwnsModel===false,'실내 모델이 차체 공간에 고정되지 않음');
+  assert(s.originalCockpitVisible===true&&s.proceduralCockpitVisible===false&&c.sourceVisible===true&&!s.carVisible,'원본 실내와 외관 또는 기존 실내가 중복 표시됨');
+  assert(c.sourceScale?.length===3&&c.sourceScale.every(value=>Math.abs(value-1)<1e-9),'원본 실내 크기 변경');
+  assert(c.invariant?.passed===true&&c.invariant.checkedObjects>0&&c.invariant.changed.length===0&&c.invariant.steeringRotationValid===true,'원본 부품 비율·배치 불변성 실패');
+  const expectedEye=[-.39959266548058525,1.024040214187445,0];
+  assert(c.eyeLocal?.length===3&&length3(difference3(c.eyeLocal,expectedEye))<1e-7,'채택한 원본 운전석 눈 위치 변경');
+  assert(c.eyeWorld?.length===3&&length3(difference3(c.eyeWorld,s.camera))<.0005,'카메라가 원본 눈 위치에서 이동함');
+  assert(Math.abs(s.cameraFov-42.38617142)<.0001&&Math.abs(s.cameraNear-.035)<.0001,'원본 시야각 또는 앞쪽 절단 거리 변경');
+  for(const key of ['wheel','instrument','mirror','mirrorSurface']){
+    const b=c.projectedBounds?.[key];
+    assert(b&&['left','top','right','bottom','width','height'].every(field=>Number.isFinite(b[field]))&&b.width>0&&b.height>0,'원본 화면 투영 영역 없음: '+key);
+  }
+  return{invariant:c.invariant,eyeLocal:c.eyeLocal,eyeWorld:c.eyeWorld,bodyCamera:bodyCamera(s),sourceScale:c.sourceScale,triangles:c.model?.triangles};
+}
+function gazeCleared(reason){const g=snap().cockpitStats.steering;assert(g&&Math.abs(g.amount)<1e-7&&Math.abs(g.lookDegrees)<1e-7&&Math.abs(g.target)<1e-7,reason+' 후 시선 입력이 남음');return g;}
+function steeringCheck(direction,baseline,s){
+  const sign=direction==='left'?-1:1,g=s.cockpitStats.steering;
+  assert(s.player.steeringAngle*sign<-.475,'물리 조향 방향 또는 최대 각도 오류: '+direction);
+  assert(g&&g.follow===true&&g.maxLookDegrees===6&&g.amount*sign>.9&&g.target*sign>.9,'조향과 시선 목표 방향 불일치: '+direction);
+  assert(g.lookDegrees*sign>4.8&&Math.abs(g.lookDegrees)<=6.000001,'조향 시선 범위 또는 방향 오류: '+direction);
+  const base=bodyCamera(baseline),current=bodyCamera(s),baseYaw=Math.atan2(base.direction[0],base.direction[2]),yaw=Math.atan2(current.direction[0],current.direction[2]);
+  const observedLookDegrees=-signedDegrees(yaw,baseYaw);
+  assert(length3(difference3(current.eye,base.eye))<.0005,'조향 중 눈 위치가 움직임');
+  assert(Math.abs(observedLookDegrees-g.lookDegrees)<.3,'측정한 카메라 회전과 시선 수치 불일치');
+  return{direction,physicalAngle:s.player.steeringAngle,steering:g,observedLookDegrees,eye:current.eye,original:originalCheck(s),bounds:s.cockpitStats.projectedBounds};
+}
+async function gazeRelease(){await clear('pointercancel');qa().advance(1.5,null);const g=snap().cockpitStats.steering;assert(Math.abs(g.amount)<.01&&Math.abs(g.lookDegrees)<.1&&Math.abs(g.target)<1e-7,'손을 놓은 뒤 시선 중앙 복귀 실패');return g;}
+async function gazePreference(){
+  const savedBefore=win().localStorage.getItem('hojin-city-gp:save:v1'),evidence={};
+  const measure=s=>({physicalAngle:s.player.steeringAngle,speed:s.player.speed,forwardSpeed:s.player.forwardSpeed,grounded:s.player.grounded,touches:s.touches,input:s.input,gaze:s.cockpitStats.steering});
+  try{
+    // Initial and reversed steering have different settling times. Check the
+    // disabled gaze immediately, then give the physical wheel time to settle.
+    evidence.right=measure(await drive(['right','brake'],.75));click('#pause');await tick(60);gazeCleared('일시정지');
+    checked('#pause-gaze-follow',false);assert(q('#gaze-follow').checked===false,'차고와 일시정지 시선 설정 불일치');click('#resume');
+    const transition=await drive(['left','brake'],.75);evidence.leftAfter075=measure(transition);
+    assert(transition.cockpitStats.steering.follow===false&&Math.abs(transition.cockpitStats.steering.lookDegrees)<.05,'시선 추적을 끈 뒤 정면 시선 유지 실패');
+    assert(transition.player.steeringAngle>0,'시선 추적을 끈 뒤 물리 휠 조향 방향 오류');
+    const off=await drive(['left','brake'],.45),g=off.cockpitStats.steering;evidence.leftAfter120=measure(off);
+    assert(off.player.steeringAngle>.475&&g.follow===false&&Math.abs(g.lookDegrees)<.05,'시선 추적 끄기 중 휠 조향 또는 정면 시선 실패');originalCheck(off);
+    await clear();click('#pause');checked('#pause-gaze-follow',true);assert(q('#gaze-follow').checked===true,'시선 추적 다시 켜기 동기화 실패');click('#resume');await recover();
+    assert(win().localStorage.getItem('hojin-city-gp:save:v1')===savedBefore,'시선 설정이 기존 저장 기록을 변경함');
+    return{disabled:g,restored:snap().cockpitStats.steering,saveUnchanged:true,measurements:evidence};
+  }catch(error){error.evidence={gazePreference:evidence};throw error;}
+}
+function cameraCheck(car){const s=snap(),p=s.player,h=p.heading,dx=s.camera[0]-p.x,dz=s.camera[2]-p.z;const result={height:s.camera[1]-p.y,left:dx*Math.cos(h)-dz*Math.sin(h),forward:dx*Math.sin(h)+dz*Math.cos(h),fov:s.cameraFov,direction:s.cameraDirection};if(car==='tavaculo')result.original=originalCheck(s);if(car==='f2002'){assert(s.originalCockpitVisible===false&&s.proceduralCockpitVisible===true,'F1에 원본 일반차 실내가 중복 표시됨');assert(Math.abs(result.left)<.01,'F1 카메라가 중앙에서 벗어남');assert(Math.abs(result.height-1.03)<.01,'F1 카메라 높이 변경');assert(Math.abs(result.forward+.28)<.01,'F1 카메라 앞뒤 위치 변경');assert(result.fov===75,'F1 시야각 변경');assert(s.cockpitStats.activeCar==='f2002'&&!s.mirrorStats.active,'F1 실내 또는 미러 활성 상태 오류');}return result;}
+function mirrorCheck(car){
+  // Refresh the capped rear pass at the same body pose, including after resize.
+  qa().advance(0,null);const s=snap(),m=s.mirrorStats;
+  assert(m.active===(car==='tavaculo'),'차종/시점과 미러 활성 상태 불일치');
+  if(m.active){
+    const portrait=currentSize[0]<currentSize[1],b=m.bounds,physical=m.physicalBounds,source=s.cockpitStats.projectedBounds.mirrorSurface;
+    assert(m.presentation===(portrait?'portrait-overlay':'physical'),'화면 방향과 미러 표시 방식 불일치');
+    assert(m.frames>0&&m.width<=384&&m.height<=128&&m.hz<=20,'미러 해상도·갱신 상한 또는 프레임 오류');
+    assert(b&&b.x>=-.005&&b.y>=-.005&&b.x+b.width<=1.005&&b.y+b.height<=1.005,'표시된 미러 영상이 화면 밖으로 잘림');
+    assert(physical&&['x','y','width','height'].every(key=>Number.isFinite(physical[key])),'실제 실내 미러 투영 영역 누락');
+    for(const[key,sourceKey]of [['x','left'],['y','top'],['width','width'],['height','height']])assert(Math.abs(physical[key]-source[sourceKey])<.00001,'실제 실내 미러 위치·비율 변경: '+key);
+    if(!portrait)for(const key of ['x','y','width','height'])assert(Math.abs(b[key]-physical[key])<.00001,'가로 화면에 실내와 다른 미러 영상 표시');
+    assert(m.surfaceWorld?.length===3&&length3(difference3(m.camera,m.surfaceWorld))<.00001,'후방 카메라가 실제 미러 원점에서 이동함');
+    const p=s.player,origin=inBodyFrame(difference3(m.surfaceWorld,[p.x,p.y,p.z]),p.quaternion);
+    if(!mirrorOriginReference)mirrorOriginReference=origin;
+    assert(length3(difference3(origin,mirrorOriginReference))<.0005,'화면 방향 또는 시선 이동에 따라 실제 미러 원점이 바뀜');
+    m.physicalBodyOrigin=origin;
+  }
+  return m;
+}
 function overlaps(a,b){return a.width>0&&a.height>0&&a.x<b.x+b.width&&b.x<a.x+a.width&&a.y<b.y+b.height&&b.y<a.y+a.height;}
-function mirrorHudCheck(){const s=snap();if(!s.mirrorStats.active)return[];const[width,height]=currentSize;const n=s.mirrorStats.bounds,m={x:n.x*width,y:n.y*height,width:n.width*width,height:n.height*height};const hits=[];for(const selector of ['.race-stats','.top-actions','#map','#toast']){const e=q(selector);if(!e||e.hidden||selector==='#toast'&&!e.classList.contains('visible'))continue;const r=e.getBoundingClientRect();if(overlaps(m,{x:r.x,y:r.y,width:r.width,height:r.height}))hits.push(selector);}assert(hits.length===0,'미러 영상과 HUD 겹침: '+hits.join(', '));return{mirror:m,overlaps:hits};}
+function mirrorHudCheck(){const s=snap();if(!s.mirrorStats.active)return[];const[width,height]=currentSize;const n=s.mirrorStats.bounds,m={x:n.x*width,y:n.y*height,width:n.width*width,height:n.height*height};const hits=[];for(const selector of ['.race-stats','.top-actions','#map','#toast','#speedometer']){const e=q(selector);if(!e||e.hidden||win().getComputedStyle(e).visibility==='hidden'||win().getComputedStyle(e).display==='none'||selector==='#toast'&&!e.classList.contains('visible'))continue;const r=e.getBoundingClientRect();if(overlaps(m,{x:r.x,y:r.y,width:r.width,height:r.height}))hits.push(selector);}assert(hits.length===0,'미러 영상과 HUD 겹침: '+hits.join(', '));return{mirror:m,overlaps:hits};}
+function instrumentReadabilityCheck(car){
+  if(car!=='tavaculo')return null;
+  const s=snap(),[width,height]=currentSize,portrait=width<height,t=s.cockpitStats.telemetry;
+  assert(t.kmh===Number(q('#speed').textContent)&&t.gear===q('#gear').textContent,'실내 계기와 주행 HUD 속도·기어 불일치');
+  const speedometer=q('#speedometer'),style=win().getComputedStyle(speedometer),hudVisible=style.visibility!=='hidden'&&style.display!=='none';
+  if(portrait){
+    const r=speedometer.getBoundingClientRect();assert(hudVisible&&r.left>=0&&r.top>=0&&r.right<=width&&r.bottom<=height,'세로 화면 속도·기어 HUD 잘림 또는 숨김');
+    return{presentation:'portrait-hud',kmh:t.kmh,gear:t.gear,bounds:{x:r.x,y:r.y,width:r.width,height:r.height},pixelLegibility:'requires visual review'};
+  }
+  assert(!hudVisible,'가로 실내 화면에서 속도 HUD와 원본 계기 중복 표시');
+  const b=s.cockpitStats.projectedBounds.instrument;
+  assert(b.left>=-.005&&b.top>=-.005&&b.right<=1.005&&b.bottom<=1.005,'가로 화면에서 실제 속도·기어 계기 잘림');
+  const bounds={x:b.left*width,y:b.top*height,width:b.width*width,height:b.height*height},hits=[];
+  for(const e of doc().querySelectorAll('.race-stats,.top-actions,#map,#toast,[data-control]')){
+    const st=win().getComputedStyle(e);if(e.hidden||st.visibility==='hidden'||st.display==='none'||e.id==='toast'&&!e.classList.contains('visible'))continue;
+    const r=e.getBoundingClientRect();if(overlaps(bounds,r))hits.push(e.dataset.control||e.id||e.className);
+  }
+  assert(hits.length===0,'실제 속도·기어 계기를 HUD가 가림: '+hits.join(', '));
+  return{presentation:'physical-instrument',kmh:t.kmh,gear:t.gear,bounds,estimatedDigitHeight:bounds.height*108/160,pixelLegibility:'requires visual review'};
+}
 async function mirrorProof(){
   await recover();await drive(['brake'],.2);qa().mirrorProbe(null);await tick(80);const empty=qa().mirrorPixels();
   const probe=async options=>{qa().mirrorProbe(options);await tick(70);return qa().mirrorPixels();};
   const left=await probe({behind:true,x:-3,distance:12}),right=await probe({behind:true,x:3,distance:12}),front=await probe({behind:false,x:0,distance:12});
   assert(left.probe.count>empty.probe.count+8&&right.probe.count>empty.probe.count+8,'뒤쪽 검사용 물체가 미러에 보이지 않음');assert(front.probe.count<=empty.probe.count+8,'앞쪽 물체가 미러에 잘못 보임');assert(right.probe.cx-left.probe.cx>.08,'미러 좌우 방향 또는 물체 이동 오류');
+  // The rear camera follows the body, so turning only the head must keep an
+  // actual rear target in the reflected image while the visible cabin moves.
+  const gaze=[];
+  for(const direction of ['left','right']){
+    qa().mirrorProbe({behind:true,x:0,distance:12});await drive([direction,'brake'],.75);const turned=qa().mirrorPixels();
+    assert(turned.nonUniform&&turned.probe.count>empty.probe.count+8,'시선 이동 중 실제 뒤쪽 물체가 미러에서 사라짐: '+direction);
+    gaze.push({direction,pixels:turned,lookDegrees:snap().cockpitStats.steering.lookDegrees,bounds:snap().mirrorStats.bounds});
+    await gazeRelease();
+  }
   qa().mirrorProbe(null);await clear();await tick(80);const before=qa().mirrorPixels(),p=snap().player;await drive(['throttle'],2);const after=qa().mirrorPixels(),now=snap().player;await clear();
   assert(Math.hypot(now.x-p.x,now.z-p.z)>5,'미러 비교 전에 실제 차량 이동 부족');assert(before.hash!==after.hash&&before.nonUniform&&after.nonUniform,'주행 후 실제 미러 영상 변화 없음');
-  return{empty,left,right,front,worldBefore:before.hash,worldAfter:after.hash};
+  return{empty,left,right,front,gaze,worldBefore:before.hash,worldAfter:after.hash};
 }
 async function oneCase(car,width,height){
-  await load(car,width,height);const evidence={viewport:{width,height},car,controls:controlLayout(),camera:cameraCheck(car),cockpit:snap().cockpitStats,mirror:mirrorCheck(car),syntheticPointer:true,nativeCaptureVerified:false};
-  evidence.mirrorHud=mirrorHudCheck();
-  let s=await drive(['throttle'],2);assert(s.player.forwardSpeed>5,'가속 실패');evidence.acceleration=s.player.forwardSpeed;await clear();
-  s=await drive(['brake'],3);assert(s.player.speed<1,'브레이크 정지 실패');await clear();
-  s=await drive(['reverse'],1);assert(s.player.forwardSpeed<-.6&&s.player.driveMode==='reverse','정지 후 실제 후진 실패');evidence.reverse={speed:s.player.forwardSpeed,gear:s.cockpitStats.telemetry.gear};await clear();
-  await recover();await drive(['throttle'],2);s=await drive(['reverse'],4);assert(s.player.reverseBlocked&&s.player.forwardSpeed>-.25,'움직이는 중 후진 차단 실패');await clear();s=await drive(['reverse'],1);assert(s.player.forwardSpeed<-.6,'후진 재입력 실패');await clear();evidence.reverseGate=true;
-  await recover();await drive(['throttle'],2);s=await drive(['left','drift'],.55);assert(s.touches===2&&s.player.drifting&&Math.abs(s.player.lateralSpeed)>.2,'두 포인터 드리프트 실패');evidence.drift={lateralSpeed:s.player.lateralSpeed,level:s.player.driftLevel};await clear('pointercancel');
-  evidence.steering=[];for(const direction of ['left','right']){await recover();s=await drive([direction,'brake'],.75);assert(s.touches===2&&Math.abs(s.player.steeringAngle)>.475,'최대 조향 도달 실패');evidence.steering.push({direction,angle:s.player.steeringAngle,telemetry:s.cockpitStats.telemetry,bounds:s.cockpitStats.projectedBounds});mirrorHudCheck();await clear('pointercancel');}
-  await drive(['right','throttle'],.1);click('#pause');await tick(80);assert(snap().mode==='paused'&&snap().touches===0&&Object.values(snap().input).every(v=>!v),'일시정지 입력 해제 실패');release();const paused=snap().mirrorStats.frames;await tick(240);assert(snap().mirrorStats.frames===paused,'일시정지 중 미러 재렌더');click('#resume');await tick(80);
-  click('#camera');qa().advance(0,null);await tick(100);assert(snap().view==='chase'&&snap().carVisible&&!snap().cockpitVisible&&!snap().mirrorStats.active,'차 뒤 시점 전환 실패');const chaseFrames=snap().mirrorStats.frames;await tick(130);assert(snap().mirrorStats.frames===chaseFrames,'차 뒤 시점에서 미러 렌더 지속');click('#camera');qa().advance(0,null);await tick(100);cameraCheck(car);mirrorCheck(car);
-  resize(height,width);await tick(140);win().dispatchEvent(new (win().Event)('resize'));qa().advance(0,null);controlLayout();cameraCheck(car);mirrorCheck(car);mirrorHudCheck();evidence.rotated={viewport:{width:height,height:width},camera:cameraCheck(car),bounds:snap().cockpitStats.projectedBounds};resize(width,height);await tick(140);win().dispatchEvent(new (win().Event)('resize'));qa().advance(0,null);controlLayout();cameraCheck(car);mirrorCheck(car);mirrorHudCheck();evidence.rotationRestored=true;
-  if(car==='tavaculo')evidence.rearViewProof=await mirrorProof();
-  await clear();const runtime=win().__cockpitReviewErrors||[];assert(runtime.length===0,'게임 실행 오류: '+runtime.join(' / '));evidence.runtimeErrors=runtime;evidence.storageIsolated=win().__cockpitReviewStorageIsolated;
-  return evidence;
+  await load(car,width,height);
+  const evidence={viewport:{width,height},car,controls:controlLayout(),camera:cameraCheck(car),cockpit:snap().cockpitStats,syntheticPointer:true,nativeCaptureVerified:false,layoutFailures:[]};
+  // Preserve strict mirror visibility/HUD checks, but collect their failures so
+  // one clipped mirror does not hide independent driving and input regressions.
+  const layout=label=>{for(const[name,check]of [['mirror',()=>mirrorCheck(car)],['mirrorHud',mirrorHudCheck],['instrument',()=>instrumentReadabilityCheck(car)]]){try{evidence[label+'_'+name]=check();}catch(error){evidence.layoutFailures.push({stage:label,check:name,error:error.message});}}};
+  try{
+    layout('initial');
+    let s=await drive(['throttle'],2);assert(s.player.forwardSpeed>5,'가속 실패');evidence.acceleration=s.player.forwardSpeed;await clear();
+    s=await drive(['brake'],3);assert(s.player.speed<1,'브레이크 정지 실패');await clear();
+    s=await drive(['reverse'],1);assert(s.player.forwardSpeed<-.6&&s.player.driveMode==='reverse','정지 후 실제 후진 실패');evidence.reverse={speed:s.player.forwardSpeed,gear:s.cockpitStats.telemetry.gear};await clear();
+    await recover();await drive(['throttle'],2);s=await drive(['reverse'],4);assert(s.player.reverseBlocked&&s.player.forwardSpeed>-.25,'움직이는 중 후진 차단 실패');await clear();s=await drive(['reverse'],1);assert(s.player.forwardSpeed<-.6,'후진 재입력 실패');await clear();evidence.reverseGate=true;
+    // Rescue keeps race position. A new race supplies an independent grid pose
+    // so earlier reverse tests cannot carry this maneuver into a later corner.
+    await load(car,width,height);
+    const driftStart=snap().player,entry=await drive(['throttle'],2);s=await drive(['left','drift'],.55);
+    evidence.drift={fixture:'fresh-race-grid',start:{x:driftStart.x,z:driftStart.z,s:driftStart.s,lane:driftStart.lane},entry:{x:entry.player.x,z:entry.player.z,s:entry.player.s,forwardSpeed:entry.player.forwardSpeed,grounded:entry.player.grounded},touches:s.touches,input:s.input,drifting:s.player.drifting,forwardSpeed:s.player.forwardSpeed,lateralSpeed:s.player.lateralSpeed,level:s.player.driftLevel,grounded:s.player.grounded,end:{x:s.player.x,z:s.player.z,s:s.player.s}};
+    assert(s.touches===2&&s.player.drifting&&Math.abs(s.player.lateralSpeed)>.2,'두 포인터 드리프트 실패');await clear('pointercancel');
+    evidence.steering=[];
+    for(const direction of ['left','right']){
+      await recover();const baseline=snap();s=await drive([direction,'brake'],.75);
+      assert(s.touches===2&&Math.abs(s.player.steeringAngle)>.475,'최대 조향 도달 실패');
+      const turning=car==='tavaculo'?steeringCheck(direction,baseline,s):{direction,angle:s.player.steeringAngle,camera:cameraCheck(car),telemetry:s.cockpitStats.telemetry,bounds:s.cockpitStats.projectedBounds};
+      layout(direction);turning.released=car==='tavaculo'?await gazeRelease():await clear('pointercancel');evidence.steering.push(turning);
+    }
+    if(car==='tavaculo')evidence.gazePreference=await gazePreference();
+    await drive(['right','throttle'],.1);click('#pause');await tick(80);assert(snap().mode==='paused'&&snap().touches===0&&Object.values(snap().input).every(v=>!v),'일시정지 입력 해제 실패');
+    if(car==='tavaculo')evidence.pauseClearsGaze=gazeCleared('일시정지');
+    release();const paused=snap().mirrorStats.frames;await tick(240);assert(snap().mirrorStats.frames===paused,'일시정지 중 미러 재렌더');click('#resume');await tick(80);
+    click('#camera');qa().advance(0,null);await tick(100);
+    assert(snap().view==='chase'&&snap().carVisible&&!snap().cockpitVisible&&!snap().mirrorStats.active&&snap().originalCockpitVisible===false&&snap().proceduralCockpitVisible===false,'차 뒤 시점 전환 또는 실내 중복 표시 오류');
+    const chaseFrames=snap().mirrorStats.frames;await tick(130);assert(snap().mirrorStats.frames===chaseFrames,'차 뒤 시점에서 미러 렌더 지속');click('#camera');qa().advance(0,null);await tick(100);cameraCheck(car);layout('cockpitRestored');
+    await drive(['left','brake'],.2);resize(height,width);await tick(140);win().dispatchEvent(new (win().Event)('resize'));qa().advance(0,null);
+    assert(snap().touches===0&&Object.values(snap().input).every(value=>!value),'화면 회전 뒤 누른 조작이 남음');release('pointercancel');if(car==='tavaculo')gazeCleared('화면 회전');
+    controlLayout();cameraCheck(car);layout('rotated');evidence.rotated={viewport:{width:height,height:width},camera:cameraCheck(car),bounds:snap().cockpitStats.projectedBounds};
+    resize(width,height);await tick(140);win().dispatchEvent(new (win().Event)('resize'));qa().advance(0,null);controlLayout();cameraCheck(car);layout('rotationRestored');evidence.rotationRestored=true;
+    if(car==='tavaculo')evidence.rearViewProof=await mirrorProof();
+    await clear();const runtime=win().__cockpitReviewErrors||[];assert(runtime.length===0,'게임 실행 오류: '+runtime.join(' / '));evidence.runtimeErrors=runtime;evidence.storageIsolated=win().__cockpitReviewStorageIsolated;
+    assert(evidence.layoutFailures.length===0,evidence.layoutFailures.map(issue=>issue.stage+': '+issue.error).join(' / '));
+    return evidence;
+  }catch(error){error.evidence=evidence;throw error;}
 }
 function addResult(name,passed,evidence,error){const item={name,passed,evidence,error};report.checks.push(item);const li=document.createElement('li');li.className=passed?'pass':'fail';li.textContent=(passed?'통과 · ':'실패 · ')+name+(error?' — '+error:'');$('checks').append(li);updateReport();}
-function lock(value){running=value;for(const id of ['run-all','show-scene','car','size','scene','rotate','freeze'])$(id).disabled=value;$('stop').disabled=!value;}
-async function runAll(){if(running)return;stopRequested=false;lock(true);$('checks').textContent='';$('errors').textContent='';report={startedAt:new Date().toISOString(),method:'In-page synthetic PointerEvent + button capture no-op fixture; QA.advance(seconds,null) reads the app input state. No native/hardware touch claim.',storage:'One iframe and GPU context reused through the garage UI; localStorage replaced with an in-memory store by the local review response',sizes,checks:[],visualReview:'pending: inspect actual iframe views',fileWrites:false};updateReport();try{for(const car of ['tavaculo','f2002'])for(const[width,height]of sizes){const name=`${car} ${width}×${height}`;setStatus('검사 중 · '+name);try{addResult(name,true,await oneCase(car,width,height));}catch(error){addResult(name,false,null,error.message);try{release();}catch{}if(stopRequested)throw error;}}report.completedAt=new Date().toISOString();report.passed=report.checks.length===8&&report.checks.every(x=>x.passed);setStatus(`${report.passed?'통과':'확인 필요'} · ${report.checks.filter(x=>x.passed).length}/${report.checks.length} · 실제 화면 판독 별도`,report.passed?'passed':'failed');}catch(error){report.stopped=true;report.passed=false;$('errors').textContent=error.message;setStatus('검사 중단','failed');}finally{lock(false);updateReport();}}
+function lock(value){running=value;for(const id of ['run-all','run-flow','show-scene','car','size','scene','rotate','freeze'])$(id).disabled=value;$('stop').disabled=!value;}
+async function runAll(){if(running)return;stopRequested=false;mirrorOriginReference=null;lock(true);$('checks').textContent='';$('errors').textContent='';report={startedAt:new Date().toISOString(),method:'In-page synthetic PointerEvent + button capture no-op fixture; QA.advance(seconds,null) reads the app input state; requestAnimationFrame is paused only during each maneuver so paint waiting adds no hidden physics time. No native/hardware touch claim.',storage:'One iframe and GPU context reused through the garage UI; localStorage replaced with an in-memory store by the local review response',sizes,checks:[],visualReview:'pending: inspect actual iframe views; strict mirror frame and HUD checks retained',coverage:'6 viewport sizes × 2 cars; source invariant and fixed eye; physical steering and ±6° gaze; gaze setting/release/reset; acceleration/brake/reverse/drift; resize; camera ownership; rendered rear world',fileWrites:false};updateReport();try{for(const car of ['tavaculo','f2002'])for(const[width,height]of sizes){const name=`${car} ${width}×${height}`;setStatus('검사 중 · '+name);try{addResult(name,true,await oneCase(car,width,height));}catch(error){addResult(name,false,error.evidence||null,error.message);try{release();}catch{}if(stopRequested)throw error;}}report.completedAt=new Date().toISOString();report.passed=report.checks.length===sizes.length*2&&report.checks.every(x=>x.passed);setStatus(`${report.passed?'통과':'확인 필요'} · ${report.checks.filter(x=>x.passed).length}/${report.checks.length} · 실제 화면 판독 별도`,report.passed?'passed':'failed');}catch(error){report.stopped=true;report.passed=false;$('errors').textContent=error.message;setStatus('검사 중단','failed');}finally{lock(false);updateReport();}}
+async function assistedRaceFlow(){
+  await load('tavaculo',844,390);const gazePreferenceEvidence=await gazePreference();
+  await load('tavaculo',844,390);
+  const saveKey='hojin-city-gp:save:v1',before=JSON.parse(win().localStorage.getItem(saveKey)),start=snap();
+  qa().setAssist(true);const wasFrozen=frozen;setFrozen(true);
+  try{
+    const automaticTurns=[];let simulatedSeconds=0;
+    for(;simulatedSeconds<120&&snap().mode==='race';simulatedSeconds++){
+      qa().advance(1,{throttle:true});const s=snap(),g=s.cockpitStats.steering;
+      assert(g.target===0&&Math.abs(g.amount)<1e-7&&Math.abs(g.lookDegrees)<1e-7,'쉬운조향 자동 회전에 운전자 시선이 움직임');
+      if(s.player.distance>80&&Math.abs(s.player.steeringAngle)>.05&&automaticTurns.length<3)automaticTurns.push({distance:s.player.distance,physicalAngle:s.player.steeringAngle,gaze:g});
+      if(simulatedSeconds%10===0){setStatus('자동 조향·완주 확인 · '+simulatedSeconds+'초');await tick(0);}
+    }
+    assert(automaticTurns.length>0,'자동 조향이 실제 도시 코너를 도는 장면을 확인하지 못함');
+    assert(snap().mode==='result'&&snap().player.finished,'쉬운조향으로 도시 경주 완주 실패');
+    const rank=Number.parseInt(q('#result-rank').textContent,10),prize=[1000,650,400,150][rank-1],displayedPrize=Number(q('#prize').textContent.replace(/[^0-9]/g,''));
+    const after=JSON.parse(win().localStorage.getItem(saveKey)),completed=snap();
+    assert(prize>0&&displayedPrize===prize&&after.coins-before.coins===prize&&completed.coins-start.coins===prize,'완주 순위 상금 또는 저장 금액 불일치');
+    assert(after.races===before.races+1,'완주 횟수 저장 오류');
+    assert(JSON.stringify(Object.keys(before).sort())===JSON.stringify(Object.keys(after).sort()),'기존 저장 형식에 예상하지 않은 필드 추가');
+    assert(JSON.stringify(after.owned)===JSON.stringify(before.owned)&&JSON.stringify(after.garage)===JSON.stringify(before.garage),'완주 후 보유 파츠·꾸미기 기록 변경');
+    assert(after.car===before.car&&after.view===before.view&&after.auto===before.auto,'완주 중 차종·시점·가속 설정 변경');
+    qa().advance(10,{throttle:true});const repeated=JSON.parse(win().localStorage.getItem(saveKey));
+    assert(repeated.coins===after.coins&&repeated.races===after.races,'결과 화면에서 상금이 중복 지급됨');
+    click('#result-menu');const garage=snap();assert(garage.screen==='garage'&&garage.coins===after.coins,'결과에서 차고 복귀 또는 상금 표시 실패');
+    return{passed:true,fixture:'one isolated Tavaculo city race at 844x390',gazePreference:gazePreferenceEvidence,automaticTurns,simulatedSeconds,rank,prize,coinsBefore:before.coins,coinsAfter:after.coins,racesBefore:before.races,racesAfter:after.races,prizePaidOnce:true,customizationUnchanged:true,saveShapeUnchanged:true,garageScreen:garage.screen,storageIsolated:win().__cockpitReviewStorageIsolated,nativePhoneVerified:false};
+  }finally{setFrozen(wasFrozen);qa().setAssist(false);}
+}
+async function runFlow(){
+  if(running)return;stopRequested=false;lock(true);$('errors').textContent='';
+  if(!report)report={checks:[],method:'Isolated same-origin game; QA physics and synthetic buttons; no hardware claim'};
+  try{setStatus('자동 조향·상금 검사 준비');report.flow=await assistedRaceFlow();setStatus('자동 조향·상금 검사 통과','passed');}
+  catch(error){report.flow={passed:false,error:error.message,evidence:error.evidence||null};$('errors').textContent=error.message;setStatus('자동 조향·상금 검사 확인 필요','failed');}
+  finally{try{release();}catch{}lock(false);updateReport();}
+}
 async function showScene(){if(running)return;stopRequested=false;lock(true);const car=$('car').value,[width,height]=$('size').value.split('x').map(Number),scene=$('scene').value;try{setStatus('장면 준비 · '+scene);await load(car,width,height);if(['straight','chase'].includes(scene)){await drive(['throttle'],2);await clear();}else if(scene==='corner'){qa().setAssist(true);await drive(['throttle'],7);await clear();}else if(['left','right'].includes(scene)){await recover();await drive([scene,'brake'],.75);}else if(scene==='reverse'){await recover();await drive(['reverse'],1);}else if(scene==='drift'){await drive(['throttle'],2);await drive(['left','drift'],.5);}else if(scene.startsWith('mirror-')){assert(car==='tavaculo','실내 미러는 Tavaculo 전용입니다.');qa().mirrorProbe({behind:scene!=='mirror-front',x:scene==='mirror-left'?-3:scene==='mirror-right'?3:0,distance:12});await tick(100);}else if(scene==='restored'){resize(height,width);await tick(140);win().dispatchEvent(new (win().Event)('resize'));qa().advance(0,null);resize(width,height);await tick(140);win().dispatchEvent(new (win().Event)('resize'));}if(scene==='chase')click('#camera');qa().advance(0,null);setFrozen(true);$('screen-label').textContent=`${car} · ${width} × ${height} · ${$('scene').selectedOptions[0].text} · 실제 렌더 정지 화면`;setStatus('선택 장면 준비 완료','idle');}catch(error){$('errors').textContent=error.message;setStatus('장면 준비 실패','failed');}finally{lock(false);}}
-$('run-all').onclick=runAll;$('stop').onclick=()=>{stopRequested=true;};$('show-scene').onclick=showScene;
+$('run-all').onclick=runAll;$('run-flow').onclick=runFlow;$('stop').onclick=()=>{stopRequested=true;};$('show-scene').onclick=showScene;
 $('rotate').onclick=async()=>{if(!win().__raceQA)return;setFrozen(false);const[width,height]=currentSize;resize(height,width);await tick(140);win().dispatchEvent(new (win().Event)('resize'));qa().advance(0,null);setFrozen(true);$('screen-label').textContent=`${snap().car} · ${height} × ${width} · 회전 화면`;};
 $('freeze').onclick=()=>setFrozen(!frozen);$('expand').onclick=()=>{document.body.classList.toggle('preview-only');$('expand').textContent=document.body.classList.contains('preview-only')?'검사 결과 보기':'화면 크게 보기';fit();};$('fit').onchange=fit;addEventListener('resize',fit);fit();
 function exitCapture(event){if(event.key==='Escape'&&document.body.classList.contains('capture-only')){event.preventDefault();event.stopImmediatePropagation();document.body.classList.remove('capture-only');fit();}}

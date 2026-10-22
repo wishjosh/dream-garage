@@ -146,3 +146,19 @@ body[data-view="cockpit"] #drive-state{bottom:calc(147px + env(safe-area-inset-b
 
 /* Transient race notices stay below the Tavaculo rear-view mirror. */
 @media(orientation:landscape){body[data-view="cockpit"][data-car="tavaculo"] #toast{top:34%}}
+
+/* Keep the original cabin proportions; phone telemetry is a separate HUD. */
+body[data-car="tavaculo"][data-view="cockpit"] #speedometer{display:flex;visibility:visible;position:absolute;left:50%;right:auto;bottom:18px;transform:translateX(-50%);align-items:center;gap:6px;min-width:112px;padding:7px 12px;border:1px solid #99dce655;border-radius:16px;background:#071624d9;box-shadow:0 4px 18px #0005;}
+body[data-car="tavaculo"][data-view="cockpit"] #speedometer strong{font-size:30px;line-height:1;}
+body[data-car="tavaculo"][data-view="cockpit"] #speedometer small{font-size:10px;}
+body[data-car="tavaculo"][data-view="cockpit"] #gear{position:static;font-size:20px;min-width:24px;}
+.race-setup .options{flex-wrap:wrap;}.gaze-option{display:flex;align-items:center;gap:10px;min-height:48px;margin:0 0 12px;text-align:left;font-size:14px;}.gaze-option input{width:20px;height:20px;}
+@media(max-width:600px) and (orientation:portrait){body[data-car="tavaculo"][data-view="cockpit"] #speedometer{bottom:212px;}}
+
+body[data-car="tavaculo"][data-view="cockpit"] #toast{top:46%;max-width:68%;}
+@media(orientation:landscape){
+ body[data-car="tavaculo"][data-view="cockpit"] #speedometer{visibility:hidden;}
+ body[data-car="tavaculo"][data-view="cockpit"] #map{width:64px;height:53px;right:10px;top:66px;}
+}
+
+@media(orientation:portrait){body[data-car='tavaculo'][data-view='cockpit'] #toast{top:40%;}}

@@ -18,6 +18,6 @@
     "source": "https://blendswap.com/blend/8686",
     "license": "CC BY-SA 3.0; source Fan Art noncommercial notice retained",
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
-    "changes": "Common uniform scale/axis transform; neutral materials; reduced small control meshes; no original textures. Spatial prototype only."
+    "changes": "Common uniform scale/axis transform; neutral materials; reduced small control meshes; no original textures. Shared source for the spatial study and main-game cockpit."
   }
 }
