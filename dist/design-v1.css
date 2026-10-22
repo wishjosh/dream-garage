@@ -162,3 +162,13 @@ body[data-car="tavaculo"][data-view="cockpit"] #toast{top:46%;max-width:68%;}
 }
 
 @media(orientation:portrait){body[data-car='tavaculo'][data-view='cockpit'] #toast{top:40%;}}
+
+/* City A/B steering: right pedal geometry stays unchanged. */
+.steering-choice{display:flex;align-items:center;gap:8px;font-size:13px}.steering-choice select{min-height:44px;max-width:100%;font:inherit;color:#e4f4f6;background:#142936;border:1px solid #61808c;border-radius:10px;padding:8px}.steering-hint{font-size:12px!important;color:#b5cad5!important;margin:8px 0!important}
+#pause-menu .steering-choice{margin:12px 0;justify-content:space-between}
+#thumb-steering{position:relative;flex:none;width:clamp(112px,25vw,216px);height:78px;border-radius:24px;border:1px solid #9cdbd277;background:linear-gradient(145deg,#203e4bea,#071c2bea);box-shadow:inset 0 1px #ffffff30,0 5px 0 #020b1580;touch-action:none;user-select:none;color:#d5f5ed;pointer-events:auto;outline-offset:3px}
+#thumb-steering[hidden],.steering[hidden]{display:none!important}
+.thumb-caption{position:absolute;top:5px;left:0;right:0;text-align:center;font-size:9px;white-space:nowrap;pointer-events:none}.thumb-track{position:absolute;left:22px;right:22px;top:40px;height:4px;border-radius:4px;background:#80bcb86b;pointer-events:none}.thumb-center{position:absolute;height:18px;width:2px;left:50%;top:-7px;background:#a8c9c5}.thumb-knob{position:absolute;width:50px;height:44px;left:calc(50% - 25px);top:19px;border:2px solid #9fe9d4;border-radius:16px;background:#1a454e;display:grid;place-items:center;font-size:27px;box-shadow:0 3px 8px #0008;pointer-events:none}.thumb-ends{position:absolute;bottom:3px;left:10px;right:10px;display:flex;justify-content:space-between;font-size:9px;pointer-events:none}.thumb-ends b{font-weight:500}#thumb-steering.pressed{border-color:#b4ffdf;box-shadow:0 0 15px #8ff4d144}#thumb-steering.pressed .thumb-knob{background:#9cf5d8;color:#062622}
+@media(max-height:420px){#thumb-steering{height:67px}.thumb-caption{top:2px}.thumb-knob{top:13px;height:40px}.thumb-track{top:33px}.thumb-ends{bottom:2px}}
+@media(max-width:420px){#thumb-steering{width:calc(36vw - 4px);min-width:108px}.thumb-caption{font-size:8px}}
+.race-setup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.race-setup>.steering-choice{display:block}.race-setup select{width:100%;min-width:0}.race-setup .options{grid-column:1/-1}#pause-menu .compact{max-height:calc(100dvh - 24px);overflow-y:auto}

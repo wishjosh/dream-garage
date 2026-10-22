@@ -11,14 +11,14 @@ body.capture-only{padding:0;margin:0;overflow:hidden;background:#020810}body.cap
 <section class="intro">
 <h1>드림 개러지 · 운전석과 미러 검사</h1>
 <p class="notice">로컬 전용 검사 페이지입니다. <b>합성 PointerEvent와 QA 물리 진행</b>을 사용하며 실제 손가락·포인터 캡처·iPhone/Android 성능을 검증하지 않습니다. 합성 포인터에는 활성 캡처가 없으므로 검사 iframe의 버튼에만 capture 보조 처리를 적용합니다. 저장은 메모리로 격리하며 결과 파일을 자동 저장하지 않습니다.</p>
-<div class="row"><button id="run-all" class="primary">12개 화면 전체 검사 시작</button><button id="run-flow">시험 운전자·상금 별도 검사</button><button id="run-startup">로딩 중 화면 회전 검사</button><button id="stop" disabled>검사 중단</button><span id="summary" class="badge" role="status" aria-live="polite" data-state="idle">실행 대기</span></div>
+<div class="row"><button id="run-all" class="primary">12개 화면 전체 검사 시작</button><button id="run-slide">슬라이드 12개 화면 검사</button><button id="run-flow">시험 운전자·상금 별도 검사</button><button id="run-startup">로딩 중 화면 회전 검사</button><button id="stop" disabled>검사 중단</button><span id="summary" class="badge" role="status" aria-live="polite" data-state="idle">실행 대기</span></div>
 </section>
 <div class="workspace">
 <section class="preview-panel">
 <div class="row toolbar">
 <label>차량<select id="car"><option value="tavaculo">Tavaculo</option><option value="f2002">F2002</option></select></label>
 <label>화면<select id="size"><option value="844x390">844 × 390</option><option value="740x360">740 × 360</option><option value="390x844">390 × 844</option><option value="360x740">360 × 740</option><option value="320x568">320 × 568</option><option value="568x320">568 × 320</option></select></label>
-<label>장면<select id="scene"><option value="stationary">정지</option><option value="straight">직선 주행</option><option value="corner">코너</option><option value="left">최대 왼쪽 조향</option><option value="right">최대 오른쪽 조향</option><option value="reverse">후진</option><option value="drift">드리프트</option><option value="chase">차 뒤 시점</option><option value="mirror-left">미러 · 뒤 왼쪽 물체</option><option value="mirror-right">미러 · 뒤 오른쪽 물체</option><option value="mirror-front">미러 · 앞쪽 물체</option><option value="restored">회전 후 복원</option></select></label>
+<label>장면<select id="scene"><option value="stationary">정지</option><option value="slide">엄지 슬라이드</option><option value="straight">직선 주행</option><option value="corner">코너</option><option value="left">최대 왼쪽 조향</option><option value="right">최대 오른쪽 조향</option><option value="reverse">후진</option><option value="drift">드리프트</option><option value="chase">차 뒤 시점</option><option value="mirror-left">미러 · 뒤 왼쪽 물체</option><option value="mirror-right">미러 · 뒤 오른쪽 물체</option><option value="mirror-front">미러 · 앞쪽 물체</option><option value="restored">회전 후 복원</option></select></label>
 <button id="show-scene">선택 장면 보기</button><button id="rotate">화면 회전</button><button id="freeze">장면 정지</button><button id="expand">화면 크게 보기</button><button id="capture" title="Esc 키로 검사 화면에 돌아옵니다">게임 화면만 보기</button><label><input id="fit" type="checkbox" checked>화면에 맞춤</label>
 </div>
 <div id="screen-label" role="status">실행 버튼 또는 선택 장면 보기를 눌러 주세요.</div>
@@ -69,7 +69,7 @@ async function load(car,width,height){
   if(snap().screen==='welcome')click('#enter-garage');
   assert(snap().screen==='garage','검사 사이 차고 복귀 실패');
   await tick(70);win().dispatchEvent(new (win().Event)('resize'));
-  click(`[data-car="${car}"]`);selected('#view-select','cockpit');checked('#assist',false);checked('#auto-throttle',false);checked('#gaze-follow',true);click('#start');
+  click(`[data-car="${car}"]`);selected('#view-select','cockpit');selected('#steering-mode','buttons');checked('#assist',false);checked('#auto-throttle',false);checked('#gaze-follow',true);click('#start');
   qa().advance(3.5,null);qa().advance(4,{brake:true});await tick(130);
   assert(snap().mode==='race','경주 시작 실패');
   $('screen-label').textContent=`${car} · ${width} × ${height} · 실제 게임 iframe / 합성 입력 검사`;
@@ -338,12 +338,47 @@ async function runStartup(){
   catch(error){report.startup={passed:false,error:error.message,evidence:error.evidence||null};$('errors').textContent=error.message;setStatus('로딩 중 화면 회전 검사 확인 필요','failed');}
   finally{lock(false);updateReport();}
 }
-async function showScene(){if(running)return;stopRequested=false;lock(true);const car=$('car').value,[width,height]=$('size').value.split('x').map(Number),scene=$('scene').value;try{setStatus('장면 준비 · '+scene);await load(car,width,height);if(['straight','chase'].includes(scene)){await drive(['throttle'],2);await clear();}else if(scene==='corner'){qa().setAssist(true);await drive(['throttle'],7);await clear();}else if(['left','right'].includes(scene)){await recover();await drive([scene,'brake'],.75);}else if(scene==='reverse'){await recover();await drive(['reverse'],1);}else if(scene==='drift'){await drive(['throttle'],2);await drive(['left','drift'],.5);}else if(scene.startsWith('mirror-')){assert(car==='tavaculo','실내 미러는 Tavaculo 전용입니다.');qa().mirrorProbe({behind:scene!=='mirror-front',x:scene==='mirror-left'?-3:scene==='mirror-right'?3:0,distance:12});await tick(100);}else if(scene==='restored'){resize(height,width);await tick(140);win().dispatchEvent(new (win().Event)('resize'));qa().advance(0,null);resize(width,height);await tick(140);win().dispatchEvent(new (win().Event)('resize'));}if(scene==='chase')click('#camera');qa().advance(0,null);setFrozen(true);$('screen-label').textContent=`${car} · ${width} × ${height} · ${$('scene').selectedOptions[0].text} · 실제 렌더 정지 화면`;setStatus('선택 장면 준비 완료','idle');}catch(error){$('errors').textContent=error.message;setStatus('장면 준비 실패','failed');}finally{lock(false);}}
+async function showScene(){if(running)return;stopRequested=false;lock(true);const car=$('car').value,[width,height]=$('size').value.split('x').map(Number),scene=$('scene').value;try{setStatus('장면 준비 · '+scene);await load(car,width,height);if(scene==='slide'){click('#pause');const choice=q('#pause-steering-mode');choice.scrollIntoView({block:'center'});const cr=choice.getBoundingClientRect();assert(cr.width>=100&&cr.height>=44&&doc().elementFromPoint(cr.x+cr.width/2,cr.y+cr.height/2)===choice,'조향 선택 화면 가림');selected('#pause-steering-mode','slide');click('#resume');await drive(['throttle'],1.5);await clear();}else if(['straight','chase'].includes(scene)){await drive(['throttle'],2);await clear();}else if(scene==='corner'){qa().setAssist(true);await drive(['throttle'],7);await clear();}else if(['left','right'].includes(scene)){await recover();await drive([scene,'brake'],.75);}else if(scene==='reverse'){await recover();await drive(['reverse'],1);}else if(scene==='drift'){await drive(['throttle'],2);await drive(['left','drift'],.5);}else if(scene.startsWith('mirror-')){assert(car==='tavaculo','실내 미러는 Tavaculo 전용입니다.');qa().mirrorProbe({behind:scene!=='mirror-front',x:scene==='mirror-left'?-3:scene==='mirror-right'?3:0,distance:12});await tick(100);}else if(scene==='restored'){resize(height,width);await tick(140);win().dispatchEvent(new (win().Event)('resize'));qa().advance(0,null);resize(width,height);await tick(140);win().dispatchEvent(new (win().Event)('resize'));}if(scene==='chase')click('#camera');qa().advance(0,null);setFrozen(true);$('screen-label').textContent=`${car} · ${width} × ${height} · ${$('scene').selectedOptions[0].text} · 실제 렌더 정지 화면`;setStatus('선택 장면 준비 완료','idle');}catch(error){$('errors').textContent=error.message;setStatus('장면 준비 실패','failed');}finally{lock(false);}}
 $('run-all').onclick=runAll;$('run-flow').onclick=runFlow;$('run-startup').onclick=runStartup;$('stop').onclick=()=>{stopRequested=true;};$('show-scene').onclick=showScene;
 $('rotate').onclick=async()=>{if(!win().__raceQA)return;setFrozen(false);const[width,height]=currentSize;resize(height,width);await tick(140);win().dispatchEvent(new (win().Event)('resize'));qa().advance(0,null);setFrozen(true);$('screen-label').textContent=`${snap().car} · ${height} × ${width} · 회전 화면`;};
 $('freeze').onclick=()=>setFrozen(!frozen);$('expand').onclick=()=>{document.body.classList.toggle('preview-only');$('expand').textContent=document.body.classList.contains('preview-only')?'검사 결과 보기':'화면 크게 보기';fit();};$('fit').onchange=fit;addEventListener('resize',fit);fit();
 function exitCapture(event){if(event.key==='Escape'&&document.body.classList.contains('capture-only')){event.preventDefault();event.stopImmediatePropagation();document.body.classList.remove('capture-only');fit();}}
 addEventListener('keydown',exitCapture,true);
-$('capture').onclick=()=>{document.body.classList.add('capture-only');win().addEventListener('keydown',exitCapture,true);};</script>
+$('capture').onclick=()=>{document.body.classList.add('capture-only');win().addEventListener('keydown',exitCapture,true);};async function slideCase(car,width,height){
+ await load(car,width,height);setFrozen(true);
+ const saved=win().localStorage.getItem('hojin-city-gp:save:v1'),grid=snap().player,buttons=controlLayout();
+ click('#pause');const choice=q('#pause-steering-mode');choice.scrollIntoView({block:'center'});const cr=choice.getBoundingClientRect();assert(cr.width>=100&&cr.height>=44&&doc().elementFromPoint(cr.x+cr.width/2,cr.y+cr.height/2)===choice,'조향 선택 화면 가림');selected('#pause-steering-mode','slide');
+ assert(q('#steering-mode').value==='slide'&&snap().steeringControl.mode==='slide','조향 선택 동기화 실패');
+ assert(saved===win().localStorage.getItem('hojin-city-gp:save:v1'),'방식 변경이 저장 기록을 바꿈');click('#restart');qa().advance(3.5,{});
+ const start=snap().player;assert(Math.hypot(start.x-grid.x,start.z-grid.z)<.001&&start.distance===grid.distance,'비교 출발 위치·진행 불일치');
+ const pad=q('#thumb-steering');pad.setPointerCapture=()=>{};pad.releasePointerCapture=()=>{};pad.hasPointerCapture=()=>false;
+ const box=pad.getBoundingClientRect(),center={x:box.x+box.width/2,y:box.y+box.height/2};
+ assert(!pad.hidden&&q('.steering').hidden,'슬라이드 전환 표시 실패');
+ assert(box.width>=108&&box.height>=48&&box.left>=0&&box.right<=width&&box.top>=0&&box.bottom<=height,'슬라이드 크기·화면 범위 실패');
+ assert(doc().elementFromPoint(center.x,center.y)?.closest('#thumb-steering')===pad,'슬라이드가 가려짐');
+ for(const before of buttons.filter(b=>!['left','right'].includes(b.id))){const r=q('[data-control='+before.id+']').getBoundingClientRect();for(const k of ['x','y','width','height'])assert(Math.abs(r[k]-before[k])<.1,'오른쪽 버튼 위치 변경: '+before.id);assert(!(box.x<r.right&&r.x<box.right&&box.y<r.bottom&&r.y<box.bottom),'슬라이드·페달 겹침');}
+ const event=(type,x=center.x,id=81)=>pad.dispatchEvent(new (win().PointerEvent)(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',button:0,buttons:type==='pointerup'?0:1,clientX:x,clientY:center.y}));
+ const move=value=>event('pointermove',center.x-value*box.width*.36);
+ event('pointerdown');assert(snap().steeringControl.active&&snap().steeringControl.value===0,'터치 시작 시 조향 점프');
+ event('pointerdown',center.x,82);event('pointermove',center.x-100,82);assert(snap().steeringControl.value===0,'두 번째 손가락이 조향을 탈취');
+ down('throttle',1);qa().advance(2,null);assert(snap().touches===2&&snap().player.forwardSpeed>5,'슬라이드·가속 동시 조작 실패');
+ move(.25);qa().advance(.6,null);const quarter=snap();cameraCheck(car);mirrorCheck(car);instrumentReadabilityCheck(car);if(car==='tavaculo')assert(quarter.cockpitStats.steering.target<0&&quarter.cockpitStats.steering.lookDegrees<0,'슬라이드 시선 방향 오류');assert(Math.abs(quarter.player.steeringAngle-.46*.25)<.004,'중간 조향각 유지 실패');
+ move(.30);qa().advance(.4,null);assert(Math.abs(snap().player.steeringAngle-.46*.30)<.004,'미세 조정 실패');
+ release();down('brake',2);move(-.25);qa().advance(2,null);assert(snap().player.speed<1&&snap().player.steeringAngle<0,'슬라이드 반대 조향·제동 실패');release();
+ for(const type of ['pointerup','pointercancel','lostpointercapture']){event('pointerdown');move(.4);event(type);assert(!snap().steeringControl.active&&snap().steeringControl.value===0,'해제 실패: '+type);}
+ click('#rescue');event('pointerdown');down('reverse',3);qa().advance(1,null);assert(snap().player.forwardSpeed<-.6,'슬라이드와 후진 실패');event('pointerup');release();
+ click('#pause');click('#restart');qa().advance(3.5,{});down('throttle',4);qa().advance(2,null);release();event('pointerdown');move(.8);down('drift',5);qa().advance(.6,null);assert(snap().player.drifting&&snap().touches===2,'슬라이드·드리프트 실패');event('pointercancel');release();
+ click('#rescue');event('pointerdown');move(.3);click('#pause');assert(!snap().steeringControl.active&&snap().touches===0,'일시정지 입력 해제 실패');
+ selected('#pause-steering-mode','buttons');assert(q('#thumb-steering').hidden&&!q('.steering').hidden,'버튼 복귀 실패');selected('#pause-steering-mode','slide');click('#resume');
+ event('pointerdown');move(.4);resize(height,width);await tick(100);win().dispatchEvent(new (win().Event)('resize'));assert(!snap().steeringControl.active&&snap().touches===0,'회전 입력 해제 실패');
+ resize(width,height);await tick(100);event('pointerdown');move(.4);win().dispatchEvent(new (win().Event)('blur'));assert(snap().mode==='paused'&&!snap().steeringControl.active,'창 전환 입력 해제 실패');click('#resume');
+ const beforeView=snap().view;click('#camera');assert(snap().view!==beforeView&&snap().steeringControl.mode==='slide','시점 전환 중 방식 변경');click('#camera');
+ assert(win().localStorage.getItem('hojin-city-gp:save:v1')===saved,'검사 중 기존 저장 변경');
+ const errors=win().__cockpitReviewErrors;assert(!errors.length,'실행 오류: '+errors.join('/'));
+ return{car,width,height,passed:true,pad:{x:box.x,y:box.y,width:box.width,height:box.height},quarterAngle:quarter.player.steeringAngle,quarterTarget:quarter.steeringControl.value,rightPedalsUnchanged:true,sameGrid:true,saveUnchanged:true,multitouch:'synthetic only',runtimeErrors:errors};
+}
+async function runSlides(){if(running)return;stopRequested=false;lock(true);$('run-slide').disabled=true;report={checks:[],method:'Same game iframe; synthetic PointerEvents with capture no-op; memory-only seeded save; no physical-phone claim'};updateReport();try{for(const car of ['tavaculo','f2002'])for(const[w,h]of sizes){setStatus('슬라이드 검사 · '+car+' '+w+'×'+h);try{addResult(car+' '+w+'×'+h,true,await slideCase(car,w,h));}catch(error){addResult(car+' '+w+'×'+h,false,null,error.message);}}report.passed=report.checks.length===12&&report.checks.every(c=>c.passed);setStatus((report.passed?'통과':'실패')+' · 슬라이드 '+report.checks.filter(c=>c.passed).length+'/12',report.passed?'passed':'failed');}finally{lock(false);$('run-slide').disabled=false;updateReport();}}
+$('run-slide').onclick=runSlides;
+</script>
 </body>
 </html>
