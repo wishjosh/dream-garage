@@ -16,6 +16,14 @@ const reviewBootstrap=`<script>
  const memory={getItem:key=>data.has(String(key))?data.get(String(key)):null,setItem:(key,value)=>data.set(String(key),String(value)),removeItem:key=>data.delete(String(key)),clear:()=>data.clear(),key:index=>[...data.keys()][index]??null,get length(){return data.size;}};
  Object.defineProperty(window,'localStorage',{configurable:true,value:memory});
  window.__cockpitReviewStorageIsolated=true;
+ if(new URLSearchParams(location.search).get('handling-save')==='1'){
+  const stock={paint:'paint-stock',wheels:'wheels-stock',engine:'engine-stock',tires:'tires-stock',brakes:'brakes-stock'};
+  const fixture={version:1,coins:4321,races:12,best:{tavaculo:29.5,f2002:28.75},car:'tavaculo',view:'cockpit',assist:false,auto:false,
+   owned:[...Object.values(stock),'paint-mint','wheels-gold','engine-sprint','tires-grip','brakes-sport','paint-violet'],
+   garage:{tavaculo:{paint:'paint-mint',wheels:'wheels-gold',engine:'engine-sprint',tires:'tires-grip',brakes:'brakes-sport'},f2002:{...stock,paint:'paint-violet'}}};
+  memory.setItem('hojin-city-gp:save:v1',JSON.stringify(fixture));window.__citySaveFixture=fixture;
+ }
+
  window.__cockpitReviewErrors=[];
  addEventListener('error',event=>{window.__cockpitReviewErrors.push(event.message||('Resource error: '+(event.target?.src||event.target?.href||'unknown')));},true);
  addEventListener('unhandledrejection',event=>window.__cockpitReviewErrors.push(String(event.reason?.stack||event.reason)));

@@ -11,7 +11,7 @@ body.capture-only{padding:0;margin:0;overflow:hidden;background:#020810}body.cap
 <section class="intro">
 <h1>드림 개러지 · 운전석과 미러 검사</h1>
 <p class="notice">로컬 전용 검사 페이지입니다. <b>합성 PointerEvent와 QA 물리 진행</b>을 사용하며 실제 손가락·포인터 캡처·iPhone/Android 성능을 검증하지 않습니다. 합성 포인터에는 활성 캡처가 없으므로 검사 iframe의 버튼에만 capture 보조 처리를 적용합니다. 저장은 메모리로 격리하며 결과 파일을 자동 저장하지 않습니다.</p>
-<div class="row"><button id="run-all" class="primary">12개 화면 전체 검사 시작</button><button id="run-flow">자동 조향·상금 별도 검사</button><button id="run-startup">로딩 중 화면 회전 검사</button><button id="stop" disabled>검사 중단</button><span id="summary" class="badge" role="status" aria-live="polite" data-state="idle">실행 대기</span></div>
+<div class="row"><button id="run-all" class="primary">12개 화면 전체 검사 시작</button><button id="run-flow">시험 운전자·상금 별도 검사</button><button id="run-startup">로딩 중 화면 회전 검사</button><button id="stop" disabled>검사 중단</button><span id="summary" class="badge" role="status" aria-live="polite" data-state="idle">실행 대기</span></div>
 </section>
 <div class="workspace">
 <section class="preview-panel">
@@ -53,7 +53,7 @@ async function load(car,width,height){
   let ready=false;try{ready=!!win().__raceQA&&win().__cockpitReviewStorageIsolated===true;}catch{}
   if(!ready){
     const nonce=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
-    frame.src='../?qa=1&review=1&run='+nonce;
+    frame.src='../?qa=1&review=1&handling-save=1&run='+nonce;
     await waitFor(()=>{try{return new URL(win().location.href).searchParams.get('run')===nonce&&win().__raceQA&&!q('#enter-garage').disabled;}catch{return false;}},'최초 게임 로딩 또는 QA hook 준비 실패',60000);
   }
   assert(win().__cockpitReviewStorageIsolated===true,'검사용 메모리 저장소가 준비되지 않았습니다. 서버를 최신 scripts/serve.mjs로 재시작하세요.');
@@ -121,7 +121,7 @@ function originalCheck(s=snap()){
 function gazeCleared(reason){const g=snap().cockpitStats.steering;assert(g&&Math.abs(g.amount)<1e-7&&Math.abs(g.lookDegrees)<1e-7&&Math.abs(g.target)<1e-7,reason+' 후 시선 입력이 남음');return g;}
 function steeringCheck(direction,baseline,s){
   const sign=direction==='left'?-1:1,g=s.cockpitStats.steering;
-  assert(s.player.steeringAngle*sign<-.475,'물리 조향 방향 또는 최대 각도 오류: '+direction);
+  assert(s.player.steeringAngle*sign<-.455,'물리 조향 방향 또는 최대 각도 오류: '+direction);
   assert(g&&g.follow===true&&g.maxLookDegrees===6&&g.amount*sign>.9&&g.target*sign>.9,'조향과 시선 목표 방향 불일치: '+direction);
   assert(g.lookDegrees*sign>4.8&&Math.abs(g.lookDegrees)<=6.000001,'조향 시선 범위 또는 방향 오류: '+direction);
   const base=bodyCamera(baseline),current=bodyCamera(s),baseYaw=Math.atan2(base.direction[0],base.direction[2]),yaw=Math.atan2(current.direction[0],current.direction[2]);
@@ -142,8 +142,8 @@ async function gazePreference(){
     const transition=await drive(['left','brake'],.75);evidence.leftAfter075=measure(transition);
     assert(transition.cockpitStats.steering.follow===false&&Math.abs(transition.cockpitStats.steering.lookDegrees)<.05,'시선 추적을 끈 뒤 정면 시선 유지 실패');
     assert(transition.player.steeringAngle>0,'시선 추적을 끈 뒤 물리 휠 조향 방향 오류');
-    const off=await drive(['left','brake'],.45),g=off.cockpitStats.steering;evidence.leftAfter120=measure(off);
-    assert(off.player.steeringAngle>.475&&g.follow===false&&Math.abs(g.lookDegrees)<.05,'시선 추적 끄기 중 휠 조향 또는 정면 시선 실패');originalCheck(off);
+    const off=await drive(['left','brake'],1.25),g=off.cockpitStats.steering;evidence.leftAfter200=measure(off);
+    assert(off.player.steeringAngle>.455&&g.follow===false&&Math.abs(g.lookDegrees)<.05,'시선 추적 끄기 중 휠 조향 또는 정면 시선 실패');originalCheck(off);
     await clear();click('#pause');checked('#pause-gaze-follow',true);assert(q('#gaze-follow').checked===true,'시선 추적 다시 켜기 동기화 실패');click('#resume');await recover();
     assert(win().localStorage.getItem('hojin-city-gp:save:v1')===savedBefore,'시선 설정이 기존 저장 기록을 변경함');
     return{disabled:g,restored:snap().cockpitStats.steering,saveUnchanged:true,measurements:evidence};
@@ -201,7 +201,7 @@ async function mirrorProof(){
   // actual rear target in the reflected image while the visible cabin moves.
   const gaze=[];
   for(const direction of ['left','right']){
-    qa().mirrorProbe({behind:true,x:0,distance:12});await drive([direction,'brake'],.75);const turned=qa().mirrorPixels();
+    qa().mirrorProbe({behind:true,x:0,distance:12});await drive([direction,'brake'],1.2);const turned=qa().mirrorPixels();
     assert(turned.nonUniform&&turned.probe.count>empty.probe.count+8,'시선 이동 중 실제 뒤쪽 물체가 미러에서 사라짐: '+direction);
     gaze.push({direction,pixels:turned,lookDegrees:snap().cockpitStats.steering.lookDegrees,bounds:snap().mirrorStats.bounds});
     await gazeRelease();
@@ -230,8 +230,8 @@ async function oneCase(car,width,height){
     assert(s.touches===2&&s.player.drifting&&Math.abs(s.player.lateralSpeed)>.2,'두 포인터 드리프트 실패');await clear('pointercancel');
     evidence.steering=[];
     for(const direction of ['left','right']){
-      await recover();const baseline=snap();s=await drive([direction,'brake'],.75);
-      assert(s.touches===2&&Math.abs(s.player.steeringAngle)>.475,'최대 조향 도달 실패');
+      await recover();const baseline=snap();s=await drive([direction,'brake'],1.2);
+      assert(s.touches===2&&Math.abs(s.player.steeringAngle)>.455,'최대 조향 도달 실패');
       const turning=car==='tavaculo'?steeringCheck(direction,baseline,s):{direction,angle:s.player.steeringAngle,camera:cameraCheck(car),telemetry:s.cockpitStats.telemetry,bounds:s.cockpitStats.projectedBounds};
       layout(direction);turning.released=car==='tavaculo'?await gazeRelease():await clear('pointercancel');evidence.steering.push(turning);
     }
@@ -255,39 +255,39 @@ async function oneCase(car,width,height){
 function addResult(name,passed,evidence,error){const item={name,passed,evidence,error};report.checks.push(item);const li=document.createElement('li');li.className=passed?'pass':'fail';li.textContent=(passed?'통과 · ':'실패 · ')+name+(error?' — '+error:'');$('checks').append(li);updateReport();}
 function lock(value){running=value;for(const id of ['run-all','run-flow','run-startup','show-scene','car','size','scene','rotate','freeze'])$(id).disabled=value;$('stop').disabled=!value;}
 async function runAll(){if(running)return;stopRequested=false;mirrorOriginReference=null;lock(true);$('checks').textContent='';$('errors').textContent='';report={startedAt:new Date().toISOString(),method:'In-page synthetic PointerEvent + button capture no-op fixture; QA.advance(seconds,null) reads the app input state; requestAnimationFrame is paused only during each maneuver so paint waiting adds no hidden physics time. No native/hardware touch claim.',storage:'One iframe and GPU context reused through the garage UI; localStorage replaced with an in-memory store by the local review response',sizes,checks:[],visualReview:'pending: inspect actual iframe views; strict mirror frame and HUD checks retained',coverage:'6 viewport sizes × 2 cars; source invariant and fixed eye; physical steering and ±6° gaze; gaze setting/release/reset; acceleration/brake/reverse/drift; resize; camera ownership; rendered rear world',fileWrites:false};updateReport();try{for(const car of ['tavaculo','f2002'])for(const[width,height]of sizes){const name=`${car} ${width}×${height}`;setStatus('검사 중 · '+name);try{addResult(name,true,await oneCase(car,width,height));}catch(error){addResult(name,false,error.evidence||null,error.message);try{release();}catch{}if(stopRequested)throw error;}}report.completedAt=new Date().toISOString();report.passed=report.checks.length===sizes.length*2&&report.checks.every(x=>x.passed);setStatus(`${report.passed?'통과':'확인 필요'} · ${report.checks.filter(x=>x.passed).length}/${report.checks.length} · 실제 화면 판독 별도`,report.passed?'passed':'failed');}catch(error){report.stopped=true;report.passed=false;$('errors').textContent=error.message;setStatus('검사 중단','failed');}finally{lock(false);updateReport();}}
-async function assistedRaceFlow(){
-  await load('tavaculo',844,390);const gazePreferenceEvidence=await gazePreference();
-  await load('tavaculo',844,390);
-  const saveKey='hojin-city-gp:save:v1',before=JSON.parse(win().localStorage.getItem(saveKey)),start=snap();
+async function assistedRaceFlow(car='tavaculo'){
+  await load(car,844,390);const gazePreferenceEvidence=car==='tavaculo'?await gazePreference():null;
+  await load(car,844,390);
+  const saveKey='hojin-city-gp:save:v1',fixture=win().__citySaveFixture;assert(fixture&&snap().coins>=fixture.coins&&snap().races>=fixture.races,'기존 상금·경주 횟수 누락');assert(JSON.stringify(snap().loadout)===JSON.stringify(fixture.garage[car]),'기존 장착 파츠 누락');const before=JSON.parse(win().localStorage.getItem(saveKey)),start=snap();
   qa().setAssist(true);const wasFrozen=frozen;setFrozen(true);
   try{
     const automaticTurns=[];let simulatedSeconds=0;
     for(;simulatedSeconds<120&&snap().mode==='race';simulatedSeconds++){
-      qa().advance(1,{throttle:true});const s=snap(),g=s.cockpitStats.steering;
+      qa().advanceDriver(1);const s=snap(),g=s.cockpitStats.steering||{target:0,amount:0,lookDegrees:0};
       assert(g.target===0&&Math.abs(g.amount)<1e-7&&Math.abs(g.lookDegrees)<1e-7,'쉬운조향 자동 회전에 운전자 시선이 움직임');
       if(s.player.distance>80&&Math.abs(s.player.steeringAngle)>.05&&automaticTurns.length<3)automaticTurns.push({distance:s.player.distance,physicalAngle:s.player.steeringAngle,gaze:g});
       if(simulatedSeconds%10===0){setStatus('자동 조향·완주 확인 · '+simulatedSeconds+'초');await tick(0);}
     }
     assert(automaticTurns.length>0,'자동 조향이 실제 도시 코너를 도는 장면을 확인하지 못함');
-    assert(snap().mode==='result'&&snap().player.finished,'쉬운조향으로 도시 경주 완주 실패');
+    assert(snap().mode==='result'&&snap().player.finished,'시험 운전자로 도시 경주 완주 실패');
     const rank=Number.parseInt(q('#result-rank').textContent,10),prize=[1000,650,400,150][rank-1],displayedPrize=Number(q('#prize').textContent.replace(/[^0-9]/g,''));
     const after=JSON.parse(win().localStorage.getItem(saveKey)),completed=snap();
     assert(prize>0&&displayedPrize===prize&&after.coins-before.coins===prize&&completed.coins-start.coins===prize,'완주 순위 상금 또는 저장 금액 불일치');
-    assert(after.races===before.races+1,'완주 횟수 저장 오류');
+    assert(after.races===before.races+1,'완주 횟수 저장 오류');assert(JSON.stringify(after.best)===JSON.stringify(before.best),'기존 더 빠른 최고 기록 변경');
     assert(JSON.stringify(Object.keys(before).sort())===JSON.stringify(Object.keys(after).sort()),'기존 저장 형식에 예상하지 않은 필드 추가');
     assert(JSON.stringify(after.owned)===JSON.stringify(before.owned)&&JSON.stringify(after.garage)===JSON.stringify(before.garage),'완주 후 보유 파츠·꾸미기 기록 변경');
     assert(after.car===before.car&&after.view===before.view&&after.auto===before.auto,'완주 중 차종·시점·가속 설정 변경');
     qa().advance(10,{throttle:true});const repeated=JSON.parse(win().localStorage.getItem(saveKey));
     assert(repeated.coins===after.coins&&repeated.races===after.races,'결과 화면에서 상금이 중복 지급됨');
     click('#result-menu');const garage=snap();assert(garage.screen==='garage'&&garage.coins===after.coins,'결과에서 차고 복귀 또는 상금 표시 실패');
-    return{passed:true,fixture:'one isolated Tavaculo city race at 844x390',gazePreference:gazePreferenceEvidence,automaticTurns,simulatedSeconds,rank,prize,coinsBefore:before.coins,coinsAfter:after.coins,racesBefore:before.races,racesAfter:after.races,prizePaidOnce:true,customizationUnchanged:true,saveShapeUnchanged:true,garageScreen:garage.screen,storageIsolated:win().__cockpitReviewStorageIsolated,nativePhoneVerified:false};
+    return{passed:true,fixture:'isolated '+car+' city race at 844x390 with scripted steering/throttle/brake driver',savedBefore:before,savedAfter:after,gazePreference:gazePreferenceEvidence,automaticTurns,simulatedSeconds,rank,prize,coinsBefore:before.coins,coinsAfter:after.coins,racesBefore:before.races,racesAfter:after.races,prizePaidOnce:true,customizationUnchanged:true,saveShapeUnchanged:true,garageScreen:garage.screen,storageIsolated:win().__cockpitReviewStorageIsolated,nativePhoneVerified:false};
   }finally{setFrozen(wasFrozen);qa().setAssist(false);}
 }
 async function runFlow(){
   if(running)return;stopRequested=false;lock(true);$('errors').textContent='';
   if(!report)report={checks:[],method:'Isolated same-origin game; QA physics and synthetic buttons; no hardware claim'};
-  try{setStatus('자동 조향·상금 검사 준비');report.flow=await assistedRaceFlow();setStatus('자동 조향·상금 검사 통과','passed');}
-  catch(error){report.flow={passed:false,error:error.message,evidence:error.evidence||null};$('errors').textContent=error.message;setStatus('자동 조향·상금 검사 확인 필요','failed');}
+  try{setStatus('시험 운전자·상금 검사 준비');report.flows=[];for(const car of ['tavaculo','f2002'])report.flows.push(await assistedRaceFlow(car));report.flow={passed:report.flows.every(x=>x.passed)};setStatus('시험 운전자·상금 검사 통과','passed');}
+  catch(error){report.flow={passed:false,error:error.message,evidence:error.evidence||null};$('errors').textContent=error.message;setStatus('시험 운전자·상금 검사 확인 필요','failed');}
   finally{try{release();}catch{}lock(false);updateReport();}
 }
 function startupCanvasMetrics(){

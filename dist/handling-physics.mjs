@@ -39,9 +39,9 @@ export function stepCar(s,input={},dt=DT,options={}){
   for(let i=0;i<count;i++)substep(s,input,dt/count,options);
   return s;
 }
-function substep(s,input={},dt=DT,{walls=true}={}){
+function substep(s,input={},dt=DT,{walls=true,vehicle=CAR}={}){
   if(!Number.isFinite(dt)||dt<=0||s.done)return s;
-  const c=CAR,L=c.a+c.b,speed=Math.abs(s.u);
+  const c=vehicle,L=c.a+c.b,speed=Math.abs(s.u);
   const steerTarget=clamp(Number(input.steer)||0,-1,1)*c.maxSteer;
   s.steer=mix(s.steer,steerTarget,1-Math.exp(-dt*9));
   const brake=clamp(Number(input.brake)||0,0,1),reverse=!!input.reverse;
@@ -51,7 +51,7 @@ function substep(s,input={},dt=DT,{walls=true}={}){
   if(s.reverseBlocked)gas=0;
   s.gas=brake||s.reverseBlocked?0:mix(s.gas,gas,1-Math.exp(-dt*(gas>s.gas?5:12)));s.braking=brake;s.reverse=reverse&&s.reverseAllowed;
   const acceleration=clamp(s.ax,-9,7),transfer=c.mass*acceleration*c.height/L;
-  const frontLoad=clamp(c.mass*9.81*c.b/L-transfer,2000,c.mass*9.81-2000);
+  const frontLoad=clamp(c.mass*9.81*c.b/L-transfer,2000*c.mass/CAR.mass,c.mass*9.81-2000*c.mass/CAR.mass);
   const rearLoad=c.mass*9.81-frontLoad,frontCap=frontLoad*c.frontMu,rearBase=rearLoad*c.rearMu;
   const drive=(s.reverse?-c.engine*.32:s.u<-.2?0:c.engine)*s.gas*clamp(1-(speed/c.maxSpeed)**4,0,1);
   const stopping=brake||(s.reverseBlocked?1:0)||(!reverse&&s.u<-.2&&gas ? .65 : 0);
