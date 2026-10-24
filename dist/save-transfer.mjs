@@ -1,4 +1,4 @@
-import {CARS,CATEGORIES,CATALOG,normalizeSave,itemById} from './garage-core.mjs';
+import {CARS,CATEGORIES,CATALOG,normalizeSave,itemById} from './garage-core.mjs?v=city-tour-1';
 
 export const SAVE_KEY='hojin-city-gp:save:v1';
 export const BACKUP_KEY='hojin-city-gp:save:before-import:v1';
@@ -16,7 +16,7 @@ function shape(value,allowed,required=allowed){
 }
 function integer(value,max=Number.MAX_SAFE_INTEGER){return Number.isSafeInteger(value)&&value>=0&&value<=max;}
 function checkSave(value,legacy=false){
- shape(value,SAVE_FIELDS,legacy?['version']:SAVE_FIELDS);
+ shape(value,[...SAVE_FIELDS,'courseBest'],legacy?['version']:SAVE_FIELDS);
  if(value.version!==1)throw error('unsupported_version','이 저장 버전은 아직 불러올 수 없어요. 게임을 새로고침해 주세요.');
  if(own(value,'coins')&&!integer(value.coins,1e9))invalid();
  if(own(value,'races')&&!integer(value.races))invalid();
@@ -27,6 +27,7 @@ function checkSave(value,legacy=false){
   shape(value.best,CARS,[]);
   for(const time of Object.values(value.best))if(typeof time!=='number'||!Number.isFinite(time)||time<0)invalid();
  }
+ if(own(value,'courseBest')){shape(value.courseBest,['bayfront-long-1'],[]);for(const times of Object.values(value.courseBest)){shape(times,CARS,[]);for(const time of Object.values(times))if(typeof time!=='number'||!Number.isFinite(time)||time<0)invalid();}}
  const owned=new Set(CATALOG.filter(item=>item.price===0).map(item=>item.id));
  if(own(value,'owned')){
   if(!Array.isArray(value.owned)||value.owned.length>CATALOG.length||new Set(value.owned).size!==value.owned.length)invalid();
@@ -43,7 +44,7 @@ function checkSave(value,legacy=false){
 }
 export function validateSave(value){
  checkSave(value);
- return {version:1,coins:value.coins,best:{...value.best},car:value.car,view:value.view,assist:value.assist,auto:value.auto,owned:[...value.owned],garage:Object.fromEntries(CARS.map(car=>[car,{...value.garage[car]}])),races:value.races};
+ return {version:1,...(value.courseBest?{courseBest:JSON.parse(JSON.stringify(value.courseBest))}:{}),coins:value.coins,best:{...value.best},car:value.car,view:value.view,assist:value.assist,auto:value.auto,owned:[...value.owned],garage:Object.fromEntries(CARS.map(car=>[car,{...value.garage[car]}])),races:value.races};
 }
 function storedSave(value){checkSave(value,true);return validateSave(normalizeSave(value));}
 function timestamp(value){
@@ -57,7 +58,7 @@ function parsedJSON(text){
 }
 export function summarizeSave(value){
  const save=validateSave(value);
- return {coins:save.coins,races:save.races,paidOwned:save.owned.map(itemById).filter(item=>item.price>0).map(({id,name,category})=>({id,name,category})),garage:save.garage,best:save.best,car:save.car,view:save.view,assist:save.assist,auto:save.auto};
+ return {courseBest:save.courseBest||{},coins:save.coins,races:save.races,paidOwned:save.owned.map(itemById).filter(item=>item.price>0).map(({id,name,category})=>({id,name,category})),garage:save.garage,best:save.best,car:save.car,view:save.view,assist:save.assist,auto:save.auto};
 }
 export function createTransfer(value,{exportedAt=new Date().toISOString()}={}){
  const text=JSON.stringify({app:APP,formatVersion:1,exportedAt:timestamp(exportedAt),save:validateSave(value)},null,2);
@@ -95,7 +96,7 @@ function rollback(storage,key,raw){
  try{writeExact(storage,key,raw);return true;}catch{return false;}
 }
 function equalityKey(save){
- return JSON.stringify([save.coins,save.races,save.car,save.view,save.assist,save.auto,[...save.owned].sort(),CARS.map(car=>save.best[car]??null),CARS.map(car=>Object.keys(CATEGORIES).map(category=>save.garage[car][category]))]);
+ return JSON.stringify([CARS.map(car=>save.courseBest?.['bayfront-long-1']?.[car]??null),save.coins,save.races,save.car,save.view,save.assist,save.auto,[...save.owned].sort(),CARS.map(car=>save.best[car]??null),CARS.map(car=>Object.keys(CATEGORIES).map(category=>save.garage[car][category]))]);
 }
 function unchanged(raw,save){
  const current=snapshot(raw);return !current.invalid&&equalityKey(current.save)===equalityKey(save);

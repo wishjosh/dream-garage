@@ -1,17 +1,19 @@
-import {installCitySteering} from './city-steering.mjs?v=city-feel-1';
-import {installSaveTransfer} from './save-transfer-ui.mjs?v=save-transfer-1';
-import {SAVE_KEY} from './save-transfer.mjs?v=save-transfer-1';
+import {createCityCourse,COURSE_ID,COURSE_NAME,SECTORS,courseSector} from './city-course.mjs?v=city-tour-1';
+import {createImpactSound} from './collision-feel.mjs?v=city-tour-1';
+import {installCitySteering} from './city-steering.mjs?v=city-tour-1';
+import {installSaveTransfer} from './save-transfer-ui.mjs?v=city-tour-1';
+import {SAVE_KEY} from './save-transfer.mjs?v=city-tour-1';
 import {createCockpit} from './cockpit-visual.mjs?v=gallardo-cockpit-1';
 import {createRearView} from './rear-view.mjs?v=original-city-1';
-import {createOriginalCockpit} from './original-cockpit.mjs?v=city-feel-1';
+import {createOriginalCockpit} from './original-cockpit.mjs?v=city-tour-1';
 import {createSteeringState,stepSteering,MAX_LOOK_DEGREES} from './cockpit-study-steering.mjs?v=steering-look-1';
 import {splitWheelVisuals,syncWheelVisuals} from './wheel-visual.mjs?v=wheels-1';
 import * as T from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 import {RoomEnvironment} from './vendor/RoomEnvironment.js';
-import {clamp,mod,trackFrame,nearestTrack,makeRacer,rankOf,finishRacer,PRIZES} from './race-core.mjs';
-import {RacePhysics,FIXED_DT} from './race-handling.mjs?v=city-feel-1';
-import {CATALOG,CATEGORIES,normalizeSave,transact,tuning,itemById} from './garage-core.mjs';
+import {clamp,mod,trackFrame,nearestTrack,makeRacer,rankOf,finishRacer,PRIZES} from './race-core.mjs?v=city-tour-1';
+import {RacePhysics,FIXED_DT} from './race-handling.mjs?v=city-tour-1';
+import {CATALOG,CATEGORIES,normalizeSave,transact,tuning,itemById} from './garage-core.mjs?v=city-tour-1';
 import {dressCar,disposeDress,buildGarage} from './garage-visual.mjs?v=design-1';
 
 const $=id=>document.getElementById(id),canvas=$('world');
@@ -41,16 +43,13 @@ async function boot(){
  const material=(color,roughness=.7,metalness=0)=>new T.MeshStandardMaterial({color,roughness,metalness});
  const mats={road:material('#707c87',.86),walk:material('#64778a'),navy:material('#142b43'),white:material('#c1d3de'),cyan:basic('#66f4f1'),pink:basic('#ff7197'),gold:basic('#ffdc9d'),dark:material('#143b53',.3,.5)};
  function box(w,h,d,x,y,z,mat=mats.navy,parent=scene){const m=new T.Mesh(unit,mat);m.scale.set(w,h,d);m.position.set(x,y,z);parent.add(m);return m;}
- const points=[[0,0],[0,85],[-10,125],[-65,145],[-130,125],[-175,85],[-180,20],[-145,-30],[-75,-55],[-15,-30]].map(([x,z])=>new T.Vector3(x,0,z));
- const curve=new T.CatmullRomCurve3(points,true,'catmullrom',.35),length=curve.getLength(),N=420;
- const frames=Array.from({length:N},(_,i)=>{const t=i/N,p=curve.getPointAt(t),d=curve.getTangentAt(t).normalize();return{x:p.x,z:p.z,tx:d.x,tz:d.z,rx:d.z,rz:-d.x,s:t*length};});
- const track={length,frames};
+ const track=createCityCourse(),{length,frames}=track,N=frames.length;
  function ribbon(width,y,mat){
   const v=[],uv=[],idx=[];for(let i=0;i<=N;i++){const f=frames[i%N];for(const k of [-1,1]){v.push(f.x+f.rx*width*k,y,f.z+f.rz*width*k);uv.push((k+1)*width/7,i/N*length/7);}if(i<N){let a=i*2;idx.push(a,a+2,a+1,a+1,a+2,a+3);}}
   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(v,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();const mesh=new T.Mesh(g,mat);scene.add(mesh);return mesh;
  }
  box(1400,.5,1400,-100,-.6,30,material('#163d43'));
- const bay=new T.Mesh(new T.PlaneGeometry(370,410,32,32),new T.MeshStandardMaterial({color:'#08617d',roughness:.28,metalness:.55,emissive:'#073b59',emissiveIntensity:.4}));bay.rotation.x=-Math.PI/2;bay.position.set(195,-.12,65);scene.add(bay);
+ const bay=new T.Mesh(new T.PlaneGeometry(370,600,1,1),new T.MeshStandardMaterial({color:'#08617d',roughness:.28,metalness:.55,emissive:'#073b59',emissiveIntensity:.4}));bay.rotation.x=-Math.PI/2;bay.position.set(199,-.12,170);scene.add(bay);const northBay=new T.Mesh(new T.PlaneGeometry(500,150),bay.material);northBay.rotation.x=-Math.PI/2;northBay.position.set(-140,-.12,440);scene.add(northBay);
  ribbon(12,0,mats.walk);ribbon(8.2,.045,mats.road);
  const asphalt=await new T.TextureLoader().loadAsync('./assets/materials/asphalt-color.jpg');asphalt.colorSpace=T.SRGBColorSpace;asphalt.wrapS=asphalt.wrapT=T.RepeatWrapping;asphalt.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),4);mats.road.map=asphalt;mats.road.needsUpdate=true;
  function instances(geo,mat,items){const inst=new T.InstancedMesh(geo,mat,items.length),o=new T.Object3D();items.forEach((a,i)=>{o.position.set(...a.pos);o.rotation.set(0,a.angle||0,0);o.scale.set(...a.scale);o.updateMatrix();inst.setMatrixAt(i,o.matrix);if(a.color)inst.setColorAt(i,new T.Color(a.color));});inst.instanceMatrix.needsUpdate=true;scene.add(inst);return inst;}
@@ -91,7 +90,7 @@ async function boot(){
  beam(new T.Vector3(48,0,90),new T.Vector3(57,25,90),.42,mats.white);beam(new T.Vector3(66,0,90),new T.Vector3(57,25,90),.42,mats.white);
  function sign(label,w,h){const c=document.createElement('canvas');c.width=1024;c.height=256;const x=c.getContext('2d');x.fillStyle='#102d44';x.fillRect(0,0,1024,256);x.fillStyle='#71eeee';x.fillRect(0,244,1024,12);x.textAlign='center';x.textBaseline='middle';x.font='700 80px system-ui';x.fillStyle='#f0ffff';x.fillText(label,512,115);x.font='500 26px system-ui';x.fillStyle='#8bdbe8';x.fillText('B A Y F R O N T   N I G H T   R A C E',512,204);const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;return new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map:tex,side:T.DoubleSide}));}
  function gantry(s,label){const f=trackFrame(track,s),g=new T.Group();g.position.set(f.x,0,f.z);g.rotation.y=Math.atan2(f.tx,f.tz);scene.add(g);box(.4,8.4,.5,-9,4.2,0,mats.navy,g);box(.4,8.4,.5,9,4.2,0,mats.navy,g);box(.1,7.8,.1,-8.8,4,0,mats.pink,g);box(.1,7.8,.1,8.8,4,0,mats.cyan,g);const p=sign(label,18.8,2.9);p.position.set(0,8.2,0);p.rotation.y=Math.PI;g.add(p);return g;}
- gantry(14,'SPEED GRAND PRIX');gantry(length*.51,'BAYFRONT');
+ gantry(14,'SPEED GRAND PRIX');for(const sector of SECTORS.slice(1))gantry(length*sector.at,sector.sign);
  const startframe=trackFrame(track,0),startmarks=[];for(let row=0;row<2;row++)for(let col=0;col<16;col++){const f=trackFrame(track,row*.7),l=-7.5+col;startmarks.push({pos:[f.x+f.rx*l,.065,f.z+f.rz*l],scale:[.9,.018,.65],angle:Math.atan2(f.tx,f.tz),color:(row+col)%2?'#d7ecf5':'#243447'});}instances(unit,basic('#ffffff'),startmarks);
 
  const gltf=new GLTFLoader(),models={};let loaded=0;
@@ -106,17 +105,31 @@ async function boot(){
   const s=i/30*length,f=trackFrame(track,s),side=i%3?1:-1;
   // Keep the bay side of the first straight open.
   const outer=(s<length*.23?-1:side),offset=25+(i%3)*9;
-  place(buildings[i%buildings.length],f.x+f.rx*outer*offset,f.z+f.rz*outer*offset,5+(i%4),Math.atan2(f.tx,f.tz));
+  const bx=f.x+f.rx*outer*offset,bz=f.z+f.rz*outer*offset;
+  if(nearestTrack(track,bx,bz).distance>24)place(buildings[i%buildings.length],bx,bz,5+(i%4),Math.atan2(f.tx,f.tz));
  }
  for(let i=0;i<28;i++){
   const f=trackFrame(track,i/28*length);for(const side of [-1,1])place(i%2?'tree_palmBend':'tree_palmDetailedTall',f.x+f.rx*13.5*side,f.z+f.rz*13.5*side,3.5, i*.9);
  }
 
+ // Instanced silhouettes add district variety without cloning more detailed models.
+ const towers=[],roofs=[];
+ for(let i=0;i<90;i++){const f=trackFrame(track,i/90*length),side=i%2?1:-1,offset=34+i%3*14,x=f.x+f.rx*side*offset,z=f.z+f.rz*side*offset;
+  if(nearestTrack(track,x,z).distance<25||(f.x>-20&&side===1))continue;
+  const garden=i/90>.46&&i/90<.63,h=garden?8+i%4*2:18+i*17%48,w=8+i%3*3;
+  towers.push({pos:[x,h/2,z],scale:[w,h,12],angle:Math.atan2(f.tx,f.tz)});roofs.push({pos:[x,h+.15,z],scale:[w+.2,.25,12.2],angle:Math.atan2(f.tx,f.tz),color:garden?'#73e9ad':i%2?'#71eeee':'#ff7197'});
+ }
+ const shrubs=[],beds=[];for(let i=0;i<36;i++){const f=trackFrame(track,(.46+i/36*.17)*length);for(const side of [-1,1]){const x=f.x+f.rx*side*15,z=f.z+f.rz*side*15;if(nearestTrack(track,x,z).distance<13)continue;shrubs.push({pos:[x,1.5,z],scale:[2.5,1.5,2.5]});beds.push({pos:[x,.4,z],scale:[5,.8,5],angle:Math.atan2(f.tx,f.tz)});}}
+ instances(new T.SphereGeometry(1,7,5),material('#397b64'),shrubs);instances(unit,mats.walk,beds);
+ instances(unit,buildingMat,towers);instances(unit,basic('#ffffff'),roofs);
  const shadowCanvas=document.createElement('canvas');shadowCanvas.width=shadowCanvas.height=64;const sx=shadowCanvas.getContext('2d'),grad=sx.createRadialGradient(32,32,6,32,32,32);grad.addColorStop(0,'#000b');grad.addColorStop(1,'#0000');sx.fillStyle=grad;sx.fillRect(0,0,64,64);const shadowMat=new T.MeshBasicMaterial({map:new T.CanvasTexture(shadowCanvas),transparent:true,depthWrite:false});
  let wheelInspection=false;
  let selected=save.car==='f2002'?'f2002':'tavaculo',view=save.view==='cockpit'?'cockpit':'chase',mode='menu',count=0,elapsed=0,awarded=false,player,racers=[],visuals=[],toastTime=0,pausedFrom='race',physics=null;
  if(new URLSearchParams(location.search).get('view')==='cockpit')view='cockpit';
- let steeringControl=null;
+ const impactSound=createImpactSound();
+ for(const kind of ['pointerdown','keydown'])addEventListener(kind,()=>impactSound.unlock(),{passive:true});
+ for(const id of ['impact-audio','pause-impact-audio'])$(id).onchange=e=>{impactSound.enabled=e.target.checked;for(const name of ['impact-audio','pause-impact-audio'])$(name).checked=e.target.checked;};
+ let steeringControl=null,recentImpact=null;
  const input={left:false,right:false,throttle:false,brake:false,reverse:false,drift:false};const held=new Map(),pointerZones=new Map(),keys=new Set();
  const garage=buildGarage(scene);let preview,previewAngle=0,category='paint',atWelcome=true;
  function refreshPreview(){if(preview){scene.remove(preview);disposeDress(preview);}preview=dressCar(models[selected].clone(true),selected,save.garage[selected],rigs[selected]);preview.position.set(0,.24,-110);preview.rotation.y=previewAngle;scene.add(preview);}
@@ -141,7 +154,7 @@ async function boot(){
    persist();refreshPreview();syncOptions();$('shop-status').textContent=(result.purchased?result.item.price.toLocaleString()+' C로 구매했어요. ':'보유한 물건을 다시 장착했어요. ')+result.item.name+' 장착 완료!';
   });
  }
- function syncOptions(){document.querySelectorAll('[data-car]').forEach(b=>{const on=b.dataset.car===selected;b.classList.toggle('selected',on);b.setAttribute('aria-pressed',String(on));});$('view-select').value=view;$('assist').checked=!!save.assist;$('auto-throttle').checked=!!save.auto;$('wallet').textContent=save.coins.toLocaleString()+' C';const best=save.best[selected];$('best').textContent=Number.isFinite(best)?'나의 최고 기록 '+formatTime(best):'';
+ function syncOptions(){document.querySelectorAll('[data-car]').forEach(b=>{const on=b.dataset.car===selected;b.classList.toggle('selected',on);b.setAttribute('aria-pressed',String(on));});$('view-select').value=view;$('assist').checked=!!save.assist;$('auto-throttle').checked=!!save.auto;$('wallet').textContent=save.coins.toLocaleString()+' C';const best=save.courseBest?.[COURSE_ID]?.[selected],previous=save.best[selected];$('best').textContent=(Number.isFinite(best)?'시티 투어 최고 '+formatTime(best):'시티 투어 첫 기록에 도전해요')+(Number.isFinite(previous)?' · 이전 코스 '+formatTime(previous):'');
   $('preview-name').textContent=selected==='tavaculo'?'Tavaculo':'클래식 F2002';$('preview-style').textContent=itemById(save.garage[selected].paint).name+' · '+itemById(save.garage[selected].wheels).name;
   const t=tuning(save,selected);$('tuning-stats').innerHTML=[['엔진 힘',t.force],['최고속도',t.maxSpeed],['접지',t.grip],['제동',t.brake]].map(([name,value])=>`<span>${name} ${value>1?'+'+Math.round((value-1)*100)+'%':'기본'}</span>`).join('');
   $('garage-story').textContent=storageOK?(save.races?'지금까지 '+save.races+'번 완주! 우리 차를 꾸미고 다음 경주에 도전해요.':'첫 번째 완주가 꿈의 시작! 경주에서 상금을 모아 봐요.'):'저장이 제한된 브라우저예요. 이 창을 닫으면 상금과 꾸미기가 사라질 수 있어요.';renderShop();
@@ -199,7 +212,7 @@ async function boot(){
  function resume(){mode=pausedFrom;$('pause-menu').hidden=true;$('countdown').hidden=mode!=='countdown';last=performance.now();}
  function switchView(){resetGaze();view=view==='chase'?'cockpit':'chase';save.view=view;persist();updateCamera(true);}
  function finish(){
-  if(awarded)return;awarded=true;mode='result';clearInput();const rank=rankOf(player,racers),prize=PRIZES[rank-1];save.coins+=prize;save.races++;const old=save.best[selected],record=!Number.isFinite(old)||elapsed<old;if(record)save.best[selected]=elapsed;persist();
+  if(awarded)return;awarded=true;mode='result';clearInput();const rank=rankOf(player,racers),prize=PRIZES[rank-1];save.coins+=prize;save.races++;save.courseBest??={};save.courseBest[COURSE_ID]??={};const old=save.courseBest[COURSE_ID][selected],record=!Number.isFinite(old)||elapsed<old;if(record)save.courseBest[COURSE_ID][selected]=elapsed;persist();
   $('result-title').textContent=rank===1?'우승했어요!':'멋지게 완주했어요!';$('result-rank').textContent=rank+'위';$('result-time').textContent='완주 기록 '+formatTime(elapsed);$('prize').textContent='+'+prize.toLocaleString()+' C';$('total-prize').textContent='모은 상금 '+save.coins.toLocaleString()+' C';$('record-note').textContent=storageOK?(record?'나의 최고 기록을 세웠어요!':'다음 경주에도 도전해요!'):'이 브라우저에서는 기록을 저장할 수 없어요.';$('result-story').textContent=save.races===1?'첫 상금이야! 차고에서 우리 차를 꾸며 볼까?':'이번 상금으로 다음 레이스를 준비해요!';$('result').hidden=false;
  }
  function step(dt,forcedInput=null){
@@ -208,14 +221,14 @@ async function boot(){
   readInput();const drive=forcedInput||{...input,...(steeringControl?.mode==='slide'&&!input.left&&!input.right?{steer:steeringControl.value}:{}),throttle:input.throttle||(save.auto&&!input.reverse&&!input.brake&&(player.forwardSpeed||0)>-.2)};const wasBlocked=player.reverseBlocked;const result=physics.step(dt,drive,save.assist);if(player.reverseBlocked&&!wasBlocked)showToast('멈춘 뒤 후진을 떼었다 다시 눌러요');updateSkids(result.steps*FIXED_DT);elapsed+=result.steps*FIXED_DT;
   gazeTarget=selected==='tavaculo'&&view==='cockpit'&&((!!drive.left!==!!drive.right)||(steeringControl?.active&&Number.isFinite(drive.steer)&&Math.abs(drive.steer)>.001))?clamp(-player.steeringAngle/.46,-1,1):0;
   stepSteering(gazeState,gazeTarget,result.steps*FIXED_DT,gazeFollow);
-  for(const hit of result.hits)if(hit.id===player.id)showToast(hit.kind==='car'?'차와 부딪혔어요. 방향을 맞춰요':'브레이크로 속도를 줄여요');
+  for(const hit of result.hits)if(hit.id===player.id){recentImpact={...hit};impactSound.play(hit);if(hit.level!=='light')showToast(hit.level==='heavy'?'큰 충돌 · 속도를 줄이고 자세를 잡아요':hit.kind==='car'?'접촉 · 방향을 다시 맞춰요':'벽에 닿았어요 · 속도를 줄여요');}
   racers.slice(1).forEach(r=>finishRacer(r,track,elapsed));
   if(finishRacer(player,track,elapsed))finish();
  }
- const mapctx=$('map').getContext('2d'),bounds={xmin:-205,xmax:35,zmin:-80,zmax:165};
+ const mapctx=$('map').getContext('2d'),bounds=track.bounds;
  const mp=(x,z)=>[(x-bounds.xmin)/(bounds.xmax-bounds.xmin)*220+10,190-(z-bounds.zmin)/(bounds.zmax-bounds.zmin)*180];
  function drawMap(){mapctx.clearRect(0,0,240,200);mapctx.strokeStyle='#6b91aa';mapctx.lineWidth=6;mapctx.lineJoin='round';mapctx.beginPath();frames.forEach((f,i)=>{const p=mp(f.x,f.z);i?mapctx.lineTo(...p):mapctx.moveTo(...p);});mapctx.closePath();mapctx.stroke();racers.slice().reverse().forEach(r=>{const p=mp(r.x,r.z);mapctx.fillStyle=r===player?'#83fff2':'#ff93b2';mapctx.beginPath();mapctx.arc(...p,r===player?5.5:3.8,0,Math.PI*2);mapctx.fill();});}
- function updateHUD(){if(!player)return;$('speed').textContent=Math.round(player.speed*3.6);$('gear').textContent=player.forwardSpeed<-.25||player.driveMode==='reverse'?'R':Math.round(player.speed*3.6)<1?'N':Math.min(6,Math.floor(Math.round(player.speed*3.6)/37)+1);const state=player.reverseBlocked?'멈춘 뒤 후진을 다시 눌러요':player.drifting?'드리프트 · 가속 유지':player.driveMode==='reverse'||player.forwardSpeed<-.25?'후진 · R':player.braking?'브레이크':physics?.advice(player)||'';$('drive-state').textContent=state;$('drive-state').classList.toggle('drifting',!!player.drifting);$('rank').innerHTML=rankOf(player,racers)+'<span>/ 4</span>';$('progress').innerHTML=Math.floor(clamp(player.distance/length*100,0,100))+'<span>%</span>';$('time').textContent=formatTime(elapsed);drawMap();$('race-progress').style.width=clamp(player.distance/length*100,0,100)+'%';}
+ function updateHUD(){if(!player)return;$('speed').textContent=Math.round(player.speed*3.6);$('gear').textContent=player.forwardSpeed<-.25||player.driveMode==='reverse'?'R':Math.round(player.speed*3.6)<1?'N':Math.min(6,Math.floor(Math.round(player.speed*3.6)/37)+1);const state=player.reverseBlocked?'멈춘 뒤 후진을 다시 눌러요':player.drifting?'드리프트 · 가속 유지':player.driveMode==='reverse'||player.forwardSpeed<-.25?'후진 · R':player.braking?'브레이크':physics?.advice(player)||courseSector(player.distance/length).name;$('drive-state').textContent=state;$('drive-state').classList.toggle('drifting',!!player.drifting);$('rank').innerHTML=rankOf(player,racers)+'<span>/ 4</span>';$('progress').innerHTML=Math.floor(clamp(player.distance/length*100,0,100))+'<span>%</span>';$('time').textContent=formatTime(elapsed);drawMap();$('race-progress').style.width=clamp(player.distance/length*100,0,100)+'%';}
  function syncGazeOptions(){for(const id of ['gaze-follow','pause-gaze-follow'])$(id).checked=gazeFollow;}
  for(const id of ['gaze-follow','pause-gaze-follow'])$(id).onchange=e=>{gazeFollow=e.target.checked;syncGazeOptions();if(!gazeFollow)gazeState.lookDegrees=0;updateCamera(true);};
  syncGazeOptions();
@@ -251,13 +264,24 @@ async function boot(){
   avgFrame=avgFrame*.98+lastDt*1000*.02;if(mode==='race' && avgFrame>34)poorFrames++;else poorFrames=Math.max(0,poorFrames-1);if(poorFrames>200 && renderer.getPixelRatio()>1){renderer.setPixelRatio(1);renderer.setSize(innerWidth,innerHeight);poorFrames=0;}requestAnimationFrame(frame);
  }
  let mirrorProbeObject=null;
- if(new URLSearchParams(location.search).get('qa')==='1')window.__raceQA={snapshot:()=>({mode,input:{...input},touches:held.size+(steeringControl?.active?1:0),steeringControl:steeringControl?.snapshot(),skidCount:skidMesh.count,screen:mode==='menu'?(atWelcome?'welcome':'garage'):mode,loadout:{...save.garage[selected]},owned:[...save.owned],tuning:tuning(save,selected),physicalTuning:physics?.entries[0]?.config,previewMaterials:preview?(()=>{const result=[];preview.traverse(o=>{if(o.isMesh&&o.material.name==='CarSurface')result.push(o.material.color.getHexString());});return result;})():[],customWheels:preview?.getObjectsByProperty('name','dream-wheel-trim').length,car:selected,view,engine:'verified planar tyres + cannon-es collisions',elapsed,coins:save.coins,races:save.races,best:{...save.best},length,player:player?{...player}:null,racers:racers.map(r=>({...r})),camera:camera.position.toArray(),cameraDirection:camera.getWorldDirection(new T.Vector3()).toArray(),cameraFov:camera.fov,cameraAspect:camera.aspect,cameraNear:camera.near,cockpitVisible:cockpit.visible||originalCockpit.group.visible,originalCockpitVisible:originalCockpit.group.visible,proceduralCockpitVisible:cockpit.visible,cockpitStats:selected==='tavaculo'?{...originalCockpit.stats(),steering:{...gazeState,target:gazeTarget,follow:gazeFollow,maxLookDegrees:MAX_LOOK_DEGREES,wheelAmount:clamp(-(player?.steeringAngle||0)/.46,-1,1)}}:cockpitVisual.stats(),mirrorStats:rearView.stats(),frameMs:avgFrame,pixelRatio:renderer.getPixelRatio(),carVisible:visuals[0]?.body.visible,wheelCount:visuals[0]?.wheels.length,caliperCounts:visuals[0]?.calipers.map(c=>c.children.length),wheelVisuals:visuals[0]?.wheels.map(w=>({position:w.position.toArray(),quaternion:w.quaternion.toArray()})),caliperVisuals:visuals[0]?.calipers.map(w=>({position:w.position.toArray(),quaternion:w.quaternion.toArray(),visible:w.visible})),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,storageOK}),advance:(seconds,drive={throttle:true})=>{for(let t=0;t<seconds;t+=1/60)step(1/60,drive);syncVisuals();updateCamera(true);updateHUD();renderScene(true);},advanceDriver:seconds=>{for(let t=0;t<seconds;t+=1/60){const guide=physics?.route(physics.entries[0]);step(1/60,guide?{...guide,wheelCommand:true}:{brake:1});}syncVisuals();updateCamera(true);updateHUD();renderScene(true);},mirrorPixels:()=>rearView.pixels(),mirrorProbe:options=>{
+ if(new URLSearchParams(location.search).get('qa')==='1')window.__raceQA={snapshot:()=>({recentImpact,mode,input:{...input},touches:held.size+(steeringControl?.active?1:0),steeringControl:steeringControl?.snapshot(),skidCount:skidMesh.count,screen:mode==='menu'?(atWelcome?'welcome':'garage'):mode,loadout:{...save.garage[selected]},owned:[...save.owned],tuning:tuning(save,selected),physicalTuning:physics?.entries[0]?.config,previewMaterials:preview?(()=>{const result=[];preview.traverse(o=>{if(o.isMesh&&o.material.name==='CarSurface')result.push(o.material.color.getHexString());});return result;})():[],customWheels:preview?.getObjectsByProperty('name','dream-wheel-trim').length,car:selected,view,engine:'verified planar tyres + cannon-es collisions',elapsed,coins:save.coins,races:save.races,best:{...save.best},courseBest:structuredClone(save.courseBest||{}),courseId:COURSE_ID,length,player:player?{...player}:null,racers:racers.map(r=>({...r})),camera:camera.position.toArray(),cameraDirection:camera.getWorldDirection(new T.Vector3()).toArray(),cameraFov:camera.fov,cameraAspect:camera.aspect,cameraNear:camera.near,cockpitVisible:cockpit.visible||originalCockpit.group.visible,originalCockpitVisible:originalCockpit.group.visible,proceduralCockpitVisible:cockpit.visible,cockpitStats:selected==='tavaculo'?{...originalCockpit.stats(),steering:{...gazeState,target:gazeTarget,follow:gazeFollow,maxLookDegrees:MAX_LOOK_DEGREES,wheelAmount:clamp(-(player?.steeringAngle||0)/.46,-1,1)}}:cockpitVisual.stats(),mirrorStats:rearView.stats(),frameMs:avgFrame,pixelRatio:renderer.getPixelRatio(),carVisible:visuals[0]?.body.visible,wheelCount:visuals[0]?.wheels.length,caliperCounts:visuals[0]?.calipers.map(c=>c.children.length),wheelVisuals:visuals[0]?.wheels.map(w=>({position:w.position.toArray(),quaternion:w.quaternion.toArray()})),caliperVisuals:visuals[0]?.calipers.map(w=>({position:w.position.toArray(),quaternion:w.quaternion.toArray(),visible:w.visible})),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,storageOK}),advance:(seconds,drive={throttle:true})=>{for(let t=0;t<seconds;t+=1/60)step(1/60,drive);syncVisuals();updateCamera(true);updateHUD();renderScene(true);},advanceDriver:seconds=>{for(let t=0;t<seconds;t+=1/60){const guide=physics?.route(physics.entries[0]);step(1/60,guide?{...guide,wheelCommand:true}:{brake:1});}syncVisuals();updateCamera(true);updateHUD();renderScene(true);},mirrorPixels:()=>rearView.pixels(),mirrorProbe:options=>{
    if(!options){if(mirrorProbeObject){scene.remove(mirrorProbeObject);mirrorProbeObject.geometry.dispose();mirrorProbeObject.material.dispose();mirrorProbeObject=null;}renderScene(true);return null;}
    if(!mirrorProbeObject){mirrorProbeObject=new T.Mesh(new T.BoxGeometry(1.6,1.05,1),new T.MeshBasicMaterial({color:'#00ff00',toneMapped:false,fog:false}));mirrorProbeObject.name='qa-rear-view-probe';scene.add(mirrorProbeObject);}
    const forward=new T.Vector3(Math.sin(player.heading),0,Math.cos(player.heading)),right=new T.Vector3(-forward.z,0,forward.x);
    mirrorProbeObject.position.set(player.x,(player.y||0)+1.05,player.z).addScaledVector(forward,(options.behind===false?1:-1)*(options.distance||12)).addScaledVector(right,options.x||0);mirrorProbeObject.rotation.y=player.heading;
    renderScene(true);return{position:mirrorProbeObject.position.toArray(),xMeaning:'driver right positive',behind:options.behind!==false};
-  },setWheelInspection:value=>{wheelInspection=!!value;updateCamera(true);},setAssist:value=>{save.assist=value;},track:()=>track};
+  },setWheelInspection:value=>{wheelInspection=!!value;updateCamera(true);},setAssist:value=>{save.assist=value;},track:()=>track,reviewScene:({progress=.34,closing=null,side=false}={})=>{
+   if(!window.__cockpitReviewStorageIsolated)throw Error('Local isolated review only');
+   recentImpact=null;clearInput();
+   const base=trackFrame(track,progress*length),heading=Math.atan2(base.tx,base.tz);
+   physics.entries.forEach((e,i)=>{const impact=closing!==null&&i<2,offset=i===0?0:i===1?(side?1:5):60+i*12;
+    const f=impact?base:trackFrame(track,progress*length+offset),lane=impact&&i===0&&side?-2.3:0;
+    Object.assign(e.s,{x:f.x+f.rx*lane+(impact?base.tx*offset:0),z:f.z+f.rz*lane+(impact?base.tz*offset:0),heading:impact?heading:Math.atan2(f.tx,f.tz),u:closing===null?0:side?15:i===0?20:20-closing,v:side&&i===0?closing:0,yawRate:0,steer:0,powerSlip:0,ax:0,ay:0});
+    Object.assign(e.r,{distance:progress*length+offset,s:progress*length+offset,finished:false,gate:Math.floor(progress*4)});e.motion.roll=e.motion.pitch=e.motion.rollVelocity=e.motion.pitchVelocity=0;e.impactRecovery=0;e.collisionAt=-10;physics.sync(e,false);
+   });
+   if(closing!==null){physics.route=()=>({steer:0});for(let i=0;i<100&&!recentImpact;i++)step(1/120,{steer:0});for(let i=0;i<7;i++)step(1/120,{steer:0});}
+   syncVisuals();updateCamera(true);updateHUD();renderScene(true);return recentImpact;
+  }};
  // Asset loading can span a phone rotation before the resize listener exists.
  renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;
  updateCamera(true);requestAnimationFrame(frame);

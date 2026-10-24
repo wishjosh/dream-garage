@@ -1,5 +1,5 @@
 import * as C from './vendor/cannon-es.js';
-import {clamp,angleDelta,trackFrame,nearestTrack,recordProgress} from './race-core.mjs';
+import {clamp,angleDelta,trackFrame,nearestTrack,recordProgress} from './race-core.mjs?v=city-tour-1';
 
 export const FIXED_DT=1/60;
 export const VEHICLES={

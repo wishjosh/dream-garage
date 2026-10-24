@@ -7,12 +7,13 @@ export function trackFrame(track,s){
  return {x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t,tx:tx/len,tz:tz/len,rx:tz/len,rz:-tx/len,s:mod(s,track.length)};
 }
 export function nearestTrack(track,x,z){
- let best=Infinity,answer=null;const n=track.frames.length;
+ let best=Infinity,bestI=0,bestT=0,bestX=0,bestZ=0;const n=track.frames.length;
  for(let i=0;i<n;i++){
   const a=track.frames[i],b=track.frames[(i+1)%n],dx=b.x-a.x,dz=b.z-a.z;
   const t=clamp(((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz),0,1),px=a.x+t*dx,pz=a.z+t*dz,d=(px-x)**2+(pz-z)**2;
-  if(d<best){best=d;answer={...trackFrame(track,(i+t)/n*track.length),x:px,z:pz};}
+  if(d<best){best=d;bestI=i;bestT=t;bestX=px;bestZ=pz;}
  }
+ const answer={...trackFrame(track,(bestI+bestT)/n*track.length),x:bestX,z:bestZ};
  answer.lateral=(x-answer.x)*answer.rx+(z-answer.z)*answer.rz;answer.distance=Math.sqrt(best);return answer;
 }
 export function makeRacer(track,{id='player',car='tavaculo',s=0,lane=0}={}){

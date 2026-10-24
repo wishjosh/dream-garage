@@ -11,14 +11,14 @@ body.capture-only{padding:0;margin:0;overflow:hidden;background:#020810}body.cap
 <section class="intro">
 <h1>드림 개러지 · 운전석과 미러 검사</h1>
 <p class="notice">로컬 전용 검사 페이지입니다. <b>합성 PointerEvent와 QA 물리 진행</b>을 사용하며 실제 손가락·포인터 캡처·iPhone/Android 성능을 검증하지 않습니다. 합성 포인터에는 활성 캡처가 없으므로 검사 iframe의 버튼에만 capture 보조 처리를 적용합니다. 저장은 메모리로 격리하며 결과 파일을 자동 저장하지 않습니다.</p>
-<div class="row"><button id="run-all" class="primary">12개 화면 전체 검사 시작</button><button id="run-feel">주행 감각 12개 화면 검사</button><button id="run-slide">슬라이드 12개 화면 검사</button><button id="run-flow">시험 운전자·상금 별도 검사</button><button id="run-startup">로딩 중 화면 회전 검사</button><button id="stop" disabled>검사 중단</button><span id="summary" class="badge" role="status" aria-live="polite" data-state="idle">실행 대기</span></div>
+<div class="row"><button id="run-all" class="primary">12개 화면 전체 검사 시작</button><button id="run-feel">주행 감각 12개 화면 검사</button><button id="run-slide">슬라이드 12개 화면 검사</button><button id="run-flow">시험 운전자·상금 별도 검사</button><button id="run-impact">충돌 12개 조합 검사</button><button id="run-startup">로딩 중 화면 회전 검사</button><button id="stop" disabled>검사 중단</button><span id="summary" class="badge" role="status" aria-live="polite" data-state="idle">실행 대기</span></div>
 </section>
 <div class="workspace">
 <section class="preview-panel">
 <div class="row toolbar">
 <label>차량<select id="car"><option value="tavaculo">Tavaculo</option><option value="f2002">F2002</option></select></label>
 <label>화면<select id="size"><option value="844x390">844 × 390</option><option value="740x360">740 × 360</option><option value="390x844">390 × 844</option><option value="360x740">360 × 740</option><option value="320x568">320 × 568</option><option value="568x320">568 × 320</option></select></label>
-<label>장면<select id="scene"><option value="feel-cockpit">새 주행 감각 · 운전석</option><option value="feel-chase">새 주행 감각 · 차 뒤</option><option value="stationary">정지</option><option value="slide">엄지 슬라이드</option><option value="straight">직선 주행</option><option value="corner">코너</option><option value="left">최대 왼쪽 조향</option><option value="right">최대 오른쪽 조향</option><option value="reverse">후진</option><option value="drift">드리프트</option><option value="chase">차 뒤 시점</option><option value="mirror-left">미러 · 뒤 왼쪽 물체</option><option value="mirror-right">미러 · 뒤 오른쪽 물체</option><option value="mirror-front">미러 · 앞쪽 물체</option><option value="restored">회전 후 복원</option></select></label>
+<label>장면<select id="scene"><option value="tour-water">시티 투어 · 수변</option><option value="tour-city">시티 투어 · 도심</option><option value="tour-garden">시티 투어 · S자</option><option value="tour-skyline">시티 투어 · 야경 직선</option><option value="impact-light">가벼운 접촉</option><option value="impact-medium">중간 측면 충돌</option><option value="impact-heavy">강한 측면 충돌</option><option value="feel-cockpit">새 주행 감각 · 운전석</option><option value="feel-chase">새 주행 감각 · 차 뒤</option><option value="stationary">정지</option><option value="slide">엄지 슬라이드</option><option value="straight">직선 주행</option><option value="corner">코너</option><option value="left">최대 왼쪽 조향</option><option value="right">최대 오른쪽 조향</option><option value="reverse">후진</option><option value="drift">드리프트</option><option value="chase">차 뒤 시점</option><option value="mirror-left">미러 · 뒤 왼쪽 물체</option><option value="mirror-right">미러 · 뒤 오른쪽 물체</option><option value="mirror-front">미러 · 앞쪽 물체</option><option value="restored">회전 후 복원</option></select></label>
 <button id="show-scene">선택 장면 보기</button><button id="rotate">화면 회전</button><button id="freeze">장면 정지</button><button id="expand">화면 크게 보기</button><button id="capture" title="Esc 키로 검사 화면에 돌아옵니다">게임 화면만 보기</button><label><input id="fit" type="checkbox" checked>화면에 맞춤</label>
 </div>
 <div id="screen-label" role="status">실행 버튼 또는 선택 장면 보기를 눌러 주세요.</div>
@@ -262,7 +262,7 @@ async function assistedRaceFlow(car='tavaculo'){
   qa().setAssist(true);const wasFrozen=frozen;setFrozen(true);
   try{
     const automaticTurns=[];let simulatedSeconds=0;
-    for(;simulatedSeconds<120&&snap().mode==='race';simulatedSeconds++){
+    for(;simulatedSeconds<180&&snap().mode==='race';simulatedSeconds++){
       qa().advanceDriver(1);const s=snap(),g=s.cockpitStats.steering||{target:0,amount:0,lookDegrees:0};
       assert(g.target===0&&Math.abs(g.amount)<1e-7&&Math.abs(g.lookDegrees)<1e-7,'시험 운전자 회전에 운전자 시선이 움직임');
       if(s.player.distance>80&&Math.abs(s.player.steeringAngle)>.05&&automaticTurns.length<3)automaticTurns.push({distance:s.player.distance,physicalAngle:s.player.steeringAngle,gaze:g});
@@ -273,7 +273,7 @@ async function assistedRaceFlow(car='tavaculo'){
     const rank=Number.parseInt(q('#result-rank').textContent,10),prize=[1000,650,400,150][rank-1],displayedPrize=Number(q('#prize').textContent.replace(/[^0-9]/g,''));
     const after=JSON.parse(win().localStorage.getItem(saveKey)),completed=snap();
     assert(prize>0&&displayedPrize===prize&&after.coins-before.coins===prize&&completed.coins-start.coins===prize,'완주 순위 상금 또는 저장 금액 불일치');
-    assert(after.races===before.races+1,'완주 횟수 저장 오류');assert(JSON.stringify(after.best)===JSON.stringify(before.best),'기존 더 빠른 최고 기록 변경');
+    assert(after.races===before.races+1,'완주 횟수 저장 오류');assert(after.courseBest?.['bayfront-long-1']?.[car]>60,'새 코스 기록 저장 실패');assert(JSON.stringify(after.best)===JSON.stringify(before.best),'기존 더 빠른 최고 기록 변경');
     assert(JSON.stringify(Object.keys(before).sort())===JSON.stringify(Object.keys(after).sort()),'기존 저장 형식에 예상하지 않은 필드 추가');
     assert(JSON.stringify(after.owned)===JSON.stringify(before.owned)&&JSON.stringify(after.garage)===JSON.stringify(before.garage),'완주 후 보유 파츠·꾸미기 기록 변경');
     assert(after.car===before.car&&after.view===before.view&&after.auto===before.auto,'완주 중 차종·시점·가속 설정 변경');
@@ -338,7 +338,12 @@ async function runStartup(){
   catch(error){report.startup={passed:false,error:error.message,evidence:error.evidence||null};$('errors').textContent=error.message;setStatus('로딩 중 화면 회전 검사 확인 필요','failed');}
   finally{lock(false);updateReport();}
 }
-async function showScene(){if(running)return;stopRequested=false;lock(true);const car=$('car').value,[width,height]=$('size').value.split('x').map(Number),scene=$('scene').value;try{setStatus('장면 준비 · '+scene);await load(car,width,height);if(scene.startsWith('feel-')){
+async function showScene(){if(running)return;stopRequested=false;lock(true);const car=$('car').value,[width,height]=$('size').value.split('x').map(Number),scene=$('scene').value;try{setStatus('장면 준비 · '+scene);await load(car,width,height);if(scene.startsWith('tour-')||scene.startsWith('impact-')){
+setFrozen(true);selected('#steering-mode','slide');checked('#assist',true);
+if(scene.startsWith('tour-'))qa().reviewScene({progress:{'tour-water':.21,'tour-city':.36,'tour-garden':.50,'tour-skyline':.67}[scene]});
+else qa().reviewScene({progress:.08,closing:scene==='impact-light'?2:scene==='impact-medium'?6:12,side:scene!=='impact-light'});
+click('#camera');
+}else if(scene.startsWith('feel-')){
 setFrozen(true);selected('#steering-mode','slide');checked('#assist',true);checked('#body-motion',true);down('throttle',1);qa().advance(2,null);
 const pad=q('#thumb-steering'),r=pad.getBoundingClientRect();pad.setPointerCapture=()=>{};pad.releasePointerCapture=()=>{};pad.hasPointerCapture=()=>false;
 const event=(type,value)=>pad.dispatchEvent(new (win().PointerEvent)(type,{bubbles:true,cancelable:true,pointerId:81,pointerType:'touch',button:0,buttons:1,clientX:r.x+r.width/2-value*72,clientY:r.y+r.height/2}));
@@ -407,6 +412,19 @@ async function feelCase(car,width,height){
 async function runFeel(){if(running)return;stopRequested=false;lock(true);report={checks:[],method:'Actual game with memory-only save, synthetic two-pointer input; expressive body/assisted steering tests, not physical phone measurements'};updateReport();try{for(const car of ['tavaculo','f2002'])for(const[w,h]of sizes){setStatus('주행 감각 검사 · '+car+' '+w+'×'+h);try{addResult(car+' '+w+'×'+h,true,await feelCase(car,w,h));}catch(error){addResult(car+' '+w+'×'+h,false,null,error.message);}}report.passed=report.checks.length===12&&report.checks.every(c=>c.passed);setStatus((report.passed?'통과':'실패')+' · 주행 감각 '+report.checks.filter(c=>c.passed).length+'/12',report.passed?'passed':'failed');}finally{lock(false);updateReport();}}
 $('run-feel').onclick=runFeel;
 
+
+async function runImpacts(){if(running)return;stopRequested=false;lock(true);report={checks:[],method:'Local memory-only game, deterministic collision placement, no hardware touch/audio fidelity claim'};updateReport();
+try{for(const car of ['tavaculo','f2002'])for(const [w,h]of [[844,390],[390,844]])for(const [closing,level,side] of [[2,'light',false],[6,'medium',true],[12,'heavy',true]]){
+ const name=car+' '+w+'×'+h+' '+level;setStatus(name);
+ try{await load(car,w,h);setFrozen(true);selected('#steering-mode','slide');const stored=win().localStorage.getItem('hojin-city-gp:save:v1');
+ checked('#impact-audio',false);assert(q('#pause-impact-audio').checked===false,'충돌 소리 설정 불일치');checked('#impact-audio',true);
+ const hit=qa().reviewScene({progress:.08,closing,side}),state=snap();assert(hit&&hit.level===level,'충돌 강도 구분 실패');
+ assert(Math.abs(state.player.motion.roll)+Math.abs(state.player.motion.pitch)>.0001,'충돌 차체 반응 없음');cameraCheck(car);mirrorCheck(car);
+ assert(win().localStorage.getItem('hojin-city-gp:save:v1')===stored,'충돌 시 저장 변경');assert(win().__cockpitReviewErrors.length===0,'충돌 실행 오류');
+ addResult(name,true,{hit,motion:state.player.motion,saveUnchanged:true,audioToggleSynced:true});
+ }catch(error){addResult(name,false,null,error.message);}
+}report.passed=report.checks.length===12&&report.checks.every(x=>x.passed);setStatus((report.passed?'통과':'실패')+' · 충돌 '+report.checks.filter(x=>x.passed).length+'/12');}finally{lock(false);updateReport();}}
+$('run-impact').onclick=runImpacts;
 </script>
 </body>
 </html>

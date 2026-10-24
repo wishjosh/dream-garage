@@ -25,7 +25,8 @@ export function normalizeSave(raw){
  if(Array.isArray(source.owned))for(const id of source.owned)if(itemById(id))owned.add(id);
  const garage={};for(const car of CARS){garage[car]={...DEFAULT_LOADOUT};for(const c of Object.keys(CATEGORIES)){const id=source.garage?.[car]?.[c];if(owned.has(id)&&itemById(id)?.category===c)garage[car][c]=id;}}
  const best={};for(const car of CARS)if(Number.isFinite(source.best?.[car])&&source.best[car]>=0)best[car]=source.best[car];
- return {version:1,coins:Math.max(0,Math.min(1e9,Math.floor(Number(source.coins)||0))),best,car:CARS.includes(source.car)?source.car:'tavaculo',view:source.view==='cockpit'?'cockpit':'chase',assist:source.assist!==false,auto:!!source.auto,owned:[...owned],garage,races:Math.max(0,Math.floor(Number(source.races)||0))};
+ const courseBest={};for(const id of ['bayfront-long-1'])if(source.courseBest?.[id]){courseBest[id]={};for(const car of CARS)if(Number.isFinite(source.courseBest[id][car])&&source.courseBest[id][car]>=0)courseBest[id][car]=source.courseBest[id][car];}
+ return {version:1,courseBest,coins:Math.max(0,Math.min(1e9,Math.floor(Number(source.coins)||0))),best,car:CARS.includes(source.car)?source.car:'tavaculo',view:source.view==='cockpit'?'cockpit':'chase',assist:source.assist!==false,auto:!!source.auto,owned:[...owned],garage,races:Math.max(0,Math.floor(Number(source.races)||0))};
 }
 export function transact(save,car,id){
  const item=itemById(id);if(!item||!CARS.includes(car))return {ok:false,reason:'invalid'};

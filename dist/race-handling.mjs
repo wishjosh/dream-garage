@@ -1,10 +1,11 @@
+import {contactClosing,impactLevel,recoverImpact,kickBody} from './collision-feel.mjs?v=city-tour-1';
 import {assistedSteer,stabilize} from './driver-feel.mjs?v=city-feel-1';
 import {createBodyMotion,stepBodyMotion} from './body-motion.mjs?v=city-feel-1';
 // Flat city adapter. Tyres/integration are shared with the measured study.
 // Cannon solves wall/car impulses only; it does not add a second tyre model.
 import * as C from './vendor/cannon-es.js';
 import {CAR,DT,createCar,stepCar} from './handling-physics.mjs?v=city-config-1';
-import {clamp,angleDelta,trackFrame,nearestTrack,recordProgress} from './race-core.mjs';
+import {clamp,angleDelta,trackFrame,nearestTrack,recordProgress} from './race-core.mjs?v=city-tour-1';
 import {wheelVisualPose} from './vehicle-physics.mjs?v=wheels-1';
 export const FIXED_DT=DT;
 export const VEHICLES=Object.freeze({
@@ -34,7 +35,7 @@ export class RacePhysics{
    body.invInertia.set(0,1/config.inertia,0);body.updateInertiaWorld(true);
    body.raceKind='car';body.racerId=r.id;this.world.addBody(body);
    const s=Object.assign(createCar(0),{x:r.x,z:r.z,heading:r.heading});
-   const e={r,index,config,rig,body,s,inputSteer:0,driftLevel:0,motion:createBodyMotion(),collisionAt:-10};this.entries.push(e);
+   const e={r,index,config,rig,body,s,inputSteer:0,driftLevel:0,motion:createBodyMotion(),collisionAt:-10,impactRecovery:0};this.entries.push(e);
    this.placeBody(e);this.sync(e,false);
   });
  }
@@ -75,6 +76,7 @@ export class RacePhysics{
   const vehicle=e.driftLevel>1e-6?{...e.config,rearMu:e.config.rearMu*(1-.48*e.driftLevel)}:e.config;
   stepCar(s,{steer,throttle,brake,reverse:input.reverse},DT,{walls:false,vehicle});
   if(assist&&!input.wheelCommand)stabilize(s,{neutral:Math.abs(rawSteer)<.025,brake:brake>0,reverse:input.reverse,driftLevel:e.driftLevel},DT);
+  recoverImpact(s,DT,e.impactRecovery);e.impactRecovery=Math.max(0,e.impactRecovery-DT);
   stepBodyMotion(e.motion,{ax:s.ax,ay:s.ay,speed:Math.hypot(s.u,s.v)},e.r.car,DT);
   e.r.rawSteer=rawSteer;e.r.commandedSteer=steer;e.r.stabilityAssist=!!assist;
   e.r.drifting=drifting;e.r.driftLevel=e.driftLevel;
@@ -91,11 +93,20 @@ export class RacePhysics{
   b.force.set(0,0,0);b.torque.set(0,0,0);b.aabbNeedsUpdate=true;b.updateInertiaWorld(true);
  }
  collisions(){
-  this.entries.forEach(e=>this.placeBody(e,DT));this.world.step(DT);
+  this.entries.forEach(e=>this.placeBody(e,DT));
+  const before=new Map(this.entries.map(e=>[e.body.id,{x:e.body.velocity.x,z:e.body.velocity.z,yaw:e.body.angularVelocity.y}]));
+  this.world.step(DT);
   for(const e of this.entries){
    const contacts=this.world.contacts.filter(c=>c.bi===e.body||c.bj===e.body);
    if(!contacts.length)continue;
    const{s,body:b}=e,oldV=Math.hypot(b.velocity.x-(s.u*Math.sin(s.heading)+s.v*Math.cos(s.heading)),b.velocity.z-(s.u*Math.cos(s.heading)-s.v*Math.sin(s.heading)));
+   const previous=before.get(b.id),deltaX=b.velocity.x-previous.x,deltaZ=b.velocity.z-previous.z;
+   const strongest=contacts.map(c=>({c,closing:contactClosing(c,before)})).sort((a,b)=>b.closing-a.closing)[0];
+   const closing=strongest.closing;
+   if(closing>.5&&oldV>.08){
+    e.impactRecovery=Math.max(e.impactRecovery,Math.min(1.4,.35+closing*.07));
+    kickBody(e.motion,s.heading,deltaX,deltaZ,e.r.car);
+   }
    s.x=b.position.x;s.z=b.position.z;
    // Collision torque changes subsequent yaw; keep the exact tyre-integrated
    // heading this step instead of introducing a second quaternion integrator.
@@ -103,10 +114,10 @@ export class RacePhysics{
    s.v=b.velocity.x*Math.cos(s.heading)-b.velocity.z*Math.sin(s.heading);s.yawRate=b.angularVelocity.y;
    // Sustained wall rubbing loses speed, without a score/coin penalty.
    if(contacts.some(c=>(c.bi===b?c.bj:c.bi).raceKind==='barrier')){const loss=Math.exp(-DT*.9);s.u*=loss;s.v*=loss;}
-   if(oldV>1.2&&this.time-e.collisionAt>.6){
+   if(closing>.5&&oldV>.08&&this.time-e.collisionAt>.22){
     e.collisionAt=this.time;
-    const other=contacts[0].bi===b?contacts[0].bj:contacts[0].bi;
-    this.hits.push({id:e.r.id,kind:other.raceKind,impact:oldV});
+    const c=strongest.c,other=c.bi===b?c.bj:c.bi;
+    this.hits.push({id:e.r.id,kind:other.raceKind,impact:oldV,closing,level:impactLevel(closing),deltaX,deltaZ});
    }
   }
  }
@@ -135,7 +146,7 @@ export class RacePhysics{
   const lane=[0,-3.2,3.2,-5.4,5.4].find(l=>this.entries.every(other=>other===e||Math.hypot(other.s.x-(f.x+f.rx*l),other.s.z-(f.z+f.rz*l))>5.8));
   if(lane===undefined)return false;
   e.s=Object.assign(createCar(0),{x:f.x+f.rx*lane,z:f.z+f.rz*lane,heading:Math.atan2(f.tx,f.tz)});
-  e.inputSteer=0;e.driftLevel=0;e.motion=createBodyMotion();Object.assign(r,{s:f.s,drifting:false,driftLevel:0,reverseBlocked:false,driveMode:'coast',braking:false});
+  e.inputSteer=0;e.driftLevel=0;e.impactRecovery=0;e.motion=createBodyMotion();Object.assign(r,{s:f.s,drifting:false,driftLevel:0,reverseBlocked:false,driveMode:'coast',braking:false});
   this.placeBody(e);this.sync(e,false);return true;
  }
  advice(r){
