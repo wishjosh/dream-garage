@@ -18,7 +18,7 @@ async function init(){if(ready)return;frame.src='/?qa=1&review=1&handling-save=1
 function click(s){q(s).click();}
 function garage(){for(const el of d().querySelectorAll('dialog[open]'))el.close();const s=qa().snapshot();if(['countdown','race'].includes(s.mode))click('#pause');if(qa().snapshot().mode==='paused')click('#back-menu');if(qa().snapshot().mode==='result')click('#result-menu');if(qa().snapshot().screen==='welcome')click('#enter-garage');}
 function change(s,value){q(s).value=value;q(s).dispatchEvent(new (w().Event)('change',{bubbles:true}));}
-async function result(){garage();change('#view-select','cockpit');qa().setAssist(true);click('#start');qa().advance(3.5,null);for(let i=0;i<150&&qa().snapshot().mode!=='result';i++){qa().advanceDriver(1);if(i%10===0)await sleep(0);}assert(qa().snapshot().mode==='result','완주 실패');}
+async function result(){garage();change('#view-select','cockpit');qa().setAssist(true);click('#start');qa().advance(3.5,null);for(let i=0;i<150&&qa().snapshot().mode!=='result';i++){if(qa().snapshot().mode==='paused'){report.backgroundPauses=(report.backgroundPauses||0)+1;click('#resume');}qa().advanceDriver(1);if(i%2===0)await sleep(0);}assert(qa().snapshot().mode==='result','완주 실패');}
 async function run(){document.querySelector('#run').disabled=true;report={method:'Real game UI, isolated save, DOM hit-testing and programmatic scrolling; no native phone or notch claim',checks:[]};try{await init();const before=qa().snapshot();for(const [x,y]of sizes){status.textContent=x+'×'+y;await size(x,y);garage();click('#title-back');
 check(x+'x'+y+' welcome',()=>{reach('#enter-garage');reach('#welcome [data-save-transfer-open]');return inside(q('#welcome'));});click('#enter-garage');
 check(x+'x'+y+' garage',()=>{for(const s of ['#steering-mode','#view-select','#help-open','#credits-open','#fullscreen','#start'])reach(s);return inside(q('#menu'));});
@@ -28,7 +28,7 @@ click(open);if(id==='save-transfer'){
  // Use the actual v1 transfer envelope, exported by the same pure module.
  const {createTransfer}=await import('/save-transfer.mjs');
  const dt=new (w().DataTransfer)();dt.items.add(new (w().File)([createTransfer(fixture)],'layout-fixture.json',{type:'application/json'}));q('#transfer-file').files=dt.files;q('#transfer-file').dispatchEvent(new (w().Event)('change',{bubbles:true}));for(let wait=0;wait<250&&q('#transfer-preview').hidden;wait++)await sleep(20);
- }check(x+'x'+y+' '+id,()=>{const box=inside(q('#'+id));q('#'+id).scrollTop=0;assert(q('#'+id+' h2').getBoundingClientRect().top>=box.y-1,'제목 잘림');if(id==='save-transfer'){reach('#transfer-export');reach('#transfer-file');assert(!q('#transfer-preview').hidden,'비교 화면 없음');reach('#transfer-apply');reach('#transfer-cancel');}reach(close);return box;});click(close);}
+ }check(x+'x'+y+' '+id,()=>{const box=inside(q('#'+id));assert(q('#'+id+' h2').getBoundingClientRect().top>=box.y-1,'제목 잘림');if(id==='save-transfer'){reach('#transfer-export');reach('#transfer-file');assert(!q('#transfer-preview').hidden,'비교 화면 없음');reach('#transfer-apply');reach('#transfer-cancel');}reach(close);return box;});click(close);}
 click('#start');qa().advance(3.5,null);click('#pause');
 check(x+'x'+y+' pause',()=>{const box=inside(q('#pause-menu .compact'));for(const s of ['#pause-steering-mode','#resume','#restart','#back-menu'])reach(s);return box;});
 await size(y,x);check(x+'x'+y+' pause rotated',()=>{inside(q('#pause-menu .compact'));return reach('#resume');});await size(x,y);click('#back-menu');}
