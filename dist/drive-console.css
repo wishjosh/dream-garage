@@ -1,0 +1,42 @@
+/* Accepted graphite art, screen-fixed controls. Physics and save format unchanged. */
+body #hud #controls{left:max(2.4vw,var(--ui-left));right:max(1.8vw,var(--ui-right));bottom:calc(clamp(17px,7dvh,30px) + env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:end;gap:12px;pointer-events:none;}
+.console-art{position:relative;display:block;overflow:hidden;pointer-events:none;user-select:none;}
+.console-art img{position:absolute;max-width:none;display:block;pointer-events:none;user-select:none;}
+body #hud #thumb-steering{width:clamp(120px,35vw,340px);height:auto;min-height:44px;aspect-ratio:992/198;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible;pointer-events:auto;}
+#thumb-steering .steering-rail{width:100%;}
+body #hud #thumb-steering .thumb-knob{position:absolute;left:50%;top:17%;width:21%;height:auto;min-height:0;border:0;border-radius:0;background:none;box-shadow:none;transform:translate(-50%,-50%);transition:left .12s,top .12s;}
+body #hud #thumb-steering.pressed .thumb-knob{background:none;filter:drop-shadow(0 0 4px #a5fddd88);transition:none;}
+#thumb-steering .thumb-caption{top:auto;bottom:-18px;font-size:10px;text-shadow:0 1px 4px #000;}
+body #hud #controls .drive-console{position:relative;display:block;width:clamp(188px,30.5vw,290px);height:clamp(108px,40dvh,166px);margin:0;padding:0;pointer-events:none;}
+.pedal-faces{position:absolute;left:0;bottom:0;width:calc(100% - 62px);height:100%;pointer-events:none;}
+.brake-face{position:absolute;left:0;bottom:0;width:42.6%;height:39.2%;}
+.gas-face{position:absolute;right:6%;bottom:0;width:41%;height:88.2%;filter:drop-shadow(0 0 3px #88eec278);}
+body #hud #controls .drive-console button[data-drive-target]{position:absolute;top:auto;bottom:0;right:auto;min-width:44px;min-height:44px;border:0!important;border-radius:10px!important;background:transparent!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:0!important;box-shadow:none!important;transform:none!important;pointer-events:auto;touch-action:none;}
+body #hud #controls .drive-console .brake{left:0!important;width:48%!important;height:49%!important;}
+body #hud #controls .drive-console .throttle{left:53%!important;width:45%!important;height:100%!important;}
+body #hud #controls .drive-console button.pressed{background:#b6ffdf16!important;box-shadow:inset 0 0 0 1px #b6ffdf88!important;}
+.pedal-text{position:absolute;transform:translateX(-50%);pointer-events:none;text-shadow:0 1px 4px #000;white-space:nowrap;}
+.gas-text{left:73.5%;bottom:10%;font-size:clamp(11px,1.55vw,15px);font-weight:650;color:#bdfde5;letter-spacing:.04em;}
+.brake-text{left:21.3%;bottom:9%;font-size:clamp(9px,1.15vw,11px);color:#d0dadd;}
+#drive-console[data-throttle=true] .gas-face{filter:brightness(1.2) drop-shadow(0 0 5px #a4ffe0);}
+#drive-console[data-brake=true] .brake-face{filter:brightness(1.25);}
+#drive-lever{position:absolute;right:0;bottom:0;width:clamp(44px,6.25vw,56px);height:100%;pointer-events:auto;touch-action:none;cursor:ns-resize;outline-offset:3px;user-select:none;}
+.lever-rail{position:absolute;left:50%;transform:translateX(-50%);height:100%;width:auto;}
+.lever-knob{position:absolute;left:50%;top:50%;width:clamp(44px,7.35vw,72px);transform:translate(-50%,-50%) rotate(90deg);transition:top .14s;filter:drop-shadow(0 2px 2px #0008);}
+#drive-lever.pressed .lever-knob{transition:none;}
+#drive-lever[data-command=reverse] .lever-knob{filter:drop-shadow(0 0 5px #ffd49a99);}
+#drive-lever[data-command=drift] .lever-knob{filter:drop-shadow(0 0 5px #b3ffd999);}
+.lever-label{position:absolute;left:50%;transform:translateX(-50%);font-size:10px;line-height:12px;color:#d9e8e8;white-space:nowrap;text-shadow:0 1px 4px #000;pointer-events:none;}
+.lever-up{bottom:calc(100% + 5px);}.lever-down{top:calc(100% + 5px);}
+body #hud #rescue{left:max(2.4vw,var(--ui-left));right:auto;bottom:calc(clamp(17px,7dvh,30px) + clamp(120px,35vw,340px)*.2 + 18px + env(safe-area-inset-bottom));min-height:44px;}
+@media(orientation:portrait){
+ body #hud #controls{left:var(--ui-left);right:var(--ui-right);bottom:calc(25px + env(safe-area-inset-bottom));height:224px;display:block;}
+ body #hud #controls .drive-console{position:absolute;right:0;bottom:0;height:166px;width:188px;}
+ body #hud #thumb-steering{position:absolute;left:0;bottom:180px;width:clamp(150px,48vw,220px);}
+ body #hud #controls .steering{position:absolute;left:0;bottom:180px;}
+ body #hud #rescue{left:var(--ui-left);bottom:calc(25px + 244px + env(safe-area-inset-bottom));}
+ body #hud #speedometer{bottom:calc(121px + env(safe-area-inset-bottom));left:var(--ui-left);transform:none;min-width:90px;gap:3px;}
+ body #hud #speedometer strong{font-size:29px;}body #hud #gear{font-size:21px;}
+}
+@media(orientation:landscape) and (max-height:280px){body #hud #controls .drive-console{height:108px;}body #hud #rescue{bottom:calc(97px + env(safe-area-inset-bottom));}}
+@media(prefers-reduced-motion:reduce){.lever-knob,body #hud #thumb-steering .thumb-knob{transition:none;}}

@@ -57,7 +57,7 @@ async function load(car,width,height){
     await waitFor(()=>{try{return new URL(win().location.href).searchParams.get('run')===nonce&&win().__raceQA&&!q('#enter-garage').disabled;}catch{return false;}},'최초 게임 로딩 또는 QA hook 준비 실패',60000);
   }
   assert(win().__cockpitReviewStorageIsolated===true,'검사용 메모리 저장소가 준비되지 않았습니다. 서버를 최신 scripts/serve.mjs로 재시작하세요.');
-  for(const button of doc().querySelectorAll('[data-control]')){
+  for(const button of doc().querySelectorAll('[data-control],#drive-lever')){
     // Untrusted PointerEvents cannot acquire a browser-native pointer capture.
     // This fixture only tests the app's input-state handling and pressed styling.
     button.setPointerCapture=()=>{};button.releasePointerCapture=()=>{};
@@ -75,7 +75,7 @@ async function load(car,width,height){
   $('screen-label').textContent=`${car} · ${width} × ${height} · 실제 게임 iframe / 합성 입력 검사`;
 }
 function point(button){const r=button.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2};}
-function down(key,id){const button=q(`[data-control="${key}"]`);assert(button,'버튼 없음: '+key);const p=point(button);button.dispatchEvent(new (win().PointerEvent)('pointerdown',{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',isPrimary:id===1,button:0,buttons:1,clientX:p.x,clientY:p.y}));pointers.set(id,button);}
+function down(key,id){const isLever=['reverse','drift'].includes(key),button=isLever?q('#drive-lever'):q(`[data-control="${key}"]`);assert(button,'조작부 없음: '+key);const p=point(button);button.dispatchEvent(new (win().PointerEvent)('pointerdown',{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',isPrimary:id===1,button:0,buttons:1,clientX:p.x,clientY:p.y}));if(isLever)button.dispatchEvent(new (win().PointerEvent)('pointermove',{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',button:0,buttons:1,clientX:p.x,clientY:p.y+(key==='reverse'?-40:40)}));pointers.set(id,button);}
 function release(type='pointerup'){for(const[id,button]of pointers){const p=point(button);button.dispatchEvent(new (win().PointerEvent)(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',button:0,buttons:0,clientX:p.x,clientY:p.y}));}pointers.clear();}
 async function drive(keys,seconds){
   // QA.advance owns elapsed physics time during this maneuver. Paint waiting
@@ -83,13 +83,13 @@ async function drive(keys,seconds){
   const wasFrozen=frozen;setFrozen(true);
   try{
     release();keys.forEach((key,i)=>down(key,i+1));qa().advance(1/60,null);
-    for(const key of keys){assert(snap().input[key],'합성 입력 반영 실패: '+key);assert(q('[data-control='+key+']').getAttribute('aria-pressed')==='true','눌림 표시 실패: '+key);}
+    for(const key of keys){assert(snap().input[key],'합성 입력 반영 실패: '+key);assert((['reverse','drift'].includes(key)?q('#drive-lever').dataset.command===key:q('[data-control='+key+']').getAttribute('aria-pressed')==='true'),'눌림 표시 실패: '+key);}
     qa().advance(seconds,null);await tick(60);qa().advance(0,null);return snap();
   }finally{setFrozen(wasFrozen);}
 }
 async function clear(type='pointerup'){release(type);qa().advance(1/60,null);assert(snap().touches===0&&Object.values(snap().input).every(v=>!v),'입력 해제 실패');}
 async function recover(){await clear();click('#rescue');if(snap().car==='tavaculo')gazeCleared('차량 복구');qa().advance(.15,{brake:true});await tick(70);}
-function controlLayout(){const[width,height]=currentSize;const controls=[...doc().querySelectorAll('[data-control]')].map(button=>{const r=button.getBoundingClientRect();return{id:button.dataset.control,x:r.x,y:r.y,width:r.width,height:r.height,hit:doc().elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('[data-control]')?.dataset.control};});assert(controls.length===6,'조작 버튼은 6개여야 합니다.');for(const b of controls){assert(b.x>=-.5&&b.y>=-.5&&b.x+b.width<=width+.5&&b.y+b.height<=height+.5,'화면 밖 버튼: '+b.id);assert(b.width>=48&&b.height>=48,'48px 미만 버튼: '+b.id);assert(b.hit===b.id,'다른 요소가 버튼을 덮음: '+b.id);}for(let i=0;i<controls.length;i++)for(const b of controls.slice(i+1)){const a=controls[i];assert(a.x+a.width<=b.x+.5||b.x+b.width<=a.x+.5||a.y+a.height<=b.y+.5||b.y+b.height<=a.y+.5,`버튼 겹침: ${a.id}/${b.id}`);}return controls;}
+function controlLayout(){const[width,height]=currentSize;const controls=[...doc().querySelectorAll('[data-control],#drive-lever')].map(button=>{const r=button.getBoundingClientRect();return{id:button.dataset.control||'lever',x:r.x,y:r.y,width:r.width,height:r.height,hit:doc().elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('[data-control],#drive-lever')?.getAttribute('data-control')||(button.id==='drive-lever'?'lever':null)};});assert(controls.length===5,'조향 버튼 둘·페달 둘·보조 레일 하나여야 합니다.');for(const b of controls){assert(b.x>=-.5&&b.y>=-.5&&b.x+b.width<=width+.5&&b.y+b.height<=height+.5,'화면 밖 버튼: '+b.id);assert(b.width>=44&&b.height>=44,'44px 미만 버튼: '+b.id);assert(b.hit===b.id,'다른 요소가 버튼을 덮음: '+b.id);}for(let i=0;i<controls.length;i++)for(const b of controls.slice(i+1)){const a=controls[i];assert(a.x+a.width<=b.x+.5||b.x+b.width<=a.x+.5||a.y+a.height<=b.y+.5||b.y+b.height<=a.y+.5,`버튼 겹침: ${a.id}/${b.id}`);}return controls;}
 function length3(value){return Math.hypot(...value);}
 function difference3(a,b){return a.map((value,index)=>value-b[index]);}
 // World-to-body measurements establish that steering rotates the view without
@@ -182,7 +182,7 @@ function instrumentReadabilityCheck(car){
     return{presentation:'portrait-hud',kmh:t.kmh,gear:t.gear,bounds:{x:r.x,y:r.y,width:r.width,height:r.height},pixelLegibility:'requires visual review'};
   }
   const readout=speedometer.getBoundingClientRect();assert(hudVisible&&readout.left>=0&&readout.top>=0&&readout.right<=width&&readout.bottom<=height,'가로 주행 보조 속도·기어 표시가 잘림');
-  for(const button of doc().querySelectorAll('[data-control]'))assert(!overlaps({x:readout.x,y:readout.y,width:readout.width,height:readout.height},button.getBoundingClientRect()),'보조 속도 표시와 조작 버튼이 겹침');
+  for(const button of doc().querySelectorAll('[data-control],#drive-lever'))assert(!overlaps({x:readout.x,y:readout.y,width:readout.width,height:readout.height},button.getBoundingClientRect()),'보조 속도 표시와 조작 버튼이 겹침');
   assert(s.cockpitStats.projectedBounds.instrument===null,'추가 기어 화면이 실내에 남음');
   return{presentation:'physical-analogue-dials-with-fixed-hud',readout:{x:readout.x,y:readout.y,width:readout.width,height:readout.height},kmh:t.kmh,gear:t.gear,pixelLegibility:'requires visual review'};
 }
@@ -341,7 +341,7 @@ async function startupRotationFlow(){
     assert(win().__cockpitReviewStorageIsolated===true,'시작 검사 저장소가 격리되지 않음');
     // Do not call load() or dispatch resize here: either would repair the exact
     // startup regression under test before the measurements are taken.
-    for(const button of doc().querySelectorAll('[data-control]')){button.setPointerCapture=()=>{};button.releasePointerCapture=()=>{};}
+    for(const button of doc().querySelectorAll('[data-control],#drive-lever')){button.setPointerCapture=()=>{};button.releasePointerCapture=()=>{};}
     click('#enter-garage');click('[data-car=tavaculo]');selected('#view-select','cockpit');checked('#assist',false);checked('#auto-throttle',false);checked('#gaze-follow',true);click('#start');
     qa().advance(3.5,null);qa().advance(1,{brake:true});
     assert(snap().mode==='race','로딩 중 회전 후 실제 경주 출발 실패');
@@ -387,7 +387,7 @@ $('capture').onclick=()=>{document.body.classList.add('capture-only');win().addE
  assert(!pad.hidden&&q('.steering').hidden,'슬라이드 전환 표시 실패');
  assert(box.width>=108&&box.height>=48&&box.left>=0&&box.right<=width&&box.top>=0&&box.bottom<=height,'슬라이드 크기·화면 범위 실패');
  assert(doc().elementFromPoint(center.x,center.y)?.closest('#thumb-steering')===pad,'슬라이드가 가려짐');
- for(const before of buttons.filter(b=>!['left','right'].includes(b.id))){const r=q('[data-control='+before.id+']').getBoundingClientRect();for(const k of ['x','y','width','height'])assert(Math.abs(r[k]-before[k])<.1,'오른쪽 버튼 위치 변경: '+before.id);assert(!(box.x<r.right&&r.x<box.right&&box.y<r.bottom&&r.y<box.bottom),'슬라이드·페달 겹침');}
+ for(const before of buttons.filter(b=>!['left','right'].includes(b.id))){const r=q(before.id==='lever'?'#drive-lever':'[data-control='+before.id+']').getBoundingClientRect();for(const k of ['x','y','width','height'])assert(Math.abs(r[k]-before[k])<.1,'오른쪽 버튼 위치 변경: '+before.id);assert(!(box.x<r.right&&r.x<box.right&&box.y<r.bottom&&r.y<box.bottom),'슬라이드·페달 겹침');}
  const event=(type,x=center.x,id=81)=>pad.dispatchEvent(new (win().PointerEvent)(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',button:0,buttons:type==='pointerup'?0:1,clientX:x,clientY:center.y}));
  const move=value=>event('pointermove',center.x-value*72);
  event('pointerdown');assert(snap().steeringControl.active&&snap().steeringControl.value===0,'터치 시작 시 조향 점프');

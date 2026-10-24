@@ -1,0 +1,1 @@
+Original graphite control sprite sheet created with the built-in OpenAI image generator for Dream Garage, 2026-10-25. User-selected curved steering, straight reverse/drift rail and frontal pedal design. No reference-game artwork is included. Source resolution 1774x887 RGBA; the original alpha is preserved. Labels and hit areas are separate DOM elements.
