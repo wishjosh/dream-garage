@@ -1,5 +1,6 @@
 import {setCabinUp} from './cockpit-attitude.mjs?v=cabin-layout-1';
 import * as T from './vendor/three.module.js';
+import {createCabinDetails} from './cabin-details.mjs?v=cockpit-detail-1';
 import {loadStudyCar} from './cockpit-study-model.mjs?v=steering-look-1';
 
 // The inspected car and the driver's eye share a metre-based, scene-owned rig.
@@ -15,6 +16,7 @@ export async function createOriginalCockpit({scene,camera,loader}) {
   sourceBaseline.push({object,parent:object.parent,position:object.position.clone(),quaternion:object.quaternion.clone(),scale:object.scale.clone(),geometry:object.geometry,attributes,index:object.geometry?.index,indexVersion:object.geometry?.index?.version});
  });
  const wheel=model.root.getObjectByName('source_Circle');
+ const details=createCabinDetails({root:model.root,eye:model.eye});
  const material=options=>{const m=new T.MeshStandardMaterial(options);materials.push(m);return m;};
  const basic=options=>{const m=new T.MeshBasicMaterial(options);materials.push(m);return m;};
  const shell=material({color:'#10171c',roughness:.74,metalness:.08});
@@ -42,21 +44,21 @@ export async function createOriginalCockpit({scene,camera,loader}) {
  box(mirrorMount,[.251,.067,.006],[0,0,.001],edge);
  box(mirrorMount,[.016,.044,.018],[.012,.059,-.018],shell);
  box(mirrorMount,[.039,.012,.029],[.012,.086,-.027],shell);
- const mirrorSurface=new T.Mesh(roundedSurface(.243,.06075,.006),basic({color:'#c8d7dd',toneMapped:false}));
+ const mirrorSurface=new T.Mesh(roundedSurface(.243,.06075,.006),basic({color:'#edf4f7',toneMapped:false}));
  mirrorSurface.name='original-live-rear-view-surface';mirrorSurface.position.z=.006;
  mirrorMount.add(mirrorSurface);
 
  // The original analogue cluster remains intact. This compact telemetry
  // display sits on its driver-facing surface, behind the original wheel.
  const instrument=new T.Group();instrument.name='original-live-instrument';
- instrument.position.set(model.eye.x,.845,-.642);instrument.rotation.x=-.23;group.add(instrument);
- box(instrument,[.193,.066,.012],[0,0,-.008],shell);
- const canvas=document.createElement('canvas');canvas.width=512;canvas.height=160;
+ instrument.position.set(model.eye.x,.818,-.680);instrument.rotation.x=-.23;group.add(instrument);
+ box(instrument,[.075,.054,.012],[0,0,-.008],shell);
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=180;
  const context=canvas.getContext('2d');
  if(!context)throw new Error('계기판 화면을 준비하지 못했습니다.');
  const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;
  texture.generateMipmaps=false;texture.minFilter=T.LinearFilter;textures.push(texture);
- const instrumentSurface=new T.Mesh(roundedSurface(.183,.057,.003),basic({color:'#ffffff',map:texture,toneMapped:false}));
+ const instrumentSurface=new T.Mesh(roundedSurface(.066,.046,.004),basic({color:'#ffffff',map:texture,toneMapped:false}));
  instrumentSurface.name='original-live-speed-gear';instrumentSurface.position.z=.001;instrument.add(instrumentSurface);
 
  const bodyQuaternion=new T.Quaternion(),originalForwardFlip=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,1,0),Math.PI);
@@ -68,18 +70,18 @@ export async function createOriginalCockpit({scene,camera,loader}) {
  const finite=(v,fallback=0)=>Number.isFinite(v)?v:fallback;
  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
  function drawInstrument(){
-  const {kmh,gear,rpm}=telemetry;
-  context.fillStyle='#080d11';context.fillRect(0,0,512,160);
+  const {gear,rpm}=telemetry;
+  context.fillStyle='#060c11';context.fillRect(0,0,256,180);
   const ratio=clamp((rpm-900)/7100,0,1);
-  for(let i=0;i<20;i++){
-   context.fillStyle=i/20<ratio?(i<14?'#9ce4c4':i<18?'#ffd17c':'#ff7875'):'#253335';
-   context.fillRect(19+i*24,12,18,6);
+  for(let i=0;i<12;i++){
+   context.fillStyle=i/12<ratio?(i<9?'#d4dfe0':i<11?'#eacb8d':'#f27859'):'#253335';
+   context.fillRect(13+i*20,12,14,5);
   }
-  context.textBaseline='middle';context.textAlign='center';context.fillStyle='#eef6ef';
-  context.font='700 108px system-ui, sans-serif';context.fillText(String(kmh),192,92);
-  context.fillStyle=gear==='R'?'#ffc78e':'#aee6cf';context.font='700 102px system-ui, sans-serif';context.fillText(gear,423,91);
-  context.fillStyle='#849e9c';context.font='500 15px system-ui, sans-serif';context.fillText('km/h',310,126);
-  context.fillStyle='#354d4b';context.fillRect(356,42,2,99);texture.needsUpdate=true;
+  context.textBaseline='middle';context.textAlign='center';
+  context.fillStyle=gear==='R'?'#ffc78e':'#eef3ee';
+  context.font='700 96px system-ui, sans-serif';context.fillText(gear,128,91);
+  context.fillStyle='#91a2a8';context.font='600 20px system-ui, sans-serif';context.fillText(gear==='R'?'REVERSE':gear==='N'?'READY':'AUTO',128,157);
+  texture.needsUpdate=true;
  }
  function update({player,steeringAmount:amount=0,lookDegrees:look=0,now=performance.now()}={}){
   if(disposed)return;
@@ -103,6 +105,7 @@ export async function createOriginalCockpit({scene,camera,loader}) {
   if(!lastKey||(finite(now)-lastInstrument>=100&&key!==lastKey)){
    drawInstrument();lastInstrument=finite(now);lastKey=key;
   }
+  details.update(telemetry);
   group.userData.telemetry=telemetry;
  }
  function applyCamera(){
@@ -151,20 +154,20 @@ export async function createOriginalCockpit({scene,camera,loader}) {
  }
  function stats(){
   let extraMeshes=0,extraTriangles=0;
-  for(const node of [mirrorMount,instrument])node.traverse(o=>{if(o.isMesh){extraMeshes++;extraTriangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;}});
+  for(const node of [mirrorMount,instrument,details.group,...details.sideMirrors.map(m=>m.surface)])node.traverse(o=>{if(o.isMesh){extraMeshes++;extraTriangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;}});
   const sourceVisible=group.visible&&model.root.visible;
-  return{activeCar:'tavaculo',construction:'original-gallardo',meshes:model.stats.meshes+extraMeshes,triangles:model.stats.triangles+extraTriangles,textures:textures.length,
-   instrumentHz:10,telemetry:{...telemetry},projectedBounds:{wheel:projectedRect(wheel),instrument:projectedRect(instrumentSurface),mirror:projectedRect(mirrorMount),mirrorSurface:projectedRect(mirrorSurface)},
+  return{activeCar:'tavaculo',construction:'original-gallardo',meshes:model.stats.meshes+extraMeshes,triangles:model.stats.triangles+extraTriangles,textures:textures.length+5,
+   instrumentHz:10,details:details.stats(),telemetry:{...telemetry},projectedBounds:{wheel:projectedRect(wheel),instrument:projectedRect(instrumentSurface),mirror:projectedRect(mirrorMount),mirrorSurface:projectedRect(mirrorSurface)},
    mirrorReady:!!mirrorSurface.material.map,provenance:{...model.provenance},model:{...model.stats},eyeWorld:eyeWorld.toArray(),eyeLocal:model.eye.toArray(),lookDegrees,steeringAmount,
    sceneOwned:group.parent===scene,cameraOwnsModel:group.parent===camera||model.root.parent===camera,sourceVisible,sourceScale:model.root.scale.toArray(),invariant:invariant()};
  }
  function dispose(){
-  if(disposed)return;disposed=true;group.removeFromParent();
+  if(disposed)return;disposed=true;details.dispose();group.removeFromParent();
   const sourceGeometries=new Set(),sourceMaterials=new Set(),sourceTextures=new Set();
   model.root.traverse(o=>{if(!o.isMesh)return;sourceGeometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material]){sourceMaterials.add(m);for(const value of Object.values(m))if(value?.isTexture)sourceTextures.add(value);}});
   for(const g of new Set([...geometries,...sourceGeometries]))g.dispose();
   for(const m of new Set([...materials,...sourceMaterials]))m.dispose();
   for(const t of new Set([...textures,...sourceTextures]))t.dispose();
  }
- update();return{group,mirrorSurface,mirrorMount,update,applyCamera,reset,stats,dispose};
+ update();return{group,mirrorSurface,mirrorMount,sideMirrors:details.sideMirrors,update,applyCamera,reset,stats,dispose};
 }

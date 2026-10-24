@@ -5,13 +5,13 @@ import {createRearView} from '../dist/rear-view.mjs';
 
 const near=(actual,expected,tolerance=1e-8)=>assert.ok(Math.abs(actual-expected)<tolerance,actual+' != '+expected);
 function nearVector(actual,expected){for(let i=0;i<3;i++)near(actual[i],expected[i]);}
-function fixture(){
+function fixture(options={}){
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(60,844/390,.12,700),cockpit=new T.Group();scene.add(camera,cockpit);
  const surface=new T.Mesh(new T.PlaneGeometry(.5,.16),new T.MeshBasicMaterial());surface.position.set(.4,.25,-1);cockpit.add(surface);
  const hidden=new T.Group(),visibleExtra=new T.Group();hidden.visible=false;scene.add(hidden,visibleExtra);
  let target=null,viewport=new T.Vector4(3,4,844,390),scissor=new T.Vector4(8,9,800,300),scissorTest=true,renderCount=0,fail=false,overlay,lastRearTarget;
  const renderer={autoClear:false,info:{render:{calls:42,triangles:1000}},getRenderTarget:()=>target,setRenderTarget:v=>{target=v;if(v)lastRearTarget=v;},getViewport:v=>v.copy(viewport),setViewport:(...v)=>viewport=v[0]?.isVector4?v[0].clone():new T.Vector4(...v),getScissor:v=>v.copy(scissor),setScissor:v=>scissor=v.clone(),getScissorTest:()=>scissorTest,setScissorTest:v=>scissorTest=v,render(){assert.equal(cockpit.visible,false);assert.equal(hidden.visible,false);assert.equal(overlay.visible,false,'portrait HUD must not render itself in the rear pass');renderCount++;if(fail)throw Error('test render failed');},readRenderTargetPixels(){}};
- const mirror=createRearView({renderer,scene,camera,cockpit,surface});overlay=camera.getObjectByName('portrait-rear-view-hud');
+ const mirror=createRearView({renderer,scene,camera,cockpit,surface,options});overlay=camera.getObjectByName('portrait-rear-view-hud');
  return{mirror,camera,cockpit,surface,hidden,visibleExtra,overlay,renderer,get rearTarget(){return lastRearTarget;},get state(){return{target,viewport:viewport.toArray(),scissor:scissor.toArray(),scissorTest,renderCount}},setFail:(value=true)=>fail=value};
 }
 function setViewport(f,width,height){f.camera.aspect=width/height;f.camera.updateProjectionMatrix();return{portrait:height>width,viewportWidth:width,viewportHeight:height};}
@@ -88,4 +88,23 @@ test('sustained slow frames reduce mirror cost, and disposal releases shared res
  const frames=s.frames;f.mirror.dispose();f.mirror.dispose();f.mirror.update({player:{heading:0},enabled:true,force:true});
  assert.equal(f.surface.material.map,null);assert.equal(f.overlay.parent,null);assert.equal(f.mirror.stats().frames,frames);assert.equal(f.mirror.stats().disposed,true);
  assert.equal(f.mirror.stats().active,false);for(const count of disposed.values())assert.equal(count,1);
+});
+
+test('side cameras use the physical lens center, wider angled view and a separate low update budget',()=>{
+ const origin=new T.Vector3(.12,.03,0),f=fixture({origin,aspect:2,yaw:.32,width:192,height:96,hz:10,economyWidth:128,economyHeight:64,economyHz:6,fov:36,allowOverlay:false});
+ const args={player:{heading:.7},enabled:true,portrait:true,viewportWidth:390,viewportHeight:844};
+ f.mirror.update({...args,now:0});let s=f.mirror.stats();
+ nearVector(s.camera,origin.clone().applyMatrix4(f.surface.matrixWorld).toArray());near(s.fov,36);assert.equal(s.width,192);assert.equal(s.height,96);assert.equal(s.hz,10);assert.equal(f.overlay.visible,false);
+ const forward=new T.Vector3(Math.sin(.7),0,Math.cos(.7)),back=new T.Vector3(...s.direction);assert.ok(back.dot(forward)<-.94&&back.dot(forward)>-.96);
+ f.mirror.update({...args,now:60});assert.equal(f.mirror.stats().frames,1);f.mirror.update({...args,now:100});assert.equal(f.mirror.stats().frames,2);
+ for(let i=0;i<100;i++)f.mirror.update({...args,now:200+i*100,frameMs:45});
+ s=f.mirror.stats();assert.equal(s.width,128);assert.equal(s.height,64);assert.equal(s.hz,6);f.mirror.dispose();
+});
+test('mirrors outside the camera view spend no rear render and resume on re-entry',()=>{
+ const f=fixture({cullOffscreen:true});f.camera.position.set(0,0,0);f.camera.lookAt(0,0,-1);
+ const args={player:{heading:0},enabled:true,force:true,now:0};
+ f.surface.position.set(50,0,-1);f.mirror.update(args);assert.equal(f.state.renderCount,0);assert.equal(f.mirror.stats().active,false);
+ f.mirror.update({...args,inspect:true});assert.equal(f.state.renderCount,1,'opt-in QA texture inspection');
+ f.surface.position.set(0,0,-1);f.mirror.update(args);assert.equal(f.state.renderCount,2);assert.equal(f.mirror.stats().active,true);
+ f.surface.position.set(0,0,1);f.mirror.update(args);assert.equal(f.state.renderCount,2,'behind-eye mirror must be culled');f.mirror.dispose();
 });

@@ -74,3 +74,18 @@ dialog{
 @media(orientation:landscape){.garage-stage{min-height:0}.garage-panel{min-height:0}}
 /* Centre dialogs inside the safe rectangle, including asymmetric notches. */
 dialog{inset:var(--ui-top) var(--ui-right) var(--ui-bottom) var(--ui-left);margin:auto}
+
+/* The source wheel can naturally occlude its dials while turning.
+   A small independent readout keeps speed and reverse readable on phones. */
+@media(orientation:landscape){
+ body[data-car="tavaculo"][data-view="cockpit"] #speedometer{
+  visibility:visible;bottom:max(12px,env(safe-area-inset-bottom));min-width:112px;
+  padding:6px 11px;gap:7px;border-radius:12px;background:#07121bd6;
+  border:1px solid #a9c0c738;box-shadow:0 3px 14px #0004;pointer-events:none;
+ }
+ body[data-car="tavaculo"][data-view="cockpit"] #speedometer strong{
+  font-size:29px;font-style:normal;font-variant-numeric:tabular-nums;letter-spacing:-.04em;
+ }
+ body[data-car="tavaculo"][data-view="cockpit"] #speedometer small{margin:0;font-size:9px;letter-spacing:0}
+ body[data-car="tavaculo"][data-view="cockpit"] #gear{font-size:20px;background:none;border-left:1px solid #a9c0c738;border-radius:0;padding-left:7px}
+}
