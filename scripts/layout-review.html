@@ -1,0 +1,44 @@
+<!doctype html><meta charset="utf-8"><title>드림 개러지 화면 검사</title>
+<style>body{background:#10202c;color:#e2f7ef;font:14px system-ui;margin:16px}button,select{padding:12px;margin:4px}iframe{display:block;border:0;max-width:none}pre{white-space:pre-wrap}#stage{overflow:auto;max-width:100%}</style>
+<h1>화면 크기와 팝업 검사 · 로컬 격리 저장</h1>
+<button id="run">전체 레이아웃 검사</button><select id="preview"><option value="pause">일시정지</option><option value="help">조작 방법</option><option value="credits">만든 자료</option><option value="save-transfer">저장 이전</option><option value="welcome">시작 화면</option><option value="garage">차고</option><option value="result">완주 결과</option></select><button id="show">568×280 시안</button><strong id="status">대기</strong>
+<div id="stage"><iframe id="game" width="844" height="390"></iframe></div><pre id="report"></pre>
+<script type="module">
+const frame=document.querySelector('#game'),status=document.querySelector('#status'),output=document.querySelector('#report');
+const sizes=[[844,390],[740,360],[568,320],[568,280],[640,240],[390,844],[320,568],[1024,768]];
+const w=()=>frame.contentWindow,d=()=>frame.contentDocument,q=s=>d().querySelector(s),qa=()=>w().__raceQA;
+const sleep=t=>new Promise(r=>setTimeout(r,t));let report={checks:[]},ready=false;
+function check(name,fn){try{const evidence=fn();report.checks.push({name,passed:true,evidence});}catch(e){report.checks.push({name,passed:false,error:e.message});}output.textContent=JSON.stringify(report,null,2);}
+const assert=(v,m)=>{if(!v)throw Error(m);};
+function rect(el){const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};}
+function inside(el){const r=rect(el);assert(r.width>0&&r.height>0&&r.x>=-1&&r.y>=-1&&r.right<=w().innerWidth+1&&r.bottom<=w().innerHeight+1,'화면 밖: '+JSON.stringify(r));assert(el.scrollWidth<=el.clientWidth+2,'가로 넘침');if(el.scrollHeight>el.clientHeight+2)assert(['auto','scroll'].includes(w().getComputedStyle(el).overflowY),'내용 넘침인데 손으로 스크롤 불가');return r;}
+function reach(s){const el=q(s);assert(el,'없음 '+s);el.scrollIntoView({block:'center',inline:'nearest'});const r=inside(el),hit=d().elementFromPoint(r.x+r.width/2,r.y+r.height/2);assert(hit===el||el.contains(hit),'가림: '+s+' by '+hit?.id);assert(r.height>=40,'작은 조작 영역 '+s);return r;}
+async function size(x,y){frame.width=x;frame.height=y;frame.style.width=x+'px';frame.style.height=y+'px';await sleep(80);w().dispatchEvent(new (w().Event)('resize'));if(qa()&&qa().snapshot().mode!=='menu')qa().advance(0,null);}
+async function init(){if(ready)return;frame.src='/?qa=1&review=1&handling-save=1';for(let i=0;i<1200;i++){try{if(qa()&&!q('#enter-garage').disabled)break;}catch{}await sleep(50);}assert(w().__cockpitReviewStorageIsolated&&qa(),'게임 준비 실패');w().__cockpitReviewSetFrozen(true);ready=true;}
+function click(s){q(s).click();}
+function garage(){for(const el of d().querySelectorAll('dialog[open]'))el.close();const s=qa().snapshot();if(['countdown','race'].includes(s.mode))click('#pause');if(qa().snapshot().mode==='paused')click('#back-menu');if(qa().snapshot().mode==='result')click('#result-menu');if(qa().snapshot().screen==='welcome')click('#enter-garage');}
+function change(s,value){q(s).value=value;q(s).dispatchEvent(new (w().Event)('change',{bubbles:true}));}
+async function result(){garage();change('#view-select','cockpit');qa().setAssist(true);click('#start');qa().advance(3.5,null);for(let i=0;i<150&&qa().snapshot().mode!=='result';i++){qa().advanceDriver(1);if(i%10===0)await sleep(0);}assert(qa().snapshot().mode==='result','완주 실패');}
+async function run(){document.querySelector('#run').disabled=true;report={method:'Real game UI, isolated save, DOM hit-testing and programmatic scrolling; no native phone or notch claim',checks:[]};try{await init();const before=qa().snapshot();for(const [x,y]of sizes){status.textContent=x+'×'+y;await size(x,y);garage();click('#title-back');
+check(x+'x'+y+' welcome',()=>{reach('#enter-garage');reach('#welcome [data-save-transfer-open]');return inside(q('#welcome'));});click('#enter-garage');
+check(x+'x'+y+' garage',()=>{for(const s of ['#steering-mode','#view-select','#help-open','#credits-open','#fullscreen','#start'])reach(s);return inside(q('#menu'));});
+for(const [open,id,close]of [['#help-open','help','[data-close=help]'],['#credits-open','credits','[data-close=credits]'],['#menu [data-save-transfer-open]','save-transfer','#transfer-close']]){
+click(open);if(id==='save-transfer'){
+ const fixture=structuredClone(w().__citySaveFixture);fixture.coins+=17;
+ // Use the actual v1 transfer envelope, exported by the same pure module.
+ const {createTransfer}=await import('/save-transfer.mjs');
+ const dt=new (w().DataTransfer)();dt.items.add(new (w().File)([createTransfer(fixture)],'layout-fixture.json',{type:'application/json'}));q('#transfer-file').files=dt.files;q('#transfer-file').dispatchEvent(new (w().Event)('change',{bubbles:true}));for(let wait=0;wait<250&&q('#transfer-preview').hidden;wait++)await sleep(20);
+ }check(x+'x'+y+' '+id,()=>{const box=inside(q('#'+id));q('#'+id).scrollTop=0;assert(q('#'+id+' h2').getBoundingClientRect().top>=box.y-1,'제목 잘림');if(id==='save-transfer'){reach('#transfer-export');reach('#transfer-file');assert(!q('#transfer-preview').hidden,'비교 화면 없음');reach('#transfer-apply');reach('#transfer-cancel');}reach(close);return box;});click(close);}
+click('#start');qa().advance(3.5,null);click('#pause');
+check(x+'x'+y+' pause',()=>{const box=inside(q('#pause-menu .compact'));for(const s of ['#pause-steering-mode','#resume','#restart','#back-menu'])reach(s);return box;});
+await size(y,x);check(x+'x'+y+' pause rotated',()=>{inside(q('#pause-menu .compact'));return reach('#resume');});await size(x,y);click('#back-menu');}
+await size(844,390);garage();for(const [k,v]of Object.entries({'--ui-top':'12px','--ui-bottom':'24px','--ui-left':'44px','--ui-right':'44px'}))d().documentElement.style.setProperty(k,v);
+ check('simulated safe-area garage',()=>{reach('#help-open');const r=reach('#start');assert(r.right<=800&&r.bottom<=366,'안전 여백 침범');return r;});
+ click('#help-open');await size(390,844);check('open help rotates to portrait',()=>{inside(q('#help'));return reach('[data-close=help]');});await size(844,390);check('simulated safe-area help',()=>{const r=inside(q('#help'));assert(r.x>=44&&r.right<=800&&r.y>=12&&r.bottom<=366,'안전 여백 침범');return reach('[data-close=help]');});click('[data-close=help]');d().documentElement.removeAttribute('style');
+ const after=qa().snapshot();check('layout keeps wallet and loadouts',()=>{assert(after.coins===before.coins&&after.races===before.races,'기록 변경');assert(JSON.stringify(after.loadout)===JSON.stringify(before.loadout),'장착 변경');return {coins:after.coins,races:after.races};});
+await result();for(const [x,y]of sizes){await size(x,y);check(x+'x'+y+' result',()=>{inside(q('#result .compact'));reach('#result-menu');return reach('#again');});}
+report.runtimeErrors=w().__cockpitReviewErrors;report.passed=report.checks.every(c=>c.passed)&&!report.runtimeErrors.length;status.textContent=(report.passed?'통과':'실패')+' '+report.checks.filter(c=>c.passed).length+'/'+report.checks.length;
+}catch(e){report.error=e.message;status.textContent='검사 중단: '+e.message;}finally{output.textContent=JSON.stringify(report,null,2);document.querySelector('#run').disabled=false;}}
+document.querySelector('#run').onclick=run;
+document.querySelector('#show').onclick=async()=>{await init();await size(568,280);const v=document.querySelector('#preview').value;if(v==='result')await result();else{garage();if(v==='welcome')click('#title-back');else if(v==='pause'){click('#start');qa().advance(3.5,null);click('#pause');}else if(v==='help')click('#help-open');else if(v==='credits')click('#credits-open');else if(v==='save-transfer')click('#menu [data-save-transfer-open]');}status.textContent=v;};
+</script>

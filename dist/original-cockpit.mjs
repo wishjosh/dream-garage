@@ -1,3 +1,4 @@
+import {setCabinUp} from './cockpit-attitude.mjs?v=cabin-layout-1';
 import * as T from './vendor/three.module.js';
 import {loadStudyCar} from './cockpit-study-model.mjs?v=steering-look-1';
 
@@ -115,7 +116,7 @@ export async function createOriginalCockpit({scene,camera,loader}) {
   direction.applyQuaternion(worldQuaternion);lookWorld.copy(eyeWorld).addScaledVector(direction,10);
   camera.position.copy(eyeWorld);
   if(camera.parent){camera.parent.updateWorldMatrix(true,false);camera.parent.worldToLocal(camera.position);}
-  camera.up.copy(yAxis).applyQuaternion(worldQuaternion).lerp(yAxis,.55).normalize();camera.lookAt(lookWorld);
+  setCabinUp(camera.up,worldQuaternion,yAxis);camera.lookAt(lookWorld);
   if(camera.fov!==verticalFov||camera.near!==.035||camera.far!==700){
    camera.fov=verticalFov;camera.near=.035;camera.far=700;camera.updateProjectionMatrix();
   }

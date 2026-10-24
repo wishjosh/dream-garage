@@ -1,0 +1,76 @@
+/* Shared viewport limits for menus and dialogs. Keep driving controls unchanged. */
+:root{
+ --ui-top:max(12px,env(safe-area-inset-top,0px));
+ --ui-bottom:max(12px,env(safe-area-inset-bottom,0px));
+ --ui-left:max(12px,env(safe-area-inset-left,0px));
+ --ui-right:max(12px,env(safe-area-inset-right,0px));
+ --ui-height:calc(100dvh - var(--ui-top) - var(--ui-bottom));
+}
+#pause-menu,#result,#fatal{
+ display:flex;align-items:center;justify-content:center;
+ padding:var(--ui-top) var(--ui-right) var(--ui-bottom) var(--ui-left);
+ overflow:hidden;
+}
+#pause-menu .compact,#result .compact,#fatal .compact{
+ flex:0 1 470px;min-width:0;min-height:0;width:100%;max-width:470px;
+ max-height:var(--ui-height);overflow-y:auto;overflow-x:hidden;
+ overscroll-behavior:contain;scrollbar-width:thin;scroll-padding:16px;
+ padding:20px;overflow-wrap:anywhere;-webkit-overflow-scrolling:touch;
+}
+.compact button{min-height:44px;white-space:normal}
+.compact .steering-choice{flex-wrap:wrap}
+.compact .steering-choice select{flex:1;min-width:140px}
+.welcome-overlay{
+ display:flex;align-items:flex-start;justify-content:flex-start;
+ padding:var(--ui-top) max(4vw,var(--ui-right)) var(--ui-bottom) max(4vw,var(--ui-left));
+ overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
+}
+.welcome-card{flex:0 1 510px;min-width:0;max-width:100%;margin-block:auto;overflow-wrap:anywhere}
+.welcome-card h1{overflow-wrap:normal;word-break:keep-all}
+.welcome-loop{white-space:normal;line-height:1.8}
+.welcome-card button{min-height:44px}
+dialog{
+ max-width:calc(100% - var(--ui-left) - var(--ui-right));
+ max-height:var(--ui-height);overflow:auto;overscroll-behavior:contain;
+ scroll-padding:16px 16px 72px;overflow-wrap:anywhere;
+}
+#help,#credits{width:450px;padding:20px}
+#help [data-close],#credits [data-close]{
+ position:sticky;bottom:0;z-index:1;min-height:44px;
+ box-shadow:0 -8px 16px #0d293e,0 4px 0 #213c39;
+}
+#save-transfer{
+ width:min(760px,calc(100% - var(--ui-left) - var(--ui-right)));
+ max-width:760px;max-height:var(--ui-height);scroll-padding:0;
+}
+.transfer-body{flex:1 1 auto;min-height:0}
+.transfer-footer{max-height:40dvh;overflow-y:auto;overflow-wrap:anywhere}
+.transfer-header{min-height:0}.transfer-header button{min-height:44px}
+.garage-panel{min-width:0;scroll-padding-top:16px;scroll-padding-bottom:94px}
+.menu-footer{flex-wrap:wrap}.menu-footer button{min-height:44px}
+@media(orientation:landscape){
+ .garage-overlay{
+  --garage-width:clamp(280px,42vw,400px);--garage-pad:14px;
+  grid-template-columns:minmax(0,1fr) var(--garage-width);
+  padding:var(--ui-top) var(--ui-right) var(--ui-bottom) var(--ui-left);
+ }
+ .garage-panel{max-height:var(--ui-height);padding:var(--garage-pad) var(--garage-pad) 94px;overflow-y:auto}
+ .launch-bar{
+  left:auto;right:calc(var(--ui-right) + var(--garage-pad));
+  bottom:calc(var(--ui-bottom) + 8px);width:calc(var(--garage-width) - 2 * var(--garage-pad));
+ }
+}
+@media(max-height:350px){
+ .welcome-card{padding:8px;max-width:430px}.welcome-card h1{font-size:32px;margin:8px 0}
+ .welcome-card::after{display:none}
+ #pause-menu .compact,#result .compact,#fatal .compact{padding:14px 18px}
+ .compact h2{font-size:23px}.compact .gaze-option{margin-bottom:6px;min-height:44px}
+ #result-rank{font-size:42px}
+}
+@media(max-width:350px){
+ .welcome-card h1{font-size:34px}.welcome-card .welcome-loop{font-size:10px}
+}
+
+@media(orientation:landscape){.garage-stage{min-height:0}.garage-panel{min-height:0}}
+/* Centre dialogs inside the safe rectangle, including asymmetric notches. */
+dialog{inset:var(--ui-top) var(--ui-right) var(--ui-bottom) var(--ui-left);margin:auto}

@@ -1,3 +1,4 @@
+import {setCabinUp} from './cockpit-attitude.mjs?v=cabin-layout-1';
 import {createCityCourse,COURSE_ID,COURSE_NAME,SECTORS,courseSector} from './city-course.mjs?v=city-tour-1';
 import {createImpactSound} from './collision-feel.mjs?v=city-tour-1';
 import {installCitySteering} from './city-steering.mjs?v=city-tour-1';
@@ -5,7 +6,7 @@ import {installSaveTransfer} from './save-transfer-ui.mjs?v=city-tour-1';
 import {SAVE_KEY} from './save-transfer.mjs?v=city-tour-1';
 import {createCockpit} from './cockpit-visual.mjs?v=gallardo-cockpit-1';
 import {createRearView} from './rear-view.mjs?v=original-city-1';
-import {createOriginalCockpit} from './original-cockpit.mjs?v=city-tour-1';
+import {createOriginalCockpit} from './original-cockpit.mjs?v=cabin-layout-1';
 import {createSteeringState,stepSteering,MAX_LOOK_DEGREES} from './cockpit-study-steering.mjs?v=steering-look-1';
 import {splitWheelVisuals,syncWheelVisuals} from './wheel-visual.mjs?v=wheels-1';
 import * as T from './vendor/three.module.js';
@@ -183,7 +184,7 @@ async function boot(){
    // A lower left seat sees the road from that seat while looking along the car.
    if(!isFormula)camera.position.addScaledVector(new T.Vector3(direction.z,0,-direction.x),.38);
    const bodyForward=new T.Vector3(0,0,1).applyQuaternion(new T.Quaternion().fromArray(player.quaternion||[0,0,0,1]));
-   camera.up.set(0,1,0).lerp(new T.Vector3(0,1,0).applyQuaternion(new T.Quaternion().fromArray(player.quaternion||[0,0,0,1])),.25);
+   setCabinUp(camera.up,new T.Quaternion().fromArray(player.quaternion||[0,0,0,1]),new T.Vector3(0,1,0));
    if(isFormula)camera.lookAt(player.x+direction.x*40,camera.position.y+bodyForward.y*10+.15,player.z+direction.z*40);
    else camera.lookAt(camera.position.x+direction.x*40,camera.position.y+bodyForward.y*10-.28,camera.position.z+direction.z*40);
   }else{
