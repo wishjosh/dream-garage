@@ -51,7 +51,9 @@ http.createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://localhost'),pathname=decodeURIComponent(url.pathname);
   let file,body,type;
-  if(pathname==='/__qa__/layout-review.html'){
+  if(pathname==='/__qa__/hud-review.html'){
+   file=fileURLToPath(new URL('./hud-review.html',import.meta.url));type=types['.html'];body=await readFile(file);
+  }else if(pathname==='/__qa__/layout-review.html'){
    file=fileURLToPath(new URL('./layout-review.html',import.meta.url));type=types['.html'];body=await readFile(file);
   }else if(pathname==='/__qa__/handling-review.html'){
    file=fileURLToPath(new URL('./handling-review.html',import.meta.url));type=types['.html'];body=await readFile(file);

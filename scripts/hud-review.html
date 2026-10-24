@@ -1,0 +1,55 @@
+<!doctype html><meta charset="utf-8"><title>주행 정보 배치 검사</title>
+<style>body{margin:16px;background:#10202c;color:#dbeee7;font:14px system-ui}button{padding:12px;margin:5px}iframe{border:0;display:block}#stage{overflow:auto}pre{white-space:pre-wrap}body.capture{margin:0;overflow:hidden}body.capture header,body.capture pre{display:none}body.capture iframe{position:fixed;inset:0}</style>
+<header><h1>실제 게임 · 주행 정보 배치 검사</h1><p>8개 화면 × 두 차량 × 두 시점. 저장 격리·합성 입력이며 실제 휴대폰 성능 검사는 아닙니다.</p><button id="run">주행 정보 32개 조합 검사</button><button id="show">844×390 운전석 보기</button><button id="capture">게임 화면만 보기</button><strong id="status">대기</strong></header>
+<div id="stage"><iframe id="game" width="844" height="390" title="검사 중인 게임"></iframe></div><pre id="report"></pre>
+<script type="module">
+const $=s=>document.querySelector(s),frame=$('#game'),w=()=>frame.contentWindow,d=()=>frame.contentDocument,q=s=>d().querySelector(s),qa=()=>w().__raceQA,snap=()=>qa().snapshot();
+const sleep=ms=>new Promise(r=>setTimeout(r,ms)),assert=(v,m)=>{if(!v)throw Error(m);};let ready=false,report={checks:[]};
+const sizes=[[844,390],[740,360],[568,320],[568,280],[640,240],[390,844],[320,568],[1024,768]];
+const click=s=>{assert(q(s),'요소 없음 '+s);q(s).click();};
+function change(s,value){q(s).value=value;q(s).dispatchEvent(new (w().Event)('change',{bubbles:true}));}
+function box(el){const r=el.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};}
+function overlap(a,b){return a.x<b.right-.5&&b.x<a.right-.5&&a.y<b.bottom-.5&&b.y<a.bottom-.5;}
+function visible(el){const s=w().getComputedStyle(el);return !el.hidden&&s.display!=='none'&&s.visibility!=='hidden'&&el.getBoundingClientRect().width>0;}
+function within(el){const r=box(el);assert(r.x>=-.5&&r.y>=-.5&&r.right<=w().innerWidth+.5&&r.bottom<=w().innerHeight+.5,'화면 밖 '+el.id+JSON.stringify(r));return r;}
+function hit(el){const r=within(el),at=d().elementFromPoint(r.x+r.width/2,r.y+r.height/2);assert(at===el||el.contains(at),'다른 요소가 가림 '+el.id);assert(r.width>=44&&r.height>=44,'터치 영역 44px 미만 '+el.id);}
+function record(name,fn){try{report.checks.push({name,passed:true,evidence:fn()});}catch(e){report.checks.push({name,passed:false,error:e.message});}$('#report').textContent=JSON.stringify(report,null,2);}
+async function init(){if(ready)return;frame.src='/?qa=1&review=1&handling-save=1';for(let i=0;i<1200;i++){try{if(qa()&&!q('#enter-garage').disabled)break;}catch{}await sleep(50);}assert(w().__cockpitReviewStorageIsolated&&qa(),'격리 게임 준비 실패');w().__cockpitReviewSetFrozen(true);ready=true;}
+async function size(width,height){frame.width=width;frame.height=height;frame.style.width=width+'px';frame.style.height=height+'px';await sleep(70);w().dispatchEvent(new (w().Event)('resize'));}
+function garage(){if(!q('#course-map').hidden)click('#map-resume');if(['race','countdown'].includes(snap().mode))click('#pause');if(snap().mode==='paused')click('#back-menu');if(snap().mode==='result')click('#result-menu');if(snap().screen==='welcome')click('#enter-garage');}
+function start(car,view){garage();click('[data-car="'+car+'"]');change('#view-select',view);click('#start');qa().advance(3.5,null);qa().advance(0,null);}
+function layout(){
+ const elements=['.race-stats','.top-actions','#map-open','#speedometer','#thumb-steering',...[...d().querySelectorAll('[data-control]')].filter(visible).map(el=>'[data-control='+el.dataset.control+']')];
+ const rects=elements.map(s=>({name:s,r:within(q(s))}));
+ for(let i=0;i<rects.length;i++)for(let j=i+1;j<rects.length;j++)assert(!overlap(rects[i].r,rects[j].r),'겹침 '+rects[i].name+' / '+rects[j].name);
+ for(const s of ['#camera','#pause','#map-open','#rescue','#thumb-steering',...[...d().querySelectorAll('[data-control]')].filter(visible).map(el=>'[data-control='+el.dataset.control+']')])hit(q(s));
+ assert(w().getComputedStyle(q('#speedometer')).backgroundImage==='none','속도 표시의 불필요한 배경');
+ const mirror=snap().mirrorStats;if(mirror?.active){const m=mirror.bounds,r={x:m.x*w().innerWidth,y:m.y*w().innerHeight,right:(m.x+m.width)*w().innerWidth,bottom:(m.y+m.height)*w().innerHeight};for(const entry of rects.filter(v=>!v.name.includes('control')&&v.name!=='#thumb-steering'))assert(!overlap(r,entry.r),'실제 미러를 가림 '+entry.name);}
+ return rects;
+}
+function pauseMap(){
+ const before=snap(),stored=w().localStorage.getItem('hojin-city-gp:save:v1');
+ click('#map-open');assert(snap().mode==='paused'&&!q('#course-map').hidden&&q('#pause-menu').hidden,'지도 확대시 일시정지 실패');
+ assert(snap().touches===0&&!Object.values(snap().input).some(Boolean),'지도 확대 중 입력 잔류');qa().advance(.5,{throttle:true});
+ const paused=snap();assert(paused.elapsed===before.elapsed&&paused.player.x===before.player.x&&paused.player.z===before.player.z,'지도에서 경주 진행됨');
+ q('#map-resume').scrollIntoView({block:'center'});hit(q('#map-resume'));assert(q('#full-map').width===720,'전체 지도 준비 실패');
+ click('#map-resume');assert(snap().mode===before.mode&&q('#course-map').hidden,'지도 복귀 실패');
+ assert(w().localStorage.getItem('hojin-city-gp:save:v1')===stored,'지도 열기 중 기록 변경');
+ return{samePosition:true,sameElapsed:true,saveUnchanged:true};
+}
+async function run(){
+ $('#run').disabled=true;report={checks:[],method:'isolated actual game, DOM bounds/hit-testing, QA fixed stepping; no real-phone claim'};
+ try{await init();const before=snap();
+ for(const [width,height]of sizes)for(const car of ['tavaculo','f2002'])for(const view of ['cockpit','chase']){
+  $('#status').textContent=`검사 중 ${width}×${height} ${car} ${view}`;await size(width,height);start(car,view);
+  const name=`${width}x${height} ${car} ${view}`;record(name+' layout',layout);record(name+' map pause',pauseMap);
+  const fixed=box(q('#speedometer'));click('#camera');qa().advance(0,null);record(name+' fixed anchors',()=>{const current=box(q('#speedometer'));assert(JSON.stringify(current)===JSON.stringify(fixed),'시점에 따라 HUD 위치 변경');return{same:true};});
+ }
+ const after=snap();record('wallet and owned/loadouts preserved',()=>{assert(before.coins===after.coins&&before.races===after.races,'상금 또는 완주 기록 변경');assert(JSON.stringify(before.owned)===JSON.stringify(after.owned),'보유품 변경');return{coins:after.coins,races:after.races};});
+ report.runtimeErrors=w().__cockpitReviewErrors;report.passed=report.checks.every(c=>c.passed)&&!report.runtimeErrors.length;
+ $('#status').textContent=(report.passed?'통과 ':'실패 ')+report.checks.filter(c=>c.passed).length+'/'+report.checks.length;
+ }catch(e){report.error=e.stack;$('#status').textContent='검사 중단 '+e.message;}finally{$('#report').textContent=JSON.stringify(report,null,2);$('#run').disabled=false;}
+}
+$('#run').onclick=run;$('#show').onclick=async()=>{await init();await size(844,390);start('tavaculo','cockpit');qa().reviewScene({progress:.18});qa().advance(1.2,{throttle:true});$('#status').textContent='실제 수변 운전석 · 저장 격리';};
+$('#capture').onclick=()=>document.body.classList.toggle('capture');addEventListener('keydown',e=>{if(e.key==='Escape')document.body.classList.remove('capture');});
+</script>

@@ -1,12 +1,13 @@
+import {createCircuitMap,drivingReadout,nearbyCar} from './race-hud.mjs?v=race-hud-1';
 import {setCabinUp} from './cockpit-attitude.mjs?v=cabin-layout-1';
-import {createCityCourse,COURSE_ID,COURSE_NAME,SECTORS,courseSector} from './city-course.mjs?v=city-tour-1';
+import {createCityCourse,COURSE_ID,COURSE_NAME,SECTORS} from './city-course.mjs?v=city-tour-1';
 import {createImpactSound} from './collision-feel.mjs?v=city-tour-1';
 import {installCitySteering} from './city-steering.mjs?v=city-tour-1';
 import {installSaveTransfer} from './save-transfer-ui.mjs?v=city-tour-1';
 import {SAVE_KEY} from './save-transfer.mjs?v=city-tour-1';
 import {createCockpit} from './cockpit-visual.mjs?v=gallardo-cockpit-1';
 import {createRearView} from './rear-view.mjs?v=cockpit-detail-1';
-import {createOriginalCockpit} from './original-cockpit.mjs?v=cockpit-detail-1';
+import {createOriginalCockpit} from './original-cockpit.mjs?v=race-hud-1';
 import {createSteeringState,stepSteering,MAX_LOOK_DEGREES} from './cockpit-study-steering.mjs?v=steering-look-1';
 import {splitWheelVisuals,syncWheelVisuals} from './wheel-visual.mjs?v=wheels-1';
 import * as T from './vendor/three.module.js';
@@ -200,7 +201,9 @@ async function boot(){
  function clearInput(){steeringControl?.clear();resetGaze();held.clear();pointerZones.clear();keys.clear();Object.keys(input).forEach(k=>input[k]=false);document.querySelectorAll('[data-control]').forEach(b=>{b.classList.remove('pressed');b.setAttribute('aria-pressed','false');});}
  function readInput(){for(const k of Object.keys(input))input[k]=[...held.values()].includes(k);input.left ||= keys.has('ArrowLeft')||keys.has('KeyA');input.right ||=keys.has('ArrowRight')||keys.has('KeyD');input.throttle ||=keys.has('ArrowUp')||keys.has('KeyW');input.brake ||=keys.has('ArrowDown')||keys.has('KeyS')||keys.has('Space');input.reverse ||=keys.has('KeyX');input.drift ||=keys.has('ShiftLeft')||keys.has('ShiftRight');}
  function showToast(message){$('toast').textContent=message;$('toast').classList.add('visible');toastTime=2.5;}
+ let mapOpen=false;
  function resetRace(){
+  mapOpen=false;$('course-map').hidden=true;
   physics?.dispose();resetSkids();
   visuals.forEach(v=>{scene.remove(v.root);disposeDress(v.body);});visuals=[];if(preview)preview.visible=false;
   player=makeRacer(track,{car:selected,lane:-2.3});racers=[player,...[0,1,2].map((i)=>makeRacer(track,{id:'bot'+i,car:i===1?'tavaculo':'f2002',s:7+i*7,lane:i%2?-2.3:2.3}))];
@@ -209,9 +212,9 @@ async function boot(){
   elapsed=0;awarded=false;count=3.3;clearInput();mode='countdown';$('welcome').hidden=true;$('menu').hidden=$('pause-menu').hidden=$('result').hidden=true;$('hud').hidden=false;$('countdown').hidden=false;syncVisuals();updateCamera(true);persist();
  }
  function syncVisuals(){racers.forEach((r,i)=>{const v=visuals[i];v.body.position.set(r.x,r.y??.045,r.z);v.body.quaternion.fromArray(r.quaternion||[0,0,0,1]);v.shadow.position.set(r.x,.062,r.z);v.shadow.rotation.z=-r.heading;syncWheelVisuals(v.wheels,v.calipers,r.wheels);});}
- function toMenu(){clearInput();mode='menu';physics?.dispose();physics=null;$('hud').hidden=$('result').hidden=$('pause-menu').hidden=$('countdown').hidden=true;$('welcome').hidden=true;$('menu').hidden=false;atWelcome=false;visuals.forEach(v=>{scene.remove(v.root);disposeDress(v.body);});visuals=[];refreshPreview();preview.visible=true;syncOptions();updateCamera(true);}
+ function toMenu(){mapOpen=false;$('course-map').hidden=true;clearInput();mode='menu';physics?.dispose();physics=null;$('hud').hidden=$('result').hidden=$('pause-menu').hidden=$('countdown').hidden=true;$('welcome').hidden=true;$('menu').hidden=false;atWelcome=false;visuals.forEach(v=>{scene.remove(v.root);disposeDress(v.body);});visuals=[];refreshPreview();preview.visible=true;syncOptions();updateCamera(true);}
  function setPause(){if(!['race','countdown'].includes(mode))return;pausedFrom=mode;mode='paused';clearInput();updateCamera(true);$('pause-menu').hidden=false;$('pause-menu').querySelector('.compact').scrollTop=0;$('countdown').hidden=true;}
- function resume(){mode=pausedFrom;$('pause-menu').hidden=true;$('countdown').hidden=mode!=='countdown';last=performance.now();}
+ function resume(){mapOpen=false;$('course-map').hidden=true;mode=pausedFrom;$('pause-menu').hidden=true;$('countdown').hidden=mode!=='countdown';last=performance.now();}
  function switchView(){resetGaze();view=view==='chase'?'cockpit':'chase';save.view=view;persist();updateCamera(true);}
  function finish(){
   if(awarded)return;awarded=true;mode='result';clearInput();const rank=rankOf(player,racers),prize=PRIZES[rank-1];save.coins+=prize;save.races++;save.courseBest??={};save.courseBest[COURSE_ID]??={};const old=save.courseBest[COURSE_ID][selected],record=!Number.isFinite(old)||elapsed<old;if(record)save.courseBest[COURSE_ID][selected]=elapsed;persist();
@@ -227,10 +230,26 @@ async function boot(){
   racers.slice(1).forEach(r=>finishRacer(r,track,elapsed));
   if(finishRacer(player,track,elapsed))finish();
  }
- const mapctx=$('map').getContext('2d'),bounds=track.bounds;
- const mp=(x,z)=>[(x-bounds.xmin)/(bounds.xmax-bounds.xmin)*220+10,190-(z-bounds.zmin)/(bounds.zmax-bounds.zmin)*180];
- function drawMap(){mapctx.clearRect(0,0,240,200);mapctx.strokeStyle='#6b91aa';mapctx.lineWidth=6;mapctx.lineJoin='round';mapctx.beginPath();frames.forEach((f,i)=>{const p=mp(f.x,f.z);i?mapctx.lineTo(...p):mapctx.moveTo(...p);});mapctx.closePath();mapctx.stroke();racers.slice().reverse().forEach(r=>{const p=mp(r.x,r.z);mapctx.fillStyle=r===player?'#83fff2':'#ff93b2';mapctx.beginPath();mapctx.arc(...p,r===player?5.5:3.8,0,Math.PI*2);mapctx.fill();});}
- function updateHUD(){if(!player)return;$('speed').textContent=Math.round(player.speed*3.6);$('gear').textContent=player.forwardSpeed<-.25||player.driveMode==='reverse'?'R':Math.round(player.speed*3.6)<1?'N':Math.min(6,Math.floor(Math.round(player.speed*3.6)/37)+1);const state=player.reverseBlocked?'멈춘 뒤 후진을 다시 눌러요':player.drifting?'드리프트 · 가속 유지':player.driveMode==='reverse'||player.forwardSpeed<-.25?'후진 · R':player.braking?'브레이크':physics?.advice(player)||courseSector(player.distance/length).name;$('drive-state').textContent=state;$('drive-state').classList.toggle('drifting',!!player.drifting);$('rank').innerHTML=rankOf(player,racers)+'<span>/ 4</span>';$('progress').innerHTML=Math.floor(clamp(player.distance/length*100,0,100))+'<span>%</span>';$('time').textContent=formatTime(elapsed);drawMap();$('race-progress').style.width=clamp(player.distance/length*100,0,100)+'%';}
+ const compactMap=createCircuitMap($('map'),track),fullMap=createCircuitMap($('full-map'),track);
+ function openMap(){
+  if(!['race','countdown'].includes(mode))return;
+  setPause();mapOpen=true;$('pause-menu').hidden=true;$('course-map').hidden=false;
+  $('course-map').querySelector('.course-panel').scrollTop=0;fullMap.draw(player,racers);$('map-resume').focus({preventScroll:true});
+ }
+ function updateHUD(){
+  if(!player)return;
+  const readout=drivingReadout(player);$('speed').textContent=readout.kmh;$('gear').textContent=readout.gear;
+  $('gear-mode').textContent=readout.mode;$('rpm-fill').style.width=readout.ratio*100+'%';
+  const state=player.reverseBlocked?'멈춘 뒤 후진을 다시 눌러요':player.drifting?'드리프트 · 가속 유지':readout.gear==='R'?'후진 · R':player.braking?'브레이크':physics?.advice(player)||'';
+  $('drive-state').textContent=state;$('drive-state').classList.toggle('drifting',!!player.drifting);
+  $('rank').innerHTML=rankOf(player,racers)+'<span>/ 4</span>';
+  $('progress').innerHTML=Math.floor(clamp(player.distance/length*100,0,100))+'<span>%</span>';
+  $('time').textContent=formatTime(elapsed);compactMap.draw(player,racers);if(mapOpen)fullMap.draw(player,racers);
+  $('race-progress').style.width=clamp(player.distance/length*100,0,100)+'%';
+  const near=nearbyCar(player,racers),indicator=$('near-car');indicator.hidden=!near;
+  if(near){indicator.dataset.side=near.side;indicator.textContent=near.side==='left'?'◀ 옆 차':'옆 차 ▶';}
+ }
+ $('map-open').onclick=openMap;$('map-resume').onclick=()=>{resume();$('map-open').focus({preventScroll:true});};
  function syncGazeOptions(){for(const id of ['gaze-follow','pause-gaze-follow'])$(id).checked=gazeFollow;}
  for(const id of ['gaze-follow','pause-gaze-follow'])$(id).onchange=e=>{gazeFollow=e.target.checked;syncGazeOptions();if(!gazeFollow)gazeState.lookDegrees=0;updateCamera(true);};
  syncGazeOptions();

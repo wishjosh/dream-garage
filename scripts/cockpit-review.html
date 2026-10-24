@@ -112,7 +112,7 @@ function originalCheck(s=snap()){
   assert(c.eyeLocal?.length===3&&length3(difference3(c.eyeLocal,expectedEye))<1e-7,'채택한 원본 운전석 눈 위치 변경');
   assert(c.eyeWorld?.length===3&&length3(difference3(c.eyeWorld,s.camera))<.0005,'카메라가 원본 눈 위치에서 이동함');
   assert(Math.abs(s.cameraFov-42.38617142)<.0001&&Math.abs(s.cameraNear-.035)<.0001,'원본 시야각 또는 앞쪽 절단 거리 변경');
-  for(const key of ['wheel','instrument','mirror','mirrorSurface']){
+  for(const key of ['wheel','mirror','mirrorSurface']){
     const b=c.projectedBounds?.[key];
     assert(b&&['left','top','right','bottom','width','height'].every(field=>Number.isFinite(b[field]))&&b.width>0&&b.height>0,'원본 화면 투영 영역 없음: '+key);
   }
@@ -183,15 +183,8 @@ function instrumentReadabilityCheck(car){
   }
   const readout=speedometer.getBoundingClientRect();assert(hudVisible&&readout.left>=0&&readout.top>=0&&readout.right<=width&&readout.bottom<=height,'가로 주행 보조 속도·기어 표시가 잘림');
   for(const button of doc().querySelectorAll('[data-control]'))assert(!overlaps({x:readout.x,y:readout.y,width:readout.width,height:readout.height},button.getBoundingClientRect()),'보조 속도 표시와 조작 버튼이 겹침');
-  const b=s.cockpitStats.projectedBounds.instrument;
-  assert(b.left>=-.005&&b.top>=-.005&&b.right<=1.005&&b.bottom<=1.005,'가로 화면에서 실제 속도·기어 계기 잘림');
-  const bounds={x:b.left*width,y:b.top*height,width:b.width*width,height:b.height*height},hits=[];
-  for(const e of doc().querySelectorAll('.race-stats,.top-actions,#map,#toast,[data-control]')){
-    const st=win().getComputedStyle(e);if(e.hidden||st.visibility==='hidden'||st.display==='none'||e.id==='toast'&&!e.classList.contains('visible'))continue;
-    const r=e.getBoundingClientRect();if(overlaps(bounds,r))hits.push(e.dataset.control||e.id||e.className);
-  }
-  assert(hits.length===0,'실제 속도·기어 계기를 HUD가 가림: '+hits.join(', '));
-  return{presentation:'physical-instrument-with-mobile-readout',readout:{x:readout.x,y:readout.y,width:readout.width,height:readout.height},kmh:t.kmh,gear:t.gear,bounds,estimatedDigitHeight:bounds.height*96/180,pixelLegibility:'requires visual review'};
+  assert(s.cockpitStats.projectedBounds.instrument===null,'추가 기어 화면이 실내에 남음');
+  return{presentation:'physical-analogue-dials-with-fixed-hud',readout:{x:readout.x,y:readout.y,width:readout.width,height:readout.height},kmh:t.kmh,gear:t.gear,pixelLegibility:'requires visual review'};
 }
 async function mirrorProof(){
   await recover();await drive(['brake'],.2);qa().mirrorProbe(null);await tick(80);const empty=qa().mirrorPixels();

@@ -11,15 +11,17 @@
   <link rel="stylesheet" href="./design-v1.css?v=city-tour-1">
   <link rel="stylesheet" href="./save-transfer.css?v=save-transfer-1">
   <link rel="stylesheet" href="./responsive-ui.css?v=cockpit-detail-1">
-  <script type="module" src="./game.mjs?v=cockpit-detail-1"></script>
+  <link rel="stylesheet" href="./race-hud.css?v=race-hud-1">
+  <script type="module" src="./game.mjs?v=race-hud-1"></script>
 </head>
 <body>
   <canvas id="world" aria-label="수변 야간 도심 레이싱 코스"></canvas>
   <div id="hud" hidden>
-    <div class="race-stats"><div><small>순위</small><strong id="rank">4<span>/ 4</span></strong></div><div><small>한 바퀴</small><strong id="progress">0<span>%</span></strong></div><div><small>기록</small><strong id="time">0:00.00</strong></div><div class="race-progress" id="race-progress"></div></div>
+    <div class="race-stats"><div><small>순위</small><strong id="rank">4<span>/ 4</span></strong></div><div><small>진행</small><strong id="progress">0<span>%</span></strong></div><div><small>시간</small><strong id="time">0:00.00</strong></div><div class="race-progress" id="race-progress"></div></div>
     <div class="top-actions"><button id="camera" aria-label="운전석 시점으로 전환">운전석</button><button id="pause" aria-label="일시정지">Ⅱ</button></div>
-    <canvas id="map" width="240" height="200" aria-label="코스와 차량 위치"></canvas>
-    <div id="speedometer"><strong id="speed">0</strong><small>km/h</small><div id="gear">N</div></div><div id="drive-state" role="status" aria-live="polite"></div>
+    <button id="map-open" type="button" aria-label="전체 서킷 지도 보기 · 일시정지" aria-haspopup="dialog"><canvas id="map" width="240" height="200" aria-label="전체 코스와 차량 위치 · 민트 화살표가 내 차"></canvas></button>
+    <div id="near-car" class="near-car" aria-label="옆 차량 접근" hidden></div>
+    <div id="speedometer"><strong id="speed">0</strong><small>km/h</small><div id="gear">N</div><span id="gear-mode">AT</span><div class="hud-shift" aria-hidden="true"><span id="rpm-fill"></span></div></div><div id="drive-state" role="status" aria-live="polite"></div>
     <div id="toast" role="status" aria-live="polite"></div>
     <div id="controls" aria-label="운전 조작">
       <div id="thumb-steering" role="slider" tabindex="0" aria-label="엄지 슬라이드 조향" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0" hidden><span class="thumb-caption">누른 자리에서 좌우로</span><span class="thumb-track"><i class="thumb-center"></i></span><span class="thumb-knob">↔</span><span class="thumb-ends"><b>왼쪽</b><b>오른쪽</b></span></div><div class="steering"><button data-control="left" aria-label="왼쪽으로 조향" aria-pressed="false"><svg class="control-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M23 16H8M15 7l-9 9 9 9"/></svg><span class="control-label">왼쪽</span></button><button data-control="right" aria-label="오른쪽으로 조향" aria-pressed="false"><svg class="control-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M9 16H24M17 7l9 9 -9 9"/></svg><span class="control-label">오른쪽</span></button></div>
@@ -73,6 +75,9 @@
   </main>
   <div id="pause-menu" class="overlay" hidden>
     <section class="panel compact"><div class="eyebrow">PIT STOP</div><h2>잠깐 쉬어요</h2><p>달리던 자리에서 이어갈 수 있어요.</p><label class="gaze-option"><input type="checkbox" id="pause-gaze-follow" checked> 조향 따라 시선 이동</label><label class="gaze-option"><input type="checkbox" id="pause-body-motion" checked> 차체 움직임</label><label class="gaze-option"><input type="checkbox" id="pause-impact-audio" checked> 충돌 소리</label><label class="steering-choice">조향 방식<select id="pause-steering-mode"><option value="buttons">좌우 버튼</option><option value="slide">엄지 슬라이드</option></select></label><p class="steering-hint">방식을 바꾸고 처음부터 다시 달리면 같은 출발 조건으로 비교해요.</p><button id="resume" class="primary">계속 달리기</button><button id="restart" class="secondary">처음부터 다시</button><button id="back-menu" class="text-button">차고로 돌아가기</button></section>
+  </div>
+  <div id="course-map" class="overlay" role="dialog" aria-modal="true" aria-labelledby="course-title" hidden>
+    <section class="panel course-panel"><div class="course-heading"><h2 id="course-title">베이프런트 시티 투어</h2><span>일시정지 · 전체 코스</span></div><canvas id="full-map" width="720" height="520" aria-label="전체 서킷과 내 차·상대 차량 위치"></canvas><div class="course-legend"><b>▲ 내 차 · 진행 방향</b><i>● 상대 차량</i><small>▣ 출발·결승선</small></div><button id="map-resume" class="primary">계속 달리기</button></section>
   </div>
   <div id="result" class="overlay" hidden>
     <section class="panel compact"><div class="eyebrow">RACE COMPLETE</div><h2 id="result-title">완주했어요!</h2><div id="result-rank"></div><p id="result-time"></p><div class="prize"><small>이번 상금</small><strong id="prize"></strong></div><p id="total-prize"></p><p id="record-note"></p><p id="result-story">상금으로 우리 차를 더 멋지게 만들어 볼까?</p><button id="result-menu" class="primary">차고에서 꾸미기 →</button><button id="again" class="secondary">한 번 더 달리기</button></section>

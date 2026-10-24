@@ -48,41 +48,14 @@ export async function createOriginalCockpit({scene,camera,loader}) {
  mirrorSurface.name='original-live-rear-view-surface';mirrorSurface.position.z=.006;
  mirrorMount.add(mirrorSurface);
 
- // The original analogue cluster remains intact. This compact telemetry
- // display sits on its driver-facing surface, behind the original wheel.
- const instrument=new T.Group();instrument.name='original-live-instrument';
- instrument.position.set(model.eye.x,.818,-.680);instrument.rotation.x=-.23;group.add(instrument);
- box(instrument,[.075,.054,.012],[0,0,-.008],shell);
- const canvas=document.createElement('canvas');canvas.width=256;canvas.height=180;
- const context=canvas.getContext('2d');
- if(!context)throw new Error('계기판 화면을 준비하지 못했습니다.');
- const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;
- texture.generateMipmaps=false;texture.minFilter=T.LinearFilter;textures.push(texture);
- const instrumentSurface=new T.Mesh(roundedSurface(.066,.046,.004),basic({color:'#ffffff',map:texture,toneMapped:false}));
- instrumentSurface.name='original-live-speed-gear';instrumentSurface.position.z=.001;instrument.add(instrumentSurface);
-
  const bodyQuaternion=new T.Quaternion(),originalForwardFlip=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,1,0),Math.PI);
  const worldQuaternion=new T.Quaternion(),bodyOffset=new T.Vector3(),eyeWorld=new T.Vector3();
  const direction=new T.Vector3(),lookWorld=new T.Vector3(),yAxis=new T.Vector3(0,1,0);
  const pitch=T.MathUtils.degToRad(-4),verticalFov=42.38617142;
- let steeringAmount=0,lookDegrees=0,lastInstrument=-Infinity,lastKey='',disposed=false;
- let telemetry={car:'tavaculo',kmh:0,gear:'N',rpm:950,driveMode:'coast',instrumentHz:10,gearbox:'visual-automatic'};
+ let steeringAmount=0,lookDegrees=0,disposed=false;
+ let telemetry={car:'tavaculo',kmh:0,gear:'N',rpm:950,driveMode:'coast',instrumentHz:0,gearbox:'visual-automatic'};
  const finite=(v,fallback=0)=>Number.isFinite(v)?v:fallback;
  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
- function drawInstrument(){
-  const {gear,rpm}=telemetry;
-  context.fillStyle='#060c11';context.fillRect(0,0,256,180);
-  const ratio=clamp((rpm-900)/7100,0,1);
-  for(let i=0;i<12;i++){
-   context.fillStyle=i/12<ratio?(i<9?'#d4dfe0':i<11?'#eacb8d':'#f27859'):'#253335';
-   context.fillRect(13+i*20,12,14,5);
-  }
-  context.textBaseline='middle';context.textAlign='center';
-  context.fillStyle=gear==='R'?'#ffc78e':'#eef3ee';
-  context.font='700 96px system-ui, sans-serif';context.fillText(gear,128,91);
-  context.fillStyle='#91a2a8';context.font='600 20px system-ui, sans-serif';context.fillText(gear==='R'?'REVERSE':gear==='N'?'READY':'AUTO',128,157);
-  texture.needsUpdate=true;
- }
  function update({player,steeringAmount:amount=0,lookDegrees:look=0,now=performance.now()}={}){
   if(disposed)return;
   steeringAmount=clamp(finite(amount),-1,1);lookDegrees=clamp(finite(look),-8,8);
@@ -99,11 +72,7 @@ export async function createOriginalCockpit({scene,camera,loader}) {
    const driveMode=player.driveMode||'coast',reversing=forwardSpeed<-.25||driveMode==='reverse';
    const gear=reversing?'R':kmh<1?'N':String(Math.min(6,1+Math.floor(kmh/37)));
    const rpm=kmh<1?950:reversing?Math.min(8000,1200+kmh*170):1700+(kmh%37)/37*5900;
-   telemetry={car:'tavaculo',kmh,gear,rpm:Math.round(rpm),driveMode,instrumentHz:10,gearbox:'visual-automatic'};
-  }
-  const key=[telemetry.kmh,telemetry.gear,Math.round(telemetry.rpm/100)].join('|');
-  if(!lastKey||(finite(now)-lastInstrument>=100&&key!==lastKey)){
-   drawInstrument();lastInstrument=finite(now);lastKey=key;
+   telemetry={car:'tavaculo',kmh,gear,rpm:Math.round(rpm),driveMode,instrumentHz:0,gearbox:'visual-automatic'};
   }
   details.update(telemetry);
   group.userData.telemetry=telemetry;
@@ -125,7 +94,7 @@ export async function createOriginalCockpit({scene,camera,loader}) {
   }
   camera.updateMatrixWorld(true);
  }
- function reset(){steeringAmount=0;lookDegrees=0;model.setSteeringAngle(0);lastKey='';lastInstrument=-Infinity;}
+ function reset(){steeringAmount=0;lookDegrees=0;model.setSteeringAngle(0);}
  function invariant(){
   const changed=[];
   for(const b of sourceBaseline){
@@ -154,10 +123,10 @@ export async function createOriginalCockpit({scene,camera,loader}) {
  }
  function stats(){
   let extraMeshes=0,extraTriangles=0;
-  for(const node of [mirrorMount,instrument,details.group,...details.sideMirrors.map(m=>m.surface)])node.traverse(o=>{if(o.isMesh){extraMeshes++;extraTriangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;}});
+  for(const node of [mirrorMount,details.group,...details.sideMirrors.map(m=>m.surface)])node.traverse(o=>{if(o.isMesh){extraMeshes++;extraTriangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;}});
   const sourceVisible=group.visible&&model.root.visible;
   return{activeCar:'tavaculo',construction:'original-gallardo',meshes:model.stats.meshes+extraMeshes,triangles:model.stats.triangles+extraTriangles,textures:textures.length+5,
-   instrumentHz:10,details:details.stats(),telemetry:{...telemetry},projectedBounds:{wheel:projectedRect(wheel),instrument:projectedRect(instrumentSurface),mirror:projectedRect(mirrorMount),mirrorSurface:projectedRect(mirrorSurface)},
+   instrumentHz:0,details:details.stats(),telemetry:{...telemetry},projectedBounds:{wheel:projectedRect(wheel),instrument:null,mirror:projectedRect(mirrorMount),mirrorSurface:projectedRect(mirrorSurface)},
    mirrorReady:!!mirrorSurface.material.map,provenance:{...model.provenance},model:{...model.stats},eyeWorld:eyeWorld.toArray(),eyeLocal:model.eye.toArray(),lookDegrees,steeringAmount,
    sceneOwned:group.parent===scene,cameraOwnsModel:group.parent===camera||model.root.parent===camera,sourceVisible,sourceScale:model.root.scale.toArray(),invariant:invariant()};
  }
