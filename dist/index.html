@@ -8,9 +8,9 @@
   <title>드림 개러지: 스피드 그랑프리</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='16' width='64' height='64' fill='%230b2035'/%3E%3Cpath d='M10 44V20h9v8h12v-8h9v24h-9v-9H19v9M48 20h6v24h-6' fill='%235de6ed'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./style.css?v=wheels-1">
-  <link rel="stylesheet" href="./design-v1.css?v=city-slide-1">
+  <link rel="stylesheet" href="./design-v1.css?v=city-feel-1">
   <link rel="stylesheet" href="./save-transfer.css?v=save-transfer-1">
-  <script type="module" src="./game.mjs?v=city-slide-1"></script>
+  <script type="module" src="./game.mjs?v=city-feel-1"></script>
 </head>
 <body>
   <canvas id="world" aria-label="수변 야간 도심 레이싱 코스"></canvas>
@@ -62,7 +62,7 @@
       <div id="shop-tabs" class="shop-tabs" role="group" aria-label="꾸미기 종류"></div>
       <div id="shop-items" class="shop-items"></div>
       <div id="shop-status" role="status" aria-live="polite">구매한 물건은 두 차량에서 계속 쓸 수 있어요.</div>
-      <div class="race-setup"><label class="steering-choice">조향 방식<select id="steering-mode"><option value="buttons">좌우 버튼</option><option value="slide">엄지 슬라이드</option></select></label><label>시점<select id="view-select"><option value="chase">차 뒤에서 보기</option><option value="cockpit">운전석에서 보기</option></select></label><div class="options"><label><input type="checkbox" id="assist" checked> 쉬운 조향</label><label><input type="checkbox" id="auto-throttle"> 자동 가속</label><label><input type="checkbox" id="gaze-follow" checked> 조향 따라 시선 이동</label></div></div>
+      <div class="race-setup"><label class="steering-choice">조향 방식<select id="steering-mode"><option value="buttons">좌우 버튼</option><option value="slide">엄지 슬라이드</option></select></label><label>시점<select id="view-select"><option value="chase">차 뒤에서 보기</option><option value="cockpit">운전석에서 보기</option></select></label><div class="options"><label><input type="checkbox" id="assist" checked> 운전 보조</label><label><input type="checkbox" id="auto-throttle"> 자동 가속</label><label><input type="checkbox" id="gaze-follow" checked> 조향 따라 시선 이동</label><label><input type="checkbox" id="body-motion" checked> 차체 움직임</label></div></div><p class="steering-hint">슬라이드는 놓으면 중앙으로 · 운전 보조는 감도와 접지 회복을 도와요. 코너에서는 직접 브레이크를 사용해요.</p>
       <div id="load-status" role="status">도시와 차량 불러오는 중</div>
       <div id="best"></div>
       <button class="save-transfer-entry" data-save-transfer-open>저장 기록 옮기기</button>
@@ -71,7 +71,7 @@
       <div class="launch-bar"><button id="start" class="primary" disabled>차량을 준비하고 있어요…</button></div>
   </main>
   <div id="pause-menu" class="overlay" hidden>
-    <section class="panel compact"><div class="eyebrow">PIT STOP</div><h2>잠깐 쉬어요</h2><p>달리던 자리에서 이어갈 수 있어요.</p><label class="gaze-option"><input type="checkbox" id="pause-gaze-follow" checked> 조향 따라 시선 이동</label><label class="steering-choice">조향 방식<select id="pause-steering-mode"><option value="buttons">좌우 버튼</option><option value="slide">엄지 슬라이드</option></select></label><p class="steering-hint">방식을 바꾸고 처음부터 다시 달리면 같은 출발 조건으로 비교해요.</p><button id="resume" class="primary">계속 달리기</button><button id="restart" class="secondary">처음부터 다시</button><button id="back-menu" class="text-button">차고로 돌아가기</button></section>
+    <section class="panel compact"><div class="eyebrow">PIT STOP</div><h2>잠깐 쉬어요</h2><p>달리던 자리에서 이어갈 수 있어요.</p><label class="gaze-option"><input type="checkbox" id="pause-gaze-follow" checked> 조향 따라 시선 이동</label><label class="gaze-option"><input type="checkbox" id="pause-body-motion" checked> 차체 움직임</label><label class="steering-choice">조향 방식<select id="pause-steering-mode"><option value="buttons">좌우 버튼</option><option value="slide">엄지 슬라이드</option></select></label><p class="steering-hint">방식을 바꾸고 처음부터 다시 달리면 같은 출발 조건으로 비교해요.</p><button id="resume" class="primary">계속 달리기</button><button id="restart" class="secondary">처음부터 다시</button><button id="back-menu" class="text-button">차고로 돌아가기</button></section>
   </div>
   <div id="result" class="overlay" hidden>
     <section class="panel compact"><div class="eyebrow">RACE COMPLETE</div><h2 id="result-title">완주했어요!</h2><div id="result-rank"></div><p id="result-time"></p><div class="prize"><small>이번 상금</small><strong id="prize"></strong></div><p id="total-prize"></p><p id="record-note"></p><p id="result-story">상금으로 우리 차를 더 멋지게 만들어 볼까?</p><button id="result-menu" class="primary">차고에서 꾸미기 →</button><button id="again" class="secondary">한 번 더 달리기</button></section>
@@ -93,10 +93,10 @@
   </dialog>
   <dialog id="help"><h2>두 엄지로 달려요</h2>
   <p><b>왼손은 방향, 오른손은 가속·브레이크·후진·드리프트.</b> 버튼 사이로 손가락을 밀어 옮겨도 돼요. 손가락을 떼면 입력이 풀려요.</p>
-  <p>차고·일시정지에서 <b>좌우 버튼 / 엄지 슬라이드</b>를 고를 수 있어요. 슬라이드는 누른 자리에서 좌우로 밀고, 같은 위치에서 각도를 유지해요. 손을 떼면 중앙으로 돌아와요. 조향 선택은 현재 탭에서 유지돼요. 공정하게 비교하려면 같은 쉬운 조향 설정으로 처음부터 다시 달려 보세요.</p><p><b>가속:</b> 누르면 달리고, 떼면 관성으로 굴러가요. <b>브레이크:</b> 코너 전에 속도를 줄여요. 가속과 겹치면 브레이크가 우선이에요.</p>
+  <p>차고·일시정지에서 <b>좌우 버튼 / 엄지 슬라이드</b>를 고를 수 있어요. 슬라이드는 누른 자리에서 좌우로 밀고, 같은 위치에서 각도를 유지해요. 손을 떼면 중앙으로 돌아와요. 조향 선택은 현재 탭에서 유지돼요. 공정하게 비교하려면 같은 운전 보조 설정으로 처음부터 다시 달려 보세요.</p><p><b>가속:</b> 누르면 달리고, 떼면 관성으로 굴러가요. <b>브레이크:</b> 코너 전에 속도를 줄여요. 가속과 겹치면 브레이크가 우선이에요.</p>
   <p><b>후진:</b> 멈춘 상태에서 누르면 천천히 뒤로 가요. 달리는 중 누르면 먼저 멈춰요. 손을 떼었다 다시 눌러야 후진해요. 자동 가속도 후진 버튼을 누르는 동안 멈춰요.</p>
   <p><b>드리프트는 선택 기술!</b> 속도가 붙었을 때 방향과 드리프트를 함께 누르면 차가 옆으로 미끄러져요. 드리프트 버튼은 가속도 겸하므로 오른손을 가속에서 옮기면 돼요. 놓고 가속으로 돌아오면 다시 접지하며 달려요. 부스터는 없으며 보통 주행만으로도 완주할 수 있어요.</p>
-  <p>쉬운 조향·자동 가속은 차고에서 골라요. 쉬운 조향을 켜도 코너 전에는 브레이크로 속도를 줄여 주세요. 도로 복귀는 차가 끼었을 때 사용해요. 운전석에서도 같은 버튼으로 조작해요. Tavaculo는 방향 버튼을 누르면 시선이 조금 따라가고 놓으면 정면으로 돌아와요. 차고나 일시정지에서 시선 이동을 끌 수 있어요. 슈퍼카의 룸미러로 뒤따라오는 차와 도로를 볼 수 있어요.</p>
+  <p>운전 보조·자동 가속은 차고에서 골라요. 운전 보조는 고속 조향과 미끄러짐 회복을 돕고 자동으로 코스를 돌지는 않아요. 코너 안내가 나오면 브레이크로 속도를 줄여 주세요. 도로 복귀는 차가 끼었을 때 사용해요. 운전석에서도 같은 버튼으로 조작해요. Tavaculo는 방향 버튼을 누르면 시선이 조금 따라가고 놓으면 정면으로 돌아와요. 차고나 일시정지에서 시선 이동과 차체 움직임을 각각 끄고 비교할 수 있어요. 차체는 가속·제동·코너 힘에 반응하고 바퀴는 도로를 붙잡아요. 슈퍼카의 룸미러로 뒤따라오는 차와 도로를 볼 수 있어요.</p>
   <p>PC: 방향키/WASD · 브레이크 ↓/S/Space · 후진 X · 드리프트 Shift · 시점 C · 일시정지 P · 복귀 R</p>
   <p>순위별 상금 1,000 / 650 / 400 / 150 C. 차고에서 도색·휠·성능 파츠를 사고 두 차에서 다시 장착해요. 진행은 이 브라우저에 저장돼요.</p>
   <button class="primary" data-close="help">알겠어요</button></dialog>

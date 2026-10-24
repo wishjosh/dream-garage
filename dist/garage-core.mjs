@@ -11,7 +11,7 @@ export const CATALOG=[
  {id:'wheels-neon',category:'wheels',name:'네온 터빈',price:550,description:'민트 링과 열 갈래 스포크',color:'#5ff5e9',spokes:10},
  {id:'engine-stock',category:'engine',name:'기본 엔진',price:0,description:'처음부터 편안하게 달리는 엔진',force:1,maxSpeed:1},
  {id:'engine-sprint',category:'engine',name:'스프린트 엔진',price:650,description:'출발과 코너 탈출이 더 힘차게',force:1.18,maxSpeed:1},
- {id:'engine-gt',category:'engine',name:'GT 엔진',price:1100,description:'가속 +10% · 최고 속도 +8%',force:1.1,maxSpeed:1.08},
+ {id:'engine-gt',category:'engine',name:'GT 엔진',price:1100,description:'엔진 힘 +10% · 속도 한계 +8%',force:1.1,maxSpeed:1.08},
  {id:'tires-stock',category:'tires',name:'기본 타이어',price:0,description:'도심 코스를 위한 기본 접지',grip:1},
  {id:'tires-grip',category:'tires',name:'그립 타이어',price:500,description:'접지 +18% · 코너에서 더 든든하게',grip:1.18},
  {id:'brakes-stock',category:'brakes',name:'기본 브레이크',price:0,description:'속도를 줄이는 기본 제동 장치',brake:1},

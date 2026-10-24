@@ -1,12 +1,12 @@
 const clamp=v=>Math.max(-1,Math.min(1,v));
 export function createSlide(){return{id:null,origin:0,range:1,value:0};}
-export function beginSlide(s,id,x,width){if(s.id!==null)return false;s.id=id;s.origin=x;s.range=Math.max(24,width*.36);s.value=0;return true;}
+export function beginSlide(s,id,x,width){if(s.id!==null)return false;s.id=id;s.origin=x;s.range=72;s.value=0;return true;}
 export function moveSlide(s,id,x){if(id!==s.id)return;s.value=clamp((s.origin-x)/s.range);}
 export function releaseSlide(s,id=s.id){if(id!==s.id)return;s.id=null;s.value=0;}
 export function installCitySteering({canDrive,onChange}){
  const pad=document.getElementById('thumb-steering'),knob=pad.querySelector('.thumb-knob'),label=pad.querySelector('.thumb-caption');
  const selectors=['steering-mode','pause-steering-mode'].map(id=>document.getElementById(id));
- const slide=createSlide();let mode=new URLSearchParams(location.search).get('steering')==='slide'?'slide':'buttons';
+ const slide=createSlide();let mode=new URLSearchParams(location.search).get('steering')==='buttons'?'buttons':'slide';
  const paint=()=>{pad.classList.toggle('pressed',slide.id!==null);knob.style.transform=`translateX(${-slide.value*(pad.clientWidth/2-27)}px)`;pad.setAttribute('aria-valuenow',String(Math.round(-slide.value*100)));pad.setAttribute('aria-valuetext',slide.value===0?'중앙':(slide.value>0?'왼쪽 ':'오른쪽 ')+Math.round(Math.abs(slide.value)*100)+'%');label.textContent=slide.id===null?'누른 자리에서 좌우로':'놓으면 중앙으로';};
  const clear=()=>{const id=slide.id;releaseSlide(slide);if(id!==null&&pad.hasPointerCapture(id))pad.releasePointerCapture(id);paint();};
  const sync=()=>{document.body.dataset.steering=mode;pad.hidden=mode!=='slide';document.querySelector('.steering').hidden=mode==='slide';selectors.forEach(s=>s.value=mode);paint();};

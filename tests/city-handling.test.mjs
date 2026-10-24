@@ -55,10 +55,10 @@ test('display timing, manual direction and wheel spin remain consistent',()=>{
  for(const values of results.slice(1))values.forEach((v,i)=>assert.ok(Math.abs(v-results[0][i])<1e-9));
 });
 
-test('existing assistance steers only and manual steering always overrides it',()=>{
+test('assistance preserves straight input and never silently takes over steering',()=>{
  const{r,p}=setup();p.route=()=>({steer:-.3,throttle:0,brake:1});
- advance(p,1,{throttle:true},true);assert.ok(r.forwardSpeed>2);assert.equal(r.braking,false);assert.ok(r.steeringAngle<0);
- advance(p,1.5,{left:true,throttle:true},true);assert.ok(r.steeringAngle>.45);assert.equal(r.braking,false);p.dispose();
+ advance(p,1,{throttle:true},true);assert.ok(r.forwardSpeed>2);assert.equal(r.braking,false);assert.ok(Math.abs(r.steeringAngle)<1e-9);
+ advance(p,1.5,{left:true,throttle:true},true);assert.ok(r.steeringAngle>0&&r.commandedSteer>0);assert.equal(r.braking,false);p.dispose();
 });
 test('main entry uses the verified adapter and preserves the existing save modules',()=>{
  const game=fs.readFileSync(new URL('../dist/game.mjs',import.meta.url),'utf8');
