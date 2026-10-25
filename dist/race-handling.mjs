@@ -1,3 +1,4 @@
+import {RECOVERY,createRecovery,sampleRecovery,isCityWater,markRecovered} from './course-recovery.mjs?v=race-safety-1';
 import {contactClosing,impactLevel,recoverImpact,kickBody} from './collision-feel.mjs?v=city-tour-1';
 import {assistedSteer,stabilize} from './driver-feel.mjs?v=city-feel-1';
 import {createBodyMotion,stepBodyMotion} from './body-motion.mjs?v=city-feel-1';
@@ -21,8 +22,8 @@ export function vehicleConfig(car,tuning={}){
 }
 const UP=new C.Vec3(0,1,0);
 export class RacePhysics{
- constructor(track,racers,rigs,{barriers=true,playerTuning=null}={}){
-  Object.assign(this,{track,racers,rigs,accumulator:0,time:0,entries:[],hits:[],presentationEnabled:true});
+ constructor(track,racers,rigs,{barriers=true,playerTuning=null,autoRecovery=false}={}){
+  Object.assign(this,{track,racers,rigs,accumulator:0,time:0,entries:[],hits:[],recoveries:[],autoRecovery,presentationEnabled:true});
   this.world=new C.World({gravity:new C.Vec3(0,0,0),allowSleep:false});
   this.world.broadphase=new C.SAPBroadphase(this.world);this.world.solver.iterations=12;
   this.world.defaultContactMaterial.friction=.12;this.world.defaultContactMaterial.restitution=.08;
@@ -35,7 +36,7 @@ export class RacePhysics{
    body.invInertia.set(0,1/config.inertia,0);body.updateInertiaWorld(true);
    body.raceKind='car';body.racerId=r.id;this.world.addBody(body);
    const s=Object.assign(createCar(0),{x:r.x,z:r.z,heading:r.heading});
-   const e={r,index,config,rig,body,s,inputSteer:0,driftLevel:0,motion:createBodyMotion(),collisionAt:-10,impactRecovery:0};this.entries.push(e);
+   const e={r,index,config,rig,body,s,inputSteer:0,driftLevel:0,motion:createBodyMotion(),collisionAt:-10,impactRecovery:0,recovery:createRecovery(r.s),nearCourse:null};this.entries.push(e);
    this.placeBody(e);this.sync(e,false);
   });
  }
@@ -130,24 +131,30 @@ export class RacePhysics{
   // All four wheels touch the flat city plane. This is geometry, not suspension.
   r.wheels=rig.wheels.map(w=>{const p=w.position,rotation=r.wheelSpin,steering=w.front?s.steer:0,pose=wheelVisualPose(q,steering,rotation);
    return{position:[s.x+p[0]*ch+p[2]*sh,p[1]+.045,s.z-p[0]*sh+p[2]*ch],...pose,quaternion:pose.visualQuaternion,rotation,suspension:0,contact:true};});
-  if(progress&&!r.finished)recordProgress(r,this.track,nearestTrack(this.track,r.x,r.z).s);
+  if(progress&&!r.finished){const near=nearestTrack(this.track,r.x,r.z);e.nearCourse=near;if(e.index||!this.autoRecovery||near.distance<=RECOVERY.edge)recordProgress(r,this.track,near.s);}
  }
  step(dt,input={},assist=true){
-  this.accumulator+=clamp(dt,0,.1);this.hits=[];let steps=0;
+  this.accumulator+=clamp(dt,0,.1);this.hits=[];this.recoveries=[];let steps=0;
   while(this.accumulator+1e-10>=DT&&steps<12){
-   for(const e of this.entries)this.drive(e,e.index?(e.r.finished?{brake:1}:this.route(e)):input,e.index?false:assist);
-   this.collisions();this.time+=DT;this.entries.forEach(e=>this.sync(e));this.accumulator-=DT;steps++;
+   for(const e of this.entries)this.drive(e,e.index?(e.r.finished?{brake:1}:this.route(e)):this.time<e.recovery.holdUntil?{brake:1}:input,e.index?false:assist);
+   this.collisions();this.time+=DT;this.entries.forEach(e=>this.sync(e));this.checkRecovery();this.accumulator-=DT;steps++;
   }
-  return{steps,hits:this.hits};
+  return{steps,hits:this.hits,recoveries:this.recoveries};
  }
- recover(r){
+ checkRecovery(){
+  const e=this.entries[0];if(!this.autoRecovery||!e||e.r.finished||!e.nearCourse)return;
+  const n=e.nearCourse,reason=sampleRecovery(e.recovery,{distance:n.distance,s:n.s,inWater:isCityWater(e.s.x,e.s.z),dt:DT,time:this.time});
+  if(reason&&!this.recover(e.r,{atS:e.recovery.anchorS,reason}))e.recovery.nextCheck=this.time+RECOVERY.retry;
+ }
+ recoveryStats(){const e=this.entries[0];return e?{...e.recovery,remaining:Math.max(0,e.recovery.flashUntil-this.time)}:{count:0,remaining:0};}
+ recover(r,{atS,reason='manual'}={}){
   const e=this.entries.find(e=>e.r===r);if(!e)return;
-  const f=nearestTrack(this.track,r.x,r.z);
+  const f=Number.isFinite(atS)?trackFrame(this.track,atS):nearestTrack(this.track,r.x,r.z);
   const lane=[0,-3.2,3.2,-5.4,5.4].find(l=>this.entries.every(other=>other===e||Math.hypot(other.s.x-(f.x+f.rx*l),other.s.z-(f.z+f.rz*l))>5.8));
   if(lane===undefined)return false;
   e.s=Object.assign(createCar(0),{x:f.x+f.rx*lane,z:f.z+f.rz*lane,heading:Math.atan2(f.tx,f.tz)});
   e.inputSteer=0;e.driftLevel=0;e.impactRecovery=0;e.motion=createBodyMotion();Object.assign(r,{s:f.s,drifting:false,driftLevel:0,reverseBlocked:false,driveMode:'coast',braking:false});
-  this.placeBody(e);this.sync(e,false);return true;
+  this.placeBody(e);this.sync(e,false);if(e.index===0){markRecovered(e.recovery,this.time,reason);this.recoveries.push({id:r.id,reason,time:this.time});}return true;
  }
  advice(r){
   const e=this.entries.find(e=>e.r===r);if(!e||e.s.u<4)return null;
