@@ -147,7 +147,14 @@ async function boot(){
  const rearView=createRearView({renderer,scene,camera,cockpit:originalCockpit.group,surface:originalCockpit.mirrorSurface});
  const sideViews=originalCockpit.sideMirrors.map(m=>({id:m.id,view:createRearView({renderer,scene,camera,cockpit:originalCockpit.group,surface:m.surface,options:{name:m.id,origin:m.origin,aspect:m.aspect,yaw:m.yaw,width:192,height:96,hz:10,economyWidth:128,economyHeight:64,economyHz:6,fov:36,allowOverlay:false,cullOffscreen:true}})}));
  function renderMirror(force=false,now=performance.now()){const args={player,enabled:originalCockpit.group.visible&&selected==='tavaculo'&&mode!=='menu'&&!wheelInspection,paused:mode==='paused'||mode==='result',force,now,frameMs:avgFrame,portrait:innerHeight>innerWidth,viewportWidth:innerWidth,viewportHeight:innerHeight,hide:[visuals[0]?.root,cockpit]};rearView.update(args);for(const side of sideViews)side.view.update(args);}
- function paintRecovery(){const state=physics?.recoveryStats(),fx=recoveryVisual(state?.remaining||0,reducedRecoveryMotion.matches);$('recovery-effect').hidden=!fx.active||!['race','countdown'].includes(mode);$('recovery-effect').style.setProperty('--recovery-opacity',String(fx.pulse));if(visuals[0])visuals[0].root.visible=fx.carVisible;}
+ function paintRecovery(){
+  const state=physics?.recoveryStats(),playing=['race','countdown'].includes(mode),fx=recoveryVisual(playing?(state?.remaining||0):0,reducedRecoveryMotion.matches);
+  $('recovery-effect').hidden=!fx.active;$('recovery-effect').style.setProperty('--recovery-opacity',String(fx.pulse));
+  if(visuals[0])visuals[0].root.visible=fx.carVisible;
+  // Blink the complete cabin together; the road, HUD and controls stay readable.
+  const cabinVisible=mode!=='menu'&&!wheelInspection&&view==='cockpit'&&fx.carVisible;
+  originalCockpit.group.visible=cabinVisible&&selected==='tavaculo';cockpit.visible=cabinVisible&&selected==='f2002';
+ }
  function renderScene(forceMirror=false,now=performance.now()){paintRecovery();renderMirror(forceMirror,now);renderer.render(scene,camera);}
  const cameraTarget=new T.Vector3(),lookTarget=new T.Vector3(),desired=new T.Vector3();
  function renderShop(){
