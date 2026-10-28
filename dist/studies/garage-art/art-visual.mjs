@@ -1,12 +1,30 @@
 import * as T from '../../vendor/three.module.js';
 import {itemById} from './art-core.mjs';
 export function disposeArt(model){const a=model?.userData.artOwned;if(a){a.geometry.forEach(g=>g.dispose());a.materials.forEach(m=>m.dispose());}}
-export function dressArt(model,car,loadout,rig){
+export function dressArt(model,car,loadout,rig,finish='refined'){
  const geometry=[],materials=[],paint=itemById(loadout.paint),wheel=itemById(loadout.wheels);
  const ownGeo=g=>(geometry.push(g),g),ownMat=m=>(materials.push(m),m);
+ if(finish==='before'){
  if(paint.color)model.traverse(o=>{if(!o.isMesh)return;const recolor=source=>{if(source.name!=='CarSurface')return source;const m=ownMat(new T.MeshPhysicalMaterial({name:'study-clearcoat',color:paint.color,metalness:paint.metalness,roughness:paint.roughness,clearcoat:1,clearcoatRoughness:.18,envMapIntensity:.48}));if(paint.metalness>.1){m.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
  float grain = fract(sin(dot(floor(vViewPosition.xy*2300.0),vec2(12.9898,78.233)))*43758.5453);
  roughnessFactor = clamp(roughnessFactor + (grain-.5)*.035,.05,1.0);`);};m.customProgramCacheKey=()=>paint.id;}return m;};o.material=Array.isArray(o.material)?o.material.map(recolor):recolor(o.material);});
+ }else{
+ if(finish==='refined')model.traverse(o=>{if(!o.isMesh)return;const ms=Array.isArray(o.material)?o.material:[o.material];if(!ms.some(m=>m.name==='CarSurface'))return;
+  const original=o.geometry,geo=original.clone(),positions=geo.attributes.position,normals=geo.attributes.normal;if(!positions||!normals){geo.dispose();return;}
+  const groups=new Map();for(let i=0;i<positions.count;i++){const key=[positions.getX(i),positions.getY(i),positions.getZ(i)].map(x=>Math.round(x*1e5)).join(',');if(!groups.has(key))groups.set(key,[]);groups.get(key).push(i);}
+  const source=normals.array.slice(),threshold=Math.cos(T.MathUtils.degToRad(28));let changed=0;
+  for(const ids of groups.values())for(const i of ids){const n=new T.Vector3().fromArray(source,i*3),sum=new T.Vector3();for(const j of ids){const other=new T.Vector3().fromArray(source,j*3);if(n.dot(other)>threshold)sum.add(other);}sum.normalize();if(n.dot(sum)<.99999)changed++;normals.setXYZ(i,sum.x,sum.y,sum.z);}
+  normals.needsUpdate=true;geo.userData.studyNormalCorrections=changed;o.geometry=ownGeo(geo);
+ });
+ if(finish==='refined')model.traverse(o=>{if(!o.isMesh)return;const recolor=source=>{
+  if(source.name==='Glass')return ownMat(new T.MeshPhysicalMaterial({name:'study-glass',color:'#101921',metalness:0,roughness:.12,clearcoat:.45,clearcoatRoughness:.12,envMapIntensity:.8,side:source.side}));
+  if(source.name==='Doorstep')return ownMat(new T.MeshStandardMaterial({name:'study-trim',color:'#151a1f',metalness:.15,roughness:.57,side:source.side}));
+  if(source.name==='Material.001')return ownMat(new T.MeshStandardMaterial({name:'study-mirror',color:'#6b7781',metalness:1,roughness:.12,envMapIntensity:.7,side:source.side}));
+  if(source.name!=='CarSurface'||!paint.color)return source;
+  const m=ownMat(new T.MeshPhysicalMaterial({name:'study-clearcoat',color:paint.color,metalness:paint.metalness,roughness:.31,clearcoat:.35,clearcoatRoughness:.13,envMapIntensity:.7,side:source.side}));
+  return m;
+ };o.material=Array.isArray(o.material)?o.material.map(recolor):recolor(o.material);});
+ }
  if(wheel.kind){
  const metal=ownMat(new T.MeshStandardMaterial({color:wheel.color,metalness:.88,roughness:wheel.kind==='split'?.34:.24})),edge=ownMat(new T.MeshStandardMaterial({color:wheel.kind==='split'?'#87929e':'#d8dde0',metalness:.95,roughness:.19})),dark=ownMat(new T.MeshStandardMaterial({color:'#222831',metalness:.65,roughness:.4})),rotor=ownMat(new T.MeshStandardMaterial({color:'#676c73',metalness:.7,roughness:.6})),hole=ownMat(new T.MeshBasicMaterial({color:'#1d2328'})),caliperMat=ownMat(new T.MeshStandardMaterial({color:'#a81721',roughness:.42,metalness:.25}));
  const invisible=ownMat(new T.MeshBasicMaterial({visible:false}));
