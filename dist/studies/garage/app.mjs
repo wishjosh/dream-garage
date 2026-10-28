@@ -22,14 +22,15 @@ function render(){
  const loadout={...save.garage[car],...(pending?{[pending.category]:pending.id}:{})};$('look').textContent=itemById(loadout.paint).name+' · '+itemById(loadout.wheels).name;
  document.querySelectorAll('[data-car]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.car===car)));document.querySelectorAll('[data-category]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.category===category)));
  $('items').innerHTML=CATALOG.filter(i=>i.category===category).map(i=>`<button class="item" data-item="${i.id}" aria-pressed="${i.id===chosen.id}"><span class="swatch ${category==='wheels'?'wheel':''}" style="--color:${i.color||'#a8b5bd'}"></span><strong>${i.name}</strong><small>${save.garage[car][category]===i.id?'✓ 장착 중':save.owned.includes(i.id)?'보유 · 무료 장착':i.price+' C'}</small></button>`).join('');
- $('items').querySelectorAll('button').forEach(b=>b.onclick=()=>{pending=itemById(b.dataset.item);refreshModel();render();$('status').textContent='미리보기예요. 마음에 들면 아래에서 장착하세요.';});
+ $('items').querySelectorAll('button').forEach(b=>b.onclick=()=>{pending=itemById(b.dataset.item);refreshModel();render();$('status').textContent='미리보기예요. 마음에 들면 아래에서 장착하세요.';document.querySelector('.drawer-scroll').scrollTo({top:document.querySelector('.drawer-scroll').scrollHeight,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});});
  $('item-name').textContent=chosen.name;$('description').textContent=chosen.description;$('price').textContent=equipped?'장착 중':owned?'보유한 물건':cost+' C';$('balance').textContent=equipped?'다른 색이나 휠을 골라 보세요.':save.coins>=cost?'장착 후 남는 상금 '+(save.coins-cost).toLocaleString()+' C':(cost-save.coins).toLocaleString()+' C 더 모으면 살 수 있어요.';
  $('apply').disabled=equipped||save.coins<cost;$('apply').textContent=equipped?'장착 중':save.coins<cost?'상금이 부족해요':owned?'무료로 장착':'구매하고 장착';$('restore').disabled=!pending||equipped;
 }
+$('browse').onclick=()=>document.querySelector('.drawer-scroll').scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
 $('restore').onclick=()=>{pending=null;refreshModel();render();$('status').textContent='장착한 모습으로 돌아왔어요. 상금은 그대로예요.';};
 $('apply').onclick=()=>{if(!pending)return;const r=transact(save,car,pending.id);if(!r.ok)return;pending=null;refreshModel();render();$('status').textContent=r.item.name+' 장착 완료! 시안 안에서만 적용돼요.';};
 document.querySelectorAll('[data-car]').forEach(b=>{b.disabled=true;b.onclick=()=>{car=b.dataset.car;pending=null;refreshModel();render();$('status').textContent='이 차에 장착된 모습이에요.';};});
-document.querySelectorAll('[data-category]').forEach(b=>b.onclick=()=>{category=b.dataset.category;pending=null;refreshModel();render();$('status').textContent='골라 보기만 해도 차에 바로 보여요.';});
+document.querySelectorAll('[data-category]').forEach(b=>b.onclick=()=>{category=b.dataset.category;pending=null;refreshModel();render();document.querySelector('.drawer-scroll').scrollTop=0;$('status').textContent='골라 보기만 해도 차에 바로 보여요.';});
 function fold(value){pending=null;if(ready){refreshModel();render();}$('status').textContent='장착한 모습을 보고 있어요.';document.body.classList.toggle('folded',value);$('open').textContent=value?'도색·휠 꾸미기':'차 크게 보기';}
 $('close').onclick=()=>fold(true);$('open').onclick=()=>fold(!document.body.classList.contains('folded'));
 $('reset').onclick=()=>{save=normalizeSave({version:1,coins:1000});pending=null;refreshModel();render();$('status').textContent='시안용 상금과 꾸미기를 처음으로 돌렸어요.';};

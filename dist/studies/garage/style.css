@@ -2,3 +2,19 @@
 
 @media(orientation:portrait) and (max-height:650px){body{grid-template-rows:60px minmax(0,1fr) 78px}header{padding:6px 12px}h1{font-size:17px}main{grid-template-rows:minmax(140px,1fr) minmax(0,58%)}.drawer-head{display:none}aside{grid-template-rows:auto minmax(44px,1fr) auto}.caption{bottom:56px}.caption strong{font-size:18px}.caption>span:last-child{display:none}.cars button{padding:5px 8px;font-size:11px}.angles button{font-size:11px;padding:5px;min-width:56px}.detail{padding-top:5px}#status{font-size:10px}}
 footer{position:relative;z-index:2}aside{overflow:hidden}
+
+/* One vertical touch scroller owns the entire editor. No nested item strip. */
+aside{grid-template-rows:auto minmax(0,1fr);overflow:hidden}
+.drawer-toolbar{background:#15222a;border-bottom:1px solid #34454c;z-index:1}
+.drawer-scroll{min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#8ccdb8 #1a2c33;scroll-padding:12px}
+#items{overflow:visible;grid-template-columns:repeat(2,minmax(0,1fr));padding:4px 14px 14px;min-height:0}
+.item{min-height:78px;grid-template-columns:30px minmax(0,1fr);align-items:center;gap:5px 8px;padding:10px}
+.item strong{font-size:12px;overflow-wrap:anywhere}.item small{grid-column:2;font-size:11px}.swatch{width:28px;height:28px}
+.scroll-hint{margin:8px 14px;color:#a8c4b8;font-size:11px}
+.detail{padding:12px 14px 16px}.detail-title{margin-top:12px}#description{display:block;font-size:12px;line-height:1.6}#balance{font-size:12px;line-height:1.5;margin:10px 0}
+.actions button{min-height:48px;font-size:13px}#status{display:block;min-height:36px;font-size:12px;line-height:1.5;margin:9px 0 0}#browse{width:100%;text-align:left;background:transparent;min-height:44px}
+footer{padding-bottom:max(8px,env(safe-area-inset-bottom));padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+@media(orientation:portrait){aside{grid-template-rows:auto minmax(0,1fr)}.drawer-head{display:none}nav{padding:6px 14px}nav button{min-height:46px}#items{grid-template-columns:repeat(2,minmax(0,1fr))}.item{min-height:82px}#description{display:block}.detail{padding-bottom:18px}}
+@media(orientation:landscape) and (max-height:450px){.drawer-head{display:none}aside{grid-template-rows:auto minmax(0,1fr)}nav{padding:5px 12px}#items{grid-template-columns:repeat(2,minmax(0,1fr));padding:4px 12px 12px}.item{min-height:78px}#status{display:block}.detail{padding:12px}.detail-title{font-size:13px}.actions button{min-height:48px}#description{display:block}#balance{font-size:12px}}
+
+#browse{width:auto;text-align:center;min-width:60px;font-size:12px;padding:8px}nav button{min-width:0}
