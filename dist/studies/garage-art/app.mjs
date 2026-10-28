@@ -3,7 +3,7 @@ import {createPaintStudio} from './paint-studio.mjs';
 import {GLTFLoader} from '../../vendor/GLTFLoader.js';
 import {RoomEnvironment} from '../../vendor/RoomEnvironment.js';
 import {buildGarage} from '../../garage-visual.mjs';
-import {dressArt as dressCar,disposeArt as disposeDress} from './art-visual.mjs';
+import {dressArt as dressCar,disposeArt as disposeDress} from './art-visual.mjs?v=paint-finish-2';
 import {normalizeSave,CATALOG,itemById,transact} from './art-core.mjs';
 const $=id=>document.getElementById(id),base=new URL('../../',import.meta.url),stage=document.querySelector('.stage');
 // This study keeps every purchase in memory. It never reads or writes browser storage.
