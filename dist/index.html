@@ -14,8 +14,9 @@
   <link rel="stylesheet" href="./race-hud.css?v=race-hud-1">
   <link rel="stylesheet" href="./drive-console.css?v=graphite-1">
   <link rel="stylesheet" href="./race-safety.css?v=race-safety-1">
-  <script type="module" src="./game.mjs?v=ferrari-main-1"></script>
+  <script type="module" src="./game.mjs?v=garage-main-1"></script>
   <link rel="stylesheet" href="./ferrari-main.css?v=ferrari-main-1">
+  <link rel="stylesheet" href="./garage-preview.css?v=garage-main-1">
 </head>
 <body>
   <canvas id="world" aria-label="수변 야간 도심 레이싱 코스"></canvas>
@@ -51,9 +52,9 @@
     </section>
   </main>
   <main id="menu" class="overlay garage-overlay" hidden>
-    <div class="garage-stage">
-      <div class="garage-heading"><div class="eyebrow">DREAM GARAGE</div><h2>나만의 드림 개러지</h2><p>오늘은 어떤 차로 달려 볼까?</p></div>
-      <div class="preview-label"><strong id="preview-name">Ferrari 458</strong><span id="preview-style">나만의 레이스를 준비해요</span><div class="rotate-buttons"><button id="rotate-left" aria-label="차량 왼쪽 모습 보기">↶</button><button id="rotate-right" aria-label="차량 오른쪽 모습 보기">↷</button></div></div>
+    <div class="garage-stage" aria-label="좌우로 끌어 돌리는 차량 미리보기">
+      <div class="garage-heading"><div class="eyebrow">DREAM GARAGE</div><h2>나만의 드림 개러지</h2><p>좌우로 끌어 차를 돌려보세요</p></div>
+      <div class="preview-label"><small id="garage-preview-badge">장착된 모습</small><strong id="preview-name">Ferrari 458</strong><span id="preview-style"></span><div class="rotate-buttons"><button id="rotate-left" aria-label="차량 왼쪽 모습 보기">↶</button><button id="rotate-right" aria-label="차량 오른쪽 모습 보기">↷</button></div></div>
     </div>
     <section class="panel garage-panel" aria-label="차고와 꾸미기 상점">
       <div class="garage-top"><button id="title-back" class="text-button">‹ 시작 화면</button><div class="wallet"><small>모은 상금</small><strong id="wallet">0 C</strong></div></div>
@@ -61,19 +62,25 @@
         <button data-car="tavaculo" class="selected" aria-pressed="true"><span class="car-mark">01</span><strong>Ferrari 458</strong><small>슈퍼카 · 나만의 스타일</small></button>
         <button data-car="f2002" aria-pressed="false"><span class="car-mark formula">02</span><strong>클래식 F2002</strong><small>포뮬러 · 빠른 가속</small></button>
       </div>
-      <p id="garage-story" class="garage-story">첫 번째 완주가 꿈의 시작! 경주에서 상금을 모아 봐요.</p>
-      <div id="tuning-stats" class="tuning-stats" aria-label="장착한 성능 파츠"></div>
-      <h3 class="shop-title">꾸미고, 바꾸고, 달려 보기</h3>
       <div id="shop-tabs" class="shop-tabs" role="group" aria-label="꾸미기 종류"></div>
-      <div id="shop-items" class="shop-items"></div>
-      <div id="shop-status" role="status" aria-live="polite">구매한 물건은 두 차량에서 계속 쓸 수 있어요.</div>
+      <div class="garage-scroll">
+        <div id="shop-items" class="shop-items"></div>
+        <div id="shop-status" role="status" aria-live="polite">상품을 골라 먼저 확인해 보세요.</div>
+        <details class="garage-settings"><summary>주행 설정·성능·기록</summary>
+          <p id="garage-story" class="garage-story"></p><small id="tuning-label">장착한 성능</small><div id="tuning-stats" class="tuning-stats" aria-label="차량 성능"></div>
       <div class="race-setup"><label class="steering-choice">조향 방식<select id="steering-mode"><option value="buttons">좌우 버튼</option><option value="slide">엄지 슬라이드</option></select></label><label>시점<select id="view-select"><option value="chase">차 뒤에서 보기</option><option value="cockpit">운전석에서 보기</option></select></label><div class="options"><label><input type="checkbox" id="assist" checked> 운전 보조</label><label><input type="checkbox" id="auto-throttle"> 자동 가속</label><label><input type="checkbox" id="gaze-follow" checked> 조향 따라 시선 이동</label><label><input type="checkbox" id="body-motion" checked> 차체 움직임</label><label><input type="checkbox" id="impact-audio" checked> 충돌 소리</label></div></div><p class="steering-hint">슬라이드는 놓으면 중앙으로 · 운전 보조는 감도와 접지 회복을 도와요. 코너에서는 직접 브레이크를 사용해요.</p>
       <p class="steering-hint">베이프런트 시티 투어 · 수변부터 도심까지 6개 구간 · 한 바퀴</p><div id="load-status" role="status">도시와 차량 불러오는 중</div>
       <div id="best"></div>
       <button class="save-transfer-entry" data-save-transfer-open>저장 기록 옮기기</button>
       <div class="menu-footer"><button id="help-open">조작 방법</button><button id="credits-open">만든 자료</button><button id="fullscreen">전체화면</button></div>
+        </details>
+      </div>
+      <div class="launch-bar">
+        <div id="shop-offer" aria-live="polite" hidden><div class="offer-line"><strong id="shop-offer-name"></strong><span id="shop-offer-cost"></span></div><p id="shop-offer-description"></p><div id="shop-offer-balance"></div><div class="shop-actions"><button id="shop-cancel">취소</button><button id="shop-confirm" class="primary">구매하고 장착</button></div></div>
+        <button id="start" class="primary" disabled>차량을 준비하고 있어요…</button>
+      </div>
     </section>
-      <div class="launch-bar"><button id="start" class="primary" disabled>차량을 준비하고 있어요…</button></div>
+    <script id="garage-preview-state" type="application/json">{}</script>
   </main>
   <div id="pause-menu" class="overlay" hidden>
     <section class="panel compact"><div class="eyebrow">PIT STOP</div><h2>잠깐 쉬어요</h2><p>달리던 자리에서 이어갈 수 있어요.</p><label class="gaze-option"><input type="checkbox" id="pause-gaze-follow" checked> 조향 따라 시선 이동</label><label class="gaze-option"><input type="checkbox" id="pause-body-motion" checked> 차체 움직임</label><label class="gaze-option"><input type="checkbox" id="pause-impact-audio" checked> 충돌 소리</label><label class="steering-choice">조향 방식<select id="pause-steering-mode"><option value="buttons">좌우 버튼</option><option value="slide">엄지 슬라이드</option></select></label><p class="steering-hint">방식을 바꾸고 처음부터 다시 달리면 같은 출발 조건으로 비교해요.</p><button id="resume" class="primary">계속 달리기</button><button id="restart" class="secondary">처음부터 다시</button><button id="back-menu" class="text-button">차고로 돌아가기</button></section>

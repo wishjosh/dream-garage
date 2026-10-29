@@ -43,3 +43,11 @@ test('prototype dependency graph cannot reach persistent game saves or transfer 
  }
  assert.ok(visited.size>10);
 });
+
+test('main performance preview leaves physics and legacy progress untouched until confirmation',()=>{
+ const save=createDemoSave();save.coins=4321;save.races=12;save.best={tavaculo:29.5,f2002:28.75};
+ const before=structuredClone(save),p=createPreviewSession({categories:['paint','wheels','engine','tires','brakes']});
+ p.begin(save,'tavaculo','engine-gt');assert.equal(p.loadout(save,'tavaculo').engine,'engine-gt');assert.deepEqual(save,before);
+ p.cancel();assert.deepEqual(save,before);p.begin(save,'tavaculo','engine-gt');assert.equal(p.confirm(save,'tavaculo').ok,true);
+ assert.equal(save.coins,3221);assert.equal(save.garage.tavaculo.engine,'engine-gt');assert.deepEqual(save.best,before.best);assert.equal(save.races,12);assert.deepEqual(save.garage.f2002,before.garage.f2002);
+});

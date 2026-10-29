@@ -7,7 +7,7 @@ const stored=()=>JSON.parse(w().localStorage.getItem(KEY));
 function check(name,ok,detail){checks.push({name,ok,detail});report();if(!ok)throw Error(name);}
 function report(){const state={checks,snapshot:qa()?.snapshot(),stored:qa()?stored():null,errors:w().__cockpitReviewErrors||[],realStorageUnchanged:localStorage.getItem(KEY)===original};$('#state').textContent=JSON.stringify(state);$('#report').textContent=checks.map(c=>(c.ok?'PASS ':'FAIL ')+c.name).join('\n');}
 const click=s=>q(s).click(),change=(s,v)=>{q(s).value=v;q(s).dispatchEvent(new(w().Event)('change',{bubbles:true}));};
-async function load(){frame.src='/?qa=1&review=1&handling-save=1&review-persist=1&v=ferrari-main-1';for(let i=0;i<1000;i++){await sleep(50);try{if(qa()&&!q('#enter-garage').disabled){w().__cockpitReviewSetFrozen(true);return;}}catch{}}throw Error('load timeout');}
+async function load(){await new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});frame.src='/?qa=1&review=1&handling-save=1&review-persist=1&v=garage-main-1';});for(let i=0;i<1000;i++){await sleep(50);try{if(qa()&&!q('#enter-garage').disabled){w().__cockpitReviewSetFrozen(true);return;}}catch{}}throw Error('load timeout');}
 function garage(){const s=snap();if(s.mode==='countdown'||s.mode==='race')click('#pause');if(snap().mode==='paused')click('#back-menu');if(snap().mode==='result')click('#result-menu');if(snap().screen==='welcome')click('#enter-garage');}
 function start(car,view='cockpit'){garage();click('[data-car="'+car+'"]');change('#view-select',view);click('#start');qa().advance(3.6,{});}
 function rimX(){const a=snap().cockpitStats.steeringQuaternion;return 2*(a[0]*a[2]+a[1]*a[3]);}
@@ -17,8 +17,13 @@ async function run(){checks.length=0;$('#status').textContent='검사 중';await
  check('accepted environment and scale retained',Math.abs(snap().appearance.dimensions[2]-4.527)<1e-9&&snap().appearance.exposure===.85,snap().appearance);
  garage();check('both vehicles and transfer remain available',d().querySelectorAll('[data-car]').length===2&&!q('[data-save-transfer-open]').hidden);
  click('[data-category="wheels"]');check('Ferrari wheel offer describes actual rim',q('#shop-items').textContent.includes('골드 림')&&q('#shop-items').textContent.includes('원본 휠'));
- click('[data-category="paint"]');click('[data-item="paint-blue"]');const bought=stored();check('purchase charges existing balance once',bought.coins===baseline.coins-250&&bought.owned.includes('paint-blue')&&bought.garage.tavaculo.paint==='paint-blue');
- click('[data-item="paint-stock"]');click('[data-item="paint-blue"]');check('owned item re-equips without charging',stored().coins===bought.coins);
+ click('[data-category="paint"]');const untouched=w().localStorage.getItem(KEY);
+ click('[data-item="paint-blue"]');check('preview leaves persisted wallet and equipment byte-for-byte unchanged',w().localStorage.getItem(KEY)===untouched&&snap().appearance.paint==='339cff'&&snap().loadout.paint==='paint-mint'&&snap().shopPreview.id==='paint-blue');
+ click('#shop-cancel');check('cancel restores actual equipped paint',snap().appearance.paint==='42e6c5'&&!snap().shopPreview&&w().localStorage.getItem(KEY)===untouched);
+ click('[data-item="paint-blue"]');click('[data-category="wheels"]');check('category change cancels unconfirmed paint',!snap().shopPreview&&snap().appearance.paint==='42e6c5'&&w().localStorage.getItem(KEY)===untouched);
+ click('[data-category="paint"]');click('[data-item="paint-blue"]');click('#start');check('departure discards unconfirmed purchase',!snap().shopPreview&&stored().coins===baseline.coins&&stored().garage.tavaculo.paint==='paint-mint');qa().advance(3.6,{});garage();
+ click('[data-category="paint"]');click('[data-item="paint-blue"]');click('#shop-confirm');const bought=stored();check('purchase charges existing balance once',bought.coins===baseline.coins-250&&bought.owned.includes('paint-blue')&&bought.garage.tavaculo.paint==='paint-blue');
+ click('[data-item="paint-stock"]');click('#shop-confirm');click('[data-item="paint-blue"]');click('#shop-confirm');check('owned item re-equips without charging',stored().coins===bought.coins);
  await load();garage();check('purchase and equipment survive reopening',stored().coins===bought.coins&&snap().loadout.paint==='paint-blue'&&snap().appearance.paint==='339cff');
  start('tavaculo');check('Ferrari source cockpit and four physical wheels',snap().cockpitStats.construction==='original-ferrari-458'&&snap().cockpitStats.geometryUnchanged&&snap().wheelCount===4);
  qa().advance(1,{left:true,brake:true});check('left steering turns rim left',rimX()<-.1,{x:rimX()});qa().advance(1,{right:true,brake:true});check('right steering turns rim right',rimX()>.1,{x:rimX()});qa().advance(3,{});check('release centres rim',Math.abs(rimX())<.001);
@@ -39,6 +44,6 @@ async function run(){checks.length=0;$('#status').textContent='검사 중';await
 }
 $('#run').onclick=()=>run().catch(e=>{$('#status').textContent='실패 '+e.message;report();});
 $('#show').onclick=()=>{start('tavaculo');qa().advanceDriver(6);qa().advance(0);report();};
-$('#stock').onclick=()=>{garage();click('[data-car="tavaculo"]');click('[data-category="paint"]');click('[data-item="paint-stock"]');click('[data-category="wheels"]');click('[data-item="wheels-stock"]');qa().advance(0);report();};
+$('#stock').onclick=()=>{garage();click('[data-car="tavaculo"]');click('[data-category="paint"]');click('[data-item="paint-stock"]');if(!q('#shop-confirm').disabled&&snap().shopPreview)click('#shop-confirm');click('[data-category="wheels"]');click('[data-item="wheels-stock"]');if(snap().shopPreview)click('#shop-confirm');qa().advance(0);report();};
 $('#portrait').onclick=async()=>{garage();frame.width=402;frame.height=874;await sleep(100);qa().advance(0);report();};
 </script>
