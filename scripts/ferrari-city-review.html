@@ -1,0 +1,36 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>Ferrari city integration review</title><style>body{margin:0;background:#11202b;color:#e5eff4;font:14px sans-serif}header{padding:10px;display:flex;gap:8px;flex-wrap:wrap}button{padding:8px;border-radius:5px;border:0}iframe{display:block;border:0;width:844px;height:390px}#report{white-space:pre-wrap;padding:10px}#state{display:none}</style></head><body><header><button id="run">통합 검사</button><button id="exterior">외관 확인</button><button id="cockpit">운전석 확인</button><button id="left">왼쪽 거울</button><button id="right">오른쪽 거울</button><button id="straight">정면 복귀</button><button id="portrait">세로 화면</button><button id="landscape">가로 화면</button><button id="reverse">후진</button><button id="paint">다른 도색</button><button id="restore">원래 도색</button></header><iframe id="game" src="./?qa=1&frozen=1"></iframe><pre id="report">준비 중</pre><script id="state" type="application/json">{}</script><script>
+const frame=document.getElementById('game'),$=id=>document.getElementById(id),checks=[],originalSave=localStorage.getItem('hojin-city-gp:save:v1');let q,w,d;
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function assert(name,ok,detail){checks.push({name,ok,detail});if(!ok)throw Error(name);}
+function report(){const s=q.snapshot();$('state').textContent=JSON.stringify({checks,snapshot:s,body:q.cityBody(),errors:JSON.parse(d.getElementById('city-errors').textContent),storageUnchanged:originalSave===localStorage.getItem('hojin-city-gp:save:v1')});$('report').textContent=checks.map(c=>(c.ok?'PASS':'FAIL')+' '+c.name).join('\n');}
+async function ready(){for(let i=0;i<150;i++){w=frame.contentWindow;d=frame.contentDocument;if(w.__raceQA){q=w.__raceQA;return;}await wait(100);}throw Error('Loading timeout');}
+function click(id){d.getElementById(id).click();}
+function cockpit(){if(q.snapshot().view!=='cockpit')click('camera');q.cityLook(null);q.advance(0);report();}
+async function run(){checks.length=0;await ready();click('enter-garage');d.getElementById('view-select').value='cockpit';d.getElementById('view-select').dispatchEvent(new Event('change'));click('start');q.advance(3.6);q.advanceDriver(9);await wait(160);q.advance(0);let s=q.snapshot();
+ assert('city with four racers',s.racers.length===4&&s.length>1700,{length:s.length});
+ assert('vehicle moves with physics',s.player.speed>3&&s.elapsed>8,{speed:s.player.speed,elapsed:s.elapsed});
+ assert('four wheels follow car',s.wheelCount===4&&s.wheelVisuals.every(w=>w.position.every(Number.isFinite)),s.wheelVisuals);
+ assert('source cabin shape retained',s.cockpitStats.geometryUnchanged&&s.cockpitStats.construction==='original-ferrari-458');
+ assert('speed matches HUD',s.cockpitStats.telemetry.kmh===Math.round(s.player.speed*3.6)&&String(s.cockpitStats.telemetry.kmh)===d.getElementById('speed').textContent);
+ assert('forward view and near plane',s.cameraFov===58&&s.cameraNear===.025&&s.cockpitStats.glassOpacity===.035);
+ assert('official exterior recipe',q.cityBody().parameters.metalness===1&&q.cityBody().parameters.roughness===.5&&q.cityBody().parameters.clearcoat===1&&q.cityBody().sourceDimensions[2]===4.527,q.cityBody().parameters);
+ const before=s.mirrorStats.frames;q.advanceDriver(.3);s=q.snapshot();assert('rear scene updates',s.mirrorStats.frames>before&&s.mirrorStats.mirrored&&q.mirrorPixels().nonUniform,q.mirrorPixels());
+ q.mirrorProbe({behind:true,x:1});const behind=q.mirrorPixels();q.mirrorProbe({behind:false,x:1});const front=q.mirrorPixels();q.mirrorProbe(null);
+ assert('mirror sees rear, excludes forward probe',behind.probe.count>front.probe.count,{behind,front});
+ q.cityLook(45);s=q.snapshot();assert('left mirror available',s.sideMirrorStats.find(m=>m.id==='left').active,s.sideMirrorStats);
+ q.cityLook(-65);s=q.snapshot();assert('right mirror available',s.sideMirrorStats.find(m=>m.id==='right').active,s.sideMirrorStats);
+ q.cityLook(null);s=q.snapshot();assert('look returns to forward',Math.abs(s.cockpitStats.lookDegrees)<=8);
+ const gearBefore=s.cockpitStats.telemetry.gear;q.advance(5,{brake:true});q.advance(.1,{});q.advance(3,{reverse:true});s=q.snapshot();assert('reverse shown on instruments',s.cockpitStats.telemetry.gear==='R',{before:gearBefore,after:s.cockpitStats.telemetry});
+ assert('main progress untouched',originalSave===localStorage.getItem('hojin-city-gp:save:v1'));
+ assert('no runtime errors',JSON.parse(d.getElementById('city-errors').textContent).length===0);
+ q.reviewScene({progress:.34});q.advance(0);report();}
+$('run').onclick=()=>run().catch(e=>{$('report').textContent='FAIL '+e.stack;report();});
+$('exterior').onclick=()=>{if(q.snapshot().view!=='chase')click('camera');q.setWheelInspection(true);q.advance(0);report();};
+$('cockpit').onclick=()=>{q.setWheelInspection(false);cockpit();};
+$('left').onclick=()=>{cockpit();q.cityLook(45);report();};$('right').onclick=()=>{cockpit();q.cityLook(-65);report();};$('straight').onclick=()=>{q.cityLook(null);report();};
+$('portrait').onclick=async()=>{frame.style.width='402px';frame.style.height='874px';await wait(150);q.advance(0);report();};$('landscape').onclick=async()=>{frame.style.width='844px';frame.style.height='390px';await wait(150);q.advance(0);report();};
+$('reverse').onclick=()=>{q.advance(5,{brake:true});q.advance(.1,{});q.advance(2,{reverse:true});report();};
+function paint(stock){click('pause');click('back-menu');const cards=[...d.querySelectorAll('#shop-items button')];cards[stock?0:1].click();d.getElementById('view-select').value='cockpit';d.getElementById('view-select').dispatchEvent(new Event('change'));click('start');q.advance(4);report();}
+$('paint').onclick=()=>paint(false);$('restore').onclick=()=>paint(true);
+ready().then(()=>{$('report').textContent='준비 완료';});
+</script></body></html>
