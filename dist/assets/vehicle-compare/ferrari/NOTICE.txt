@@ -1,0 +1,26 @@
+Ferrari 458 Italia model by vicent091036
+Source binary: https://threejs.org/examples/models/gltf/ferrari.glb
+Official example: https://threejs.org/examples/webgl_materials_car.html
+Original attribution link: https://sketchfab.com/models/57bf6cc56931426e87494f554df1dab6
+
+The Three.js media-license inventory records ferrari.glb as CC BY 4.0:
+https://github.com/mrdoob/three.js/issues/23089
+License: https://creativecommons.org/licenses/by/4.0/
+The original Sketchfab listing was unavailable during this review (2026-10-29).
+This notice preserves the available source and license evidence; it is not a claim of manufacturer endorsement.
+
+Study modifications: the source GLB is unchanged. Scene orientation and display scale are adjusted at runtime. Body/rim/glass materials follow the official Three.js example. An optional common-paint mode applies the same paint settings to both comparison vehicles. Existing geometry and normals are preserved. The actual race and saved progress are not connected to this study.
+
+Three.js loader code: MIT, Three.js Authors.
+Draco decoder: Apache License 2.0; see the study draco/LICENSE.txt.
+
+Reference reproduction (2026-10-29):
+- Canonical appearance/camera recipe: https://github.com/mrdoob/three.js/blob/r180/examples/webgl_materials_car.html (Three.js MIT).
+- venice_sunset_1k.hdr: official Three.js r180 asset, Venice Sunset by Greg Zaal / Poly Haven, CC0. https://polyhaven.com/a/venice_sunset
+- ferrari_ao.png: official Three.js r180 Ferrari example contact-shadow asset. Model attribution/license evidence above is retained for the accompanying model resources.
+- HDRLoader.js: Three.js r180, MIT. Only the import path was adjusted for this study.
+- reference.html keeps source model transforms, original camera, #ff0000 body and official material/HDR/AO settings. Orbit controls and statistics UI are omitted; optional wheel/grid animation follows the official example.
+- The comparison page keeps the same look while changing the visible garage background; smartphone camera/framing and a global rotation are adapted together with the environment rotation.
+- Ferrari comparison scale is uniform and anchored to the 458 family's 4.527m published overall length. Width and height retain asset proportions and are not certified dimensionally exact. Tavaculo is fictional. At user request its comparison size is uniformly anchored to the Lamborghini Huracan LP 610-4 overall length of 4.459m; this does not make its geometry a Huracan replica. Manufacturer source: https://preview.thenewsmarket.com/Previews/lamb/DocumentAssets/321603.pdf (page 5, length 4459mm).
+Dimension source: Ferrari 458 Spider owner's manual, dimensions and weights page 26, https://di-uploads-development.s3.us-east-1.amazonaws.com/ferrarioffortlauderdale/uploads/2020/05/458spider.pdf (length 4527mm; source was search-indexed; full PDF fetch exceeded tool size limit).
+Length cross-check: https://www.millermotorcars.com/showroom/ferrari/458_spider/ (4527mm).

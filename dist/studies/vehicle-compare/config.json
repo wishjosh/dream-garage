@@ -1,0 +1,22 @@
+{
+  "version": "huracan-scale-1",
+  "ferrari": {
+    "url": "../../assets/vehicle-compare/ferrari/ferrari.glb",
+    "rotationY": 3.141592653589793,
+    "paintMaterials": [
+      "ferrari-reference-paint"
+    ],
+    "wheelNodes": [
+      "wheel_fl",
+      "wheel_fr",
+      "wheel_rl",
+      "wheel_rr"
+    ],
+    "displayLength": 4.527
+  },
+  "tavaculo": {
+    "source": "https://preview.thenewsmarket.com/Previews/lamb/DocumentAssets/321603.pdf",
+    "reference": "Lamborghini Huracan LP 610-4",
+    "displayLength": 4.459
+  }
+}
