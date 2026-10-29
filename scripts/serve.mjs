@@ -12,11 +12,12 @@ const types={'.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset
 // It is never written into dist or shipped with a public site.
 const reviewBootstrap=`<script>
 (()=>{
- const data=new Map();
+ const persistReview=new URLSearchParams(location.search).get('review-persist')==='1'&&parent!==window;
+ const data=persistReview?(parent.__dreamGarageReviewMemory??=new Map()):new Map();
  const memory={getItem:key=>data.has(String(key))?data.get(String(key)):null,setItem:(key,value)=>data.set(String(key),String(value)),removeItem:key=>data.delete(String(key)),clear:()=>data.clear(),key:index=>[...data.keys()][index]??null,get length(){return data.size;}};
  Object.defineProperty(window,'localStorage',{configurable:true,value:memory});
  window.__cockpitReviewStorageIsolated=true;
- if(new URLSearchParams(location.search).get('handling-save')==='1'){
+ if(new URLSearchParams(location.search).get('handling-save')==='1'&&!data.has('hojin-city-gp:save:v1')){
   const stock={paint:'paint-stock',wheels:'wheels-stock',engine:'engine-stock',tires:'tires-stock',brakes:'brakes-stock'};
   const fixture={version:1,coins:4321,races:12,best:{tavaculo:29.5,f2002:28.75},car:'tavaculo',view:'cockpit',assist:false,auto:false,
    owned:[...Object.values(stock),'paint-mint','wheels-gold','engine-sprint','tires-grip','brakes-sport','paint-violet'],
@@ -51,7 +52,9 @@ http.createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://localhost'),pathname=decodeURIComponent(url.pathname);
   let file,body,type;
-  if(pathname==='/__qa__/safety-review.html'){
+  if(pathname==='/__qa__/ferrari-main-review.html'){
+   file=fileURLToPath(new URL('./ferrari-main-review.html',import.meta.url));type=types['.html'];body=await readFile(file);
+  }else if(pathname==='/__qa__/safety-review.html'){
    file=fileURLToPath(new URL('./safety-review.html',import.meta.url));type=types['.html'];body=await readFile(file);
   }else if(pathname==='/__qa__/console-review.html'){
    file=fileURLToPath(new URL('./console-review.html',import.meta.url));type=types['.html'];body=await readFile(file);

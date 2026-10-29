@@ -1,7 +1,7 @@
 import {CARS,CATEGORIES,itemById} from './garage-core.mjs?v=city-tour-1';
 import {SAVE_KEY,BACKUP_KEY,MAX_TRANSFER_BYTES,createTransfer,readSnapshot,prepareImport,applyImport,prepareRestore,applyRestore} from './save-transfer.mjs?v=city-tour-1';
 
-const carNames={tavaculo:'Tavaculo',f2002:'클래식 F2002'};
+import {CAR_NAMES as carNames,presentItem} from './vehicle-presentation.mjs?v=ferrari-main-1';
 const amount=value=>value.toLocaleString('ko-KR')+' C';
 const time=value=>Number.isFinite(value)?Math.floor(value/60)+':'+(value%60).toFixed(2).padStart(5,'0'):'아직 없어요';
 function el(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}
@@ -15,7 +15,7 @@ function saveCard(save,title){
  for(const car of CARS){
   const section=el('div',undefined,'transfer-car');section.append(el('h5',carNames[car]));
   const dl=el('dl');
-  for(const [category,label] of Object.entries(CATEGORIES)){dl.append(el('dt',label),el('dd',itemById(save.garage[car][category])?.name||'알 수 없음'));}
+  for(const [category,label] of Object.entries(CATEGORIES)){dl.append(el('dt',label),el('dd',presentItem(itemById(save.garage[car][category]),car)?.name||'알 수 없음'));}
   dl.append(el('dt','이전 코스 최고'),el('dd',time(save.best[car])),el('dt','시티 투어 최고'),el('dd',time(save.courseBest?.['bayfront-long-1']?.[car])));section.append(dl);card.append(section);
  }
  const settings=el('p','선택 차량 '+carNames[save.car]+' · '+(save.view==='cockpit'?'운전석 시점':'차 뒤 시점')+' · 운전 보조 '+(save.assist?'켜짐':'꺼짐')+' · 자동 가속 '+(save.auto?'켜짐':'꺼짐'),'transfer-small');card.append(settings);return card;

@@ -1,7 +1,10 @@
-import {readFile,writeFile} from 'node:fs/promises';
+import {writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 const base=new URL('../dist/',import.meta.url),out=new URL('studies/ferrari-city/',base);
-const read=name=>readFile(new URL(name,base),'utf8');
+// The adopted main game now uses Ferrari too. Keep the original isolated study reproducible.
+const SOURCE_COMMIT='b7d00d266c6f92a773b40cd25a70ee9baca0987b';
+const read=async name=>execFileSync('git',['show',SOURCE_COMMIT+':dist/'+name],{cwd:new URL('../',import.meta.url),encoding:'utf8',maxBuffer:4*1024*1024});
 const put=async(name,text)=>writeFile(new URL(name,out),text.replaceAll('\r\n','\n').replace(/[ \t]+$/gm,''));
 const original=await read('game.mjs');let code=original.replaceAll('\r\n','\n');
 function replace(old,value){if(!code.includes(old))throw Error('Source integration anchor missing: '+old.slice(0,90));code=code.replace(old,value);}
