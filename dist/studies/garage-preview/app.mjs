@@ -3,6 +3,7 @@ import {GLTFLoader} from '../../vendor/GLTFLoader.js';
 import {loadFerrari,dressCar,disposeDress,buildGarage} from '../ferrari-city/asset.mjs?v=ferrari-city-2';
 import {CATALOG,itemById} from '../../garage-core.mjs';
 import {CAR_NAMES,presentItem} from '../../vehicle-presentation.mjs?v=ferrari-main-1';
+import {bindDragRotation} from './drag-rotation.mjs?v=garage-preview-2';
 import {createDemoSave,createPreviewSession} from './preview-core.mjs?v=garage-preview-1';
 const $=id=>document.getElementById(id),session=createPreviewSession();let save=createDemoSave(),car='tavaculo',category='paint',angle=0,preview=null,ready=false,renderer;
 const errors=[];function reportError(error){errors.push(String(error?.message||error));$('preview-errors').textContent=JSON.stringify(errors);$('fatal').hidden=false;}
@@ -10,8 +11,8 @@ addEventListener('error',e=>reportError(e.message));addEventListener('unhandledr
 let scene,camera,models,rigs,ferrari;
 function displayItem(id){return presentItem(itemById(id),car);}
 function label(loadout){return displayItem(loadout.paint).name+' · '+displayItem(loadout.wheels).name;}
-function syncState(){const material=preview?.getObjectByName('body')?.material;const trim=preview?.getObjectByName('rim_fl')?.material;$('preview-state').textContent=JSON.stringify({version:'garage-preview-1',ready,car,category,pending:session.pending,quote:session.quote(save),save,displayLoadout:session.loadout(save,car),appearance:{paint:material?.color?.getHexString(),rim:trim?.color?.getHexString(),customWheels:preview?.getObjectsByProperty('name','dream-wheel-trim').length,exposure:.85,environment:'Venice Sunset 1K',length:car==='tavaculo'?4.527:5.2},errors});}
-function refreshCar(){if(!ready)return;if(preview){scene.remove(preview);disposeDress(preview);}preview=dressCar(models[car].clone(true),car,session.loadout(save,car),rigs[car]);preview.position.set(0,.24,-110);preview.rotation.y=angle;scene.add(preview);}
+function syncState(){const material=preview?.getObjectByName('body')?.material;const trim=preview?.getObjectByName('rim_fl')?.material;$('preview-state').textContent=JSON.stringify({version:'garage-preview-2',rotation:preview?.rotation.y??angle,ready,car,category,pending:session.pending,quote:session.quote(save),save,displayLoadout:session.loadout(save,car),appearance:{paint:material?.color?.getHexString(),rim:trim?.color?.getHexString(),customWheels:preview?.getObjectsByProperty('name','dream-wheel-trim').length,exposure:.85,environment:'Venice Sunset 1K',length:car==='tavaculo'?4.527:5.2},errors});}
+function refreshCar(){if(!ready)return;rotationDrag.cancel();if(preview){scene.remove(preview);disposeDress(preview);}preview=dressCar(models[car].clone(true),car,session.loadout(save,car),rigs[car]);preview.position.set(0,.24,-110);preview.rotation.y=angle;scene.add(preview);}
 function render(){
  const pending=session.pending,quote=session.quote(save);$('wallet').textContent=save.coins.toLocaleString()+' C';$('preview-badge').textContent=pending?'미리보기 중 · 아직 장착 전':'장착된 모습';$('preview-badge').dataset.preview=String(!!pending);$('appearance-label').textContent=label(session.loadout(save,car));
  document.querySelectorAll('[data-car]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.car===car));b.disabled=!ready;});document.querySelectorAll('[data-category]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.category===category));b.disabled=!ready;});
@@ -27,7 +28,9 @@ $('confirm').onclick=()=>{const result=session.confirm(save,car);if(!result.ok){
 $('reset').onclick=()=>{save=createDemoSave();car='tavaculo';category='paint';angle=0;cancel('체험을 처음으로 돌렸어요. 민트 도색과 골드 림은 보유 중이에요.');};
 for(const b of document.querySelectorAll('[data-category]'))b.onclick=()=>{if(category===b.dataset.category)return;category=b.dataset.category;cancel('분류를 바꿨어요. 미리보기는 취소하고 장착된 모습을 보여줘요.');$('items').scrollTop=0;};
 for(const b of document.querySelectorAll('[data-car]'))b.onclick=()=>{if(car===b.dataset.car)return;car=b.dataset.car;cancel(CAR_NAMES[car]+'의 장착된 모습이에요.');$('items').scrollTop=0;};
-for(const [id,sign] of [['rotate-left',-1],['rotate-right',1]])$(id).onclick=()=>{angle+=sign*Math.PI/4;if(preview)preview.rotation.y=angle;};
+function rotateBy(delta){angle+=delta;if(preview)preview.rotation.y=angle;syncState();}
+const rotationDrag=bindDragRotation($('stage'),rotateBy,{enabled:()=>ready});
+for(const [id,sign] of [['rotate-left',-1],['rotate-right',1]])$(id).onclick=()=>rotateBy(sign*Math.PI/4);
 addEventListener('keydown',e=>{if(e.key==='Escape'&&session.pending){e.preventDefault();$('cancel').click();}});
 function resize(){if(!renderer)return;const width=innerWidth,height=innerHeight,r=$('stage').getBoundingClientRect(),portrait=height>width;renderer.setSize(width,height);camera.aspect=width/height;camera.fov=portrait?T.MathUtils.radToDeg(2*Math.atan(Math.tan(T.MathUtils.degToRad(28))*height/874*402/width)):45;camera.setViewOffset(width,height,width/2-(r.x+r.width/2),height/2-(r.y+r.height*.55),width,height);camera.updateProjectionMatrix();}
 function normalize(ob,target){ob.updateMatrixWorld(true);let b=new T.Box3().setFromObject(ob);const size=b.getSize(new T.Vector3());ob.scale.multiplyScalar(target/Math.max(size.x,size.z));ob.updateMatrixWorld(true);b=new T.Box3().setFromObject(ob);const c=b.getCenter(new T.Vector3()),group=new T.Group();group.add(ob);ob.position.x-=c.x;ob.position.z-=c.z;ob.position.y-=b.min.y;return group;}
