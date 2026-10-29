@@ -6,8 +6,9 @@ export async function loadReferenceAssets(){
  const [environment,shadow]=await Promise.all([new HDRLoader().loadAsync(new URL('venice_sunset_1k.hdr',base).href),new T.TextureLoader().loadAsync(new URL('ferrari_ao.png',base).href)]);
  environment.mapping=T.EquirectangularReflectionMapping;return{environment,shadow};
 }
+export function createReferencePaint(){return new T.MeshPhysicalMaterial({name:'ferrari-reference-paint',color:REFERENCE.color,metalness:1,roughness:.5,clearcoat:1,clearcoatRoughness:.03});}
 export function prepareFerrari(root){
- const body=new T.MeshPhysicalMaterial({name:'ferrari-reference-paint',color:REFERENCE.color,metalness:1,roughness:.5,clearcoat:1,clearcoatRoughness:.03});
+ const body=createReferencePaint();
  const details=new T.MeshStandardMaterial({name:'ferrari-reference-metal',color:'#ffffff',metalness:1,roughness:.5});
  const glass=new T.MeshPhysicalMaterial({name:'ferrari-reference-glass',color:'#ffffff',metalness:.25,roughness:0,transmission:1});
  root.getObjectByName('body').material=body;

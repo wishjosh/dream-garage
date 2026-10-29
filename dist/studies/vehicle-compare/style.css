@@ -4,3 +4,5 @@ header{gap:10px}.study-tag{font-size:11px;color:#b7d4c6;white-space:nowrap}.sett
 @media(orientation:landscape) and (max-height:310px){.caption{display:none}}
 
 .preset-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.preset-options button{font-size:12px;padding:8px 5px;min-height:48px}.reference-link{display:inline-flex;align-items:center;min-height:44px;padding:8px 10px;border:1px solid #5b7b72;border-radius:8px;text-decoration:none}.settings h2{font-size:16px}
+
+.finish-options button{min-height:48px}.caption #look{max-width:min(90vw,470px);font-size:12px}
