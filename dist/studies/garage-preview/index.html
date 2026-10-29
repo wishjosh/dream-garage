@@ -1,0 +1,11 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1823"><title>내 차에 먼저 입혀 보기 · 드림 개러지</title><link rel="icon" href="data:,"><link rel="stylesheet" href="./style.css?v=garage-preview-1"><script type="module" src="./app.mjs?v=garage-preview-1"></script></head><body>
+<canvas id="world" aria-label="현재 차고에서 선택한 도색과 휠을 보여주는 차량"></canvas>
+<main class="layout">
+<section id="stage" aria-label="차량 미리보기"><header><span class="eyebrow">DREAM GARAGE · PREVIEW</span><h1>내 차에 먼저 입혀 보기</h1><div class="car-switch" role="group" aria-label="차량 선택"><button data-car="tavaculo" aria-pressed="true">Ferrari 458</button><button data-car="f2002" aria-pressed="false">클래식 F2002</button></div></header>
+<div class="vehicle-caption"><div><span id="preview-badge">장착된 모습</span><p id="appearance-label">차량을 준비하고 있어요…</p></div><div class="rotation"><button id="rotate-left" aria-label="차량 왼쪽 모습 보기">↶</button><button id="rotate-right" aria-label="차량 오른쪽 모습 보기">↷</button></div></div></section>
+<section class="panel" aria-label="구매 전 꾸미기 선택"><div class="panel-top"><div class="tabs" role="group" aria-label="꾸미기 종류"><button data-category="paint" aria-pressed="true">도색</button><button data-category="wheels" aria-pressed="false">휠</button></div><div class="wallet"><span>체험용 잔액</span><strong id="wallet">700 C</strong></div></div>
+<div id="items" role="group" aria-label="미리 볼 상품"></div>
+<footer><div id="offer" aria-live="polite" hidden><div class="offer-line"><strong id="offer-name"></strong><span id="offer-cost"></span></div><p id="offer-balance"></p><div class="actions"><button id="cancel">취소</button><button id="confirm" class="primary">구매하고 장착</button></div></div>
+<div id="idle"><p id="status" role="status" aria-live="polite">차량과 차고를 불러오는 중이에요.</p><div class="actions"><button id="reset">체험 초기화</button><a href="../../?v=ferrari-main-1" target="_blank" rel="noopener">본게임 열기 ↗</a></div></div>
+<p class="isolation">별도 시안 · 본게임 기록에 영향 없음 · 새로 열면 초기화</p></footer></section>
+</main><div id="fatal" role="alert" hidden><p>차량을 불러오지 못했어요. 연결을 확인하고 다시 열어 주세요.</p><button onclick="location.reload()">다시 열기</button></div><script id="preview-state" type="application/json">{}</script><script id="preview-errors" type="application/json">[]</script></body></html>
