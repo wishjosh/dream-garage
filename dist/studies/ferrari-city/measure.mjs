@@ -1,4 +1,4 @@
-export const STUDY_VERSION='ferrari-city-1';
+export const STUDY_VERSION='ferrari-city-2';
 export function summarize(intervals){
  const sorted=[...intervals].sort((a,b)=>a-b),at=p=>sorted[Math.min(sorted.length-1,Math.floor(sorted.length*p))]||0;
  const elapsed=intervals.reduce((a,b)=>a+b,0);

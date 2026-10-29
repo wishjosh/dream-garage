@@ -1,9 +1,13 @@
 import * as T from '../../vendor/three.module.js';
-import {loadFerrari} from './asset.mjs?v=ferrari-city-1';
+import {loadFerrari} from './asset.mjs?v=ferrari-city-2';
 import {drivingReadout} from '../../race-hud.mjs';
 import {setCabinUp} from '../../cockpit-attitude.mjs';
 const yAxis=new T.Vector3(0,1,0),flip=new T.Quaternion().setFromAxisAngle(yAxis,Math.PI);
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+const steeringTurn=new T.Quaternion();
+// The tilted source local +Y axis points away from the driver.
+// The caller already negates the physical steering angle; do not negate twice.
+export function setFerrariSteering(wheel,base,amount){wheel.quaternion.copy(base).multiply(steeringTurn.setFromAxisAngle(yAxis,clamp(amount,-1,1)*1.92));}
 function canvasTexture(w,h){const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=4;return{canvas,ctx:canvas.getContext('2d'),texture};}
 function face(texture,width,height){return new T.Mesh(new T.PlaneGeometry(width,height),new T.MeshBasicMaterial({map:texture,toneMapped:false,fog:false}));}
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
@@ -48,9 +52,9 @@ export async function createOriginalCockpit({scene,camera}){
  const mirrorSurface=lens('ferrari-rear-mirror-lens',p=>Math.abs(p.x)<.14&&p.y>1.05&&p.y<1.14&&p.z>-.32&&p.z<-.25);mirrorMount.add(mirrorSurface);
  const sideMirrors=[[-1,'left'],[1,'right']].map(([sign,id])=>{const surface=lens('ferrari-'+id+'-mirror-lens',p=>p.x*sign>.94&&p.y>.79&&p.y<.93&&p.z>-.49&&p.z<-.35);frame.add(surface);return{id,surface,origin:new T.Vector3(),aspect:1.65,yaw:sign*-.22};});raw.dispose();
 
- let peek=null,lookRequests=0,lastPeek=null,telemetry=drivingReadout({speed:0}),lookDegrees=0,steeringAmount=0;const eye=new T.Vector3(-.346,1.055,.16),eyeWorld=new T.Vector3(),direction=new T.Vector3(),q=new T.Quaternion();
+ let peek=null,lookRequests=0,lastPeek=null,telemetry=drivingReadout({speed:0}),lookDegrees=0,steeringAmount=0;const eye=new T.Vector3(-.346,1.055,.16),eyeWorld=new T.Vector3(),direction=new T.Vector3();
  function update({player,steeringAmount:amount=0,lookDegrees:look=0,now=performance.now(),paint=null}={}){
-  steeringAmount=clamp(amount,-1,1);lookDegrees=peek??clamp(look,-8,8);steering.quaternion.copy(steeringBase).multiply(q.setFromAxisAngle(yAxis,-steeringAmount*1.92));
+  steeringAmount=clamp(amount,-1,1);lookDegrees=peek??clamp(look,-8,8);setFerrariSteering(steering,steeringBase,steeringAmount);
   if(player){group.position.set(player.x,player.y||0,player.z);group.quaternion.fromArray(player.quaternion||[0,0,0,1]).multiply(flip);telemetry=drivingReadout(player);}
   cabinPaint.material.color.set(paint||'#ff0000');draw(telemetry,now);
  }

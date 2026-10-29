@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>Ferrari city integration review</title><style>body{margin:0;background:#11202b;color:#e5eff4;font:14px sans-serif}header{padding:10px;display:flex;gap:8px;flex-wrap:wrap}button{padding:8px;border-radius:5px;border:0}iframe{display:block;border:0;width:844px;height:390px}#report{white-space:pre-wrap;padding:10px}#state{display:none}</style></head><body><header><button id="run">통합 검사</button><button id="exterior">외관 확인</button><button id="cockpit">운전석 확인</button><button id="left">왼쪽 거울</button><button id="right">오른쪽 거울</button><button id="straight">정면 복귀</button><button id="portrait">세로 화면</button><button id="landscape">가로 화면</button><button id="reverse">후진</button><button id="paint">다른 도색</button><button id="restore">원래 도색</button></header><iframe id="game" src="./?qa=1&frozen=1"></iframe><pre id="report">준비 중</pre><script id="state" type="application/json">{}</script><script>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>Ferrari city integration review</title><style>body{margin:0;background:#11202b;color:#e5eff4;font:14px sans-serif}header{padding:10px;display:flex;gap:8px;flex-wrap:wrap}button{padding:8px;border-radius:5px;border:0}iframe{display:block;border:0;width:844px;height:390px}#report{white-space:pre-wrap;padding:10px}#state{display:none}</style></head><body><header><button id="run">통합 검사</button><button id="steer-left">핸들 왼쪽</button><button id="steer-right">핸들 오른쪽</button><button id="steer-centre">핸들 중앙</button><button id="exterior">외관 확인</button><button id="cockpit">운전석 확인</button><button id="left">왼쪽 거울</button><button id="right">오른쪽 거울</button><button id="straight">정면 복귀</button><button id="portrait">세로 화면</button><button id="landscape">가로 화면</button><button id="reverse">후진</button><button id="paint">다른 도색</button><button id="restore">원래 도색</button></header><iframe id="game" src="./?qa=1&frozen=1"></iframe><pre id="report">준비 중</pre><script id="state" type="application/json">{}</script><script>
 const frame=document.getElementById('game'),$=id=>document.getElementById(id),checks=[],originalSave=localStorage.getItem('hojin-city-gp:save:v1');let q,w,d;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 function assert(name,ok,detail){checks.push({name,ok,detail});if(!ok)throw Error(name);}
@@ -6,7 +6,14 @@ function report(){const s=q.snapshot();$('state').textContent=JSON.stringify({ch
 async function ready(){for(let i=0;i<150;i++){w=frame.contentWindow;d=frame.contentDocument;if(w.__raceQA){q=w.__raceQA;return;}await wait(100);}throw Error('Loading timeout');}
 function click(id){d.getElementById(id).click();}
 function cockpit(){if(q.snapshot().view!=='cockpit')click('camera');q.cityLook(null);q.advance(0);report();}
-async function run(){checks.length=0;await ready();click('enter-garage');d.getElementById('view-select').value='cockpit';d.getElementById('view-select').dispatchEvent(new Event('change'));click('start');q.advance(3.6);q.advanceDriver(9);await wait(160);q.advance(0);let s=q.snapshot();
+async function run(){checks.length=0;await ready();click('enter-garage');d.getElementById('view-select').value='cockpit';d.getElementById('view-select').dispatchEvent(new Event('change'));click('start');q.advance(3.6);
+ const T=await import('../../vendor/three.module.js');
+ const base=new T.Quaternion().fromArray(q.snapshot().cockpitStats.steeringQuaternion),top=new T.Vector3(0,1,0).applyQuaternion(base.clone().invert());top.y=0;top.normalize();
+ const rimX=()=>top.clone().applyQuaternion(new T.Quaternion().fromArray(q.snapshot().cockpitStats.steeringQuaternion)).x;
+ q.advance(1,{left:true,brake:true});assert('left input turns actual Ferrari rim left',q.snapshot().player.steeringAngle>0&&rimX()<-.1,{physical:q.snapshot().player.steeringAngle,rimX:rimX()});
+ q.advance(1,{right:true,brake:true});assert('right input turns actual Ferrari rim right',q.snapshot().player.steeringAngle<0&&rimX()>.1,{physical:q.snapshot().player.steeringAngle,rimX:rimX()});
+ q.advance(3,{});assert('released Ferrari rim returns to centre',Math.abs(rimX())<.001,{rimX:rimX()});
+ q.advanceDriver(9);await wait(160);q.advance(0);let s=q.snapshot();
  assert('city with four racers',s.racers.length===4&&s.length>1700,{length:s.length});
  assert('vehicle moves with physics',s.player.speed>3&&s.elapsed>8,{speed:s.player.speed,elapsed:s.elapsed});
  assert('four wheels follow car',s.wheelCount===4&&s.wheelVisuals.every(w=>w.position.every(Number.isFinite)),s.wheelVisuals);
@@ -25,6 +32,9 @@ async function run(){checks.length=0;await ready();click('enter-garage');d.getEl
  assert('no runtime errors',JSON.parse(d.getElementById('city-errors').textContent).length===0);
  q.reviewScene({progress:.34});q.advance(0);report();}
 $('run').onclick=()=>run().catch(e=>{$('report').textContent='FAIL '+e.stack;report();});
+$('steer-left').onclick=()=>{cockpit();q.advance(1,{left:true,brake:true});report();};
+$('steer-right').onclick=()=>{cockpit();q.advance(1,{right:true,brake:true});report();};
+$('steer-centre').onclick=()=>{q.advance(3,{});report();};
 $('exterior').onclick=()=>{if(q.snapshot().view!=='chase')click('camera');q.setWheelInspection(true);q.advance(0);report();};
 $('cockpit').onclick=()=>{q.setWheelInspection(false);cockpit();};
 $('left').onclick=()=>{cockpit();q.cityLook(45);report();};$('right').onclick=()=>{cockpit();q.cityLook(-65);report();};$('straight').onclick=()=>{q.cityLook(null);report();};

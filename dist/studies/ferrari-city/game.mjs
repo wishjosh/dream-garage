@@ -12,7 +12,7 @@ import {installCitySteering} from '../../city-steering.mjs?v=graphite-1';
 
 import {createCockpit} from '../../cockpit-visual.mjs?v=gallardo-cockpit-1';
 import {createRearView} from '../../rear-view.mjs?v=cockpit-detail-1';
-import {createOriginalCockpit} from './cockpit.mjs?v=ferrari-city-1';
+import {createOriginalCockpit} from './cockpit.mjs?v=ferrari-city-2';
 import {createSteeringState,stepSteering,MAX_LOOK_DEGREES} from '../../cockpit-study-steering.mjs?v=steering-look-1';
 import {splitWheelVisuals,syncWheelVisuals} from '../../wheel-visual.mjs?v=wheels-1';
 import * as T from '../../vendor/three.module.js';
@@ -22,8 +22,8 @@ import {clamp,mod,trackFrame,nearestTrack,makeRacer,rankOf,finishRacer,PRIZES} f
 import {RacePhysics,FIXED_DT} from '../../race-handling.mjs?v=race-safety-1';
 import {CATALOG as ORIGINAL_CATALOG,CATEGORIES,normalizeSave,transact,tuning,itemById} from '../../garage-core.mjs?v=city-tour-1';
 const CATALOG=ORIGINAL_CATALOG.map(i=>i.category==='wheels'&&i.color?{...i,name:i.id==='wheels-gold'?'골드 림':'민트 림',description:'페라리 원본 휠의 색상만 변경'}:{...i});
-import {loadFerrari,dressCar,disposeDress,buildGarage} from './asset.mjs?v=ferrari-city-1';
-import {installStudy} from './measure.mjs?v=ferrari-city-1';
+import {loadFerrari,dressCar,disposeDress,buildGarage} from './asset.mjs?v=ferrari-city-2';
+import {installStudy} from './measure.mjs?v=ferrari-city-2';
 
 const $=id=>document.getElementById(id),canvas=$('world');
 // Memory only: no access to any browser persistence or original save key.
