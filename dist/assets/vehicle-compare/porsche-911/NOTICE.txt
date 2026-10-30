@@ -1,0 +1,18 @@
+Porsche 911 with interior (911 Turbo S)
+Author: n.brizitskaya
+Source: https://sketchfab.com/3d-models/porsche-911-with-interior-877b1bc1739f4a2bb65d62fd7ffd9f75
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+
+Changes for Dream Garage study, 2026-10-30:
+Closed the source's posed door using its mirrored closed transform;
+applied one rigid axis rotation and uniform scale to 4.535m length;
+separated four wheels, stationary brake groups and the steering wheel;
+preserved all 423947 source triangles;
+quantized positions, normals and tangents; reduced mobile texture resolution;
+applied Ferrari-reference paint in the preview and allowed rim recoloring;
+gzip transport encoding. Original-resolution textures are available separately.
+The original author does not endorse this study.
+
+Ferrari and environment attribution: ../ferrari/NOTICE.txt
+Three.js and bundled loaders retain their existing licenses.

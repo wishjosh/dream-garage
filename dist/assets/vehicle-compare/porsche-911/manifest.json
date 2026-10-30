@@ -1,0 +1,92 @@
+{
+  "sourceSha256": "aef53d169d8778124bafea96b0385f2228493664cc1f231f9847cb35806c989f",
+  "sourceBytes": 40710436,
+  "sourceTriangles": 423947,
+  "trianglesPreserved": true,
+  "lengthMetres": 4.535,
+  "bodyDimensions": [
+    1.8996448538548452,
+    1.1674623819350916,
+    4.535
+  ],
+  "wheelCenters": {
+    "fl": [
+      -0.778608452172933,
+      0.34888624418141034,
+      -1.2527565368860563
+    ],
+    "fr": [
+      0.7786084521729327,
+      0.3488862441814097,
+      -1.2527565368860563
+    ],
+    "rl": [
+      -0.7848857984961054,
+      0.35356280185580824,
+      1.1988290261953298
+    ],
+    "rr": [
+      0.7848857984961052,
+      0.3535628018558075,
+      1.1988290261953298
+    ]
+  },
+  "wheelRadius": 0.35356280185580785,
+  "steeringCenter": [
+    -0.3399465506475009,
+    0.78660791248369,
+    -0.2325200881338194
+  ],
+  "steeringAxis": [
+    2.164902960599461e-07,
+    -0.25374947871330056,
+    -0.9672699737160672
+  ],
+  "eye": [
+    -0.3399465506475009,
+    1.03660791248369,
+    0.2174799118661806
+  ],
+  "forward": [
+    0,
+    0,
+    -1
+  ],
+  "triangleGroups": {
+    "body": 336570,
+    "steering_wheel": 16247,
+    "brake_fl": 4264,
+    "brake_fr": 4264,
+    "brake_rl": 2715,
+    "brake_rr": 2715,
+    "wheel_fr": 14778,
+    "wheel_rr": 13808,
+    "wheel_fl": 14778,
+    "wheel_rl": 13808
+  },
+  "wheelCrossingTriangles": 0,
+  "variants": [
+    {
+      "file": "porsche-reference.glb.gz",
+      "bytes": 29818823,
+      "decodedBytes": 33699400,
+      "imagePixels": 53542912,
+      "rgba8MiB": 204.25,
+      "quantizationMaxPositionErrorMetres": 5.992866721846997e-05,
+      "meshCount": 110
+    },
+    {
+      "file": "porsche-mobile.glb.gz",
+      "bytes": 13958314,
+      "decodedBytes": 17732712,
+      "imagePixels": 11862016,
+      "rgba8MiB": 45.25,
+      "quantizationMaxPositionErrorMetres": 5.992866721846997e-05,
+      "meshCount": 110
+    }
+  ],
+  "doorPose": "closed using source mirrored transform",
+  "sourceUrl": "https://sketchfab.com/3d-models/porsche-911-with-interior-877b1bc1739f4a2bb65d62fd7ffd9f75",
+  "author": "n.brizitskaya (https://sketchfab.com/n.brizitskaya)",
+  "license": "CC BY 4.0"
+}
