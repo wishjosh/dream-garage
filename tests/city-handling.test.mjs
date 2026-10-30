@@ -62,7 +62,8 @@ test('assistance preserves straight input and never silently takes over steering
 });
 test('main entry uses the verified adapter and preserves the existing save modules',()=>{
  const game=fs.readFileSync(new URL('../dist/game.mjs',import.meta.url),'utf8');
- assert.match(game,/import \{RacePhysics,FIXED_DT\} from '\.\/race-handling\.mjs/);
+ assert.match(game,/import \{RacePhysics,FIXED_DT\} from '\.\/studies\/mixed-city\/physics\.mjs/);
+ assert.match(fs.readFileSync(new URL('../dist/studies/mixed-city/physics.mjs',import.meta.url),'utf8'),/RacePhysics extends BaseRacePhysics/);
  assert.match(game,/const SAVE=SAVE_KEY/);assert.match(game,/installSaveTransfer/);
  assert.equal(fs.readFileSync(new URL('../dist/save-transfer.mjs',import.meta.url),'utf8').includes('hojin-city-gp:save:v1'),true);
 });

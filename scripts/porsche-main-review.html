@@ -1,0 +1,59 @@
+<!doctype html><meta charset="utf-8"><title>포르쉐 본게임 통합 검증</title><style>body{margin:12px;background:#10202c;color:#dbeee7;font:14px system-ui}button{padding:10px;margin:4px}iframe{display:block;border:0}pre{white-space:pre-wrap}.viewport-only header,.viewport-only #report{display:none}.viewport-only #game{position:fixed;inset:0;width:100%;height:100%}</style>
+<header><button id="run">저장·차고·완주 검사</button><button id="show">포르쉐 운전석</button><button id="stock">원래 도색</button><button id="portrait">세로 차고</button><button id="viewport">실제 화면 크기</button><strong id="status">준비</strong></header><iframe id="game" width="844" height="390"></iframe><pre id="report"></pre><script id="state" type="application/json">{}</script>
+<script type="module">
+const $=s=>document.querySelector(s),frame=$('#game'),w=()=>frame.contentWindow,d=()=>frame.contentDocument,q=s=>d().querySelector(s),qa=()=>w().__raceQA,snap=()=>qa().snapshot(),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const KEY='hojin-city-gp:save:v1',original=localStorage.getItem(KEY),checks=[];let baseline;
+const stored=()=>JSON.parse(w().localStorage.getItem(KEY));
+function check(name,ok,detail){checks.push({name,ok,detail});report();if(!ok)throw Error(name);}
+function report(){const state={checks,snapshot:qa()?.snapshot(),stored:qa()?stored():null,errors:w().__cockpitReviewErrors||[],realStorageUnchanged:localStorage.getItem(KEY)===original};$('#state').textContent=JSON.stringify(state);$('#report').textContent=checks.map(c=>(c.ok?'PASS ':'FAIL ')+c.name).join('\n');}
+const click=s=>q(s).click(),change=(s,v)=>{q(s).value=v;q(s).dispatchEvent(new(w().Event)('change',{bubbles:true}));};
+async function load(){await new Promise(resolve=>{frame.addEventListener('load',resolve,{once:true});frame.src='/?qa=1&review=1&handling-save=1&review-persist=1&v=porsche-main-1';});for(let i=0;i<1000;i++){await sleep(50);try{if(qa()&&!q('#enter-garage').disabled){w().__cockpitReviewSetFrozen(true);return;}}catch{}}throw Error('load timeout');}
+function garage(){const s=snap();if(s.mode==='countdown'||s.mode==='race')click('#pause');if(snap().mode==='paused')click('#back-menu');if(snap().mode==='result')click('#result-menu');if(snap().screen==='welcome')click('#enter-garage');}
+function start(car,view='cockpit'){garage();click('[data-car="'+car+'"]');change('#view-select',view);click('#start');qa().advance(3.6,{});}
+function rimX(){const a=snap().cockpitStats.steeringQuaternion;return 2*(a[0]*a[2]+a[1]*a[3]);}
+async function run(){checks.length=0;$('#status').textContent='검사 중';await load();baseline=stored();
+ check('old save resumes with Ferrari identity',snap().vehicleName==='Ferrari 458'&&baseline.coins===4321&&baseline.races===12&&baseline.best.tavaculo===29.5,baseline);
+ check('old paint and wheel retained',snap().loadout.paint==='paint-mint'&&snap().loadout.wheels==='wheels-gold'&&snap().appearance.paint==='42e6c5'&&snap().appearance.rim==='ffce64',snap().appearance);
+ check('accepted environment and scale retained',Math.abs(snap().appearance.dimensions[2]-4.527)<1e-9&&snap().appearance.exposure===.85,snap().appearance);
+ garage();check('all three vehicles and transfer remain available',d().querySelectorAll('[data-car]').length===3&&!q('[data-save-transfer-open]').hidden);
+ click('[data-category="wheels"]');check('Ferrari wheel offer describes actual rim',q('#shop-items').textContent.includes('골드 림')&&q('#shop-items').textContent.includes('원본 휠'));
+ click('[data-category="paint"]');const untouched=w().localStorage.getItem(KEY);
+ click('[data-item="paint-blue"]');check('preview leaves persisted wallet and equipment byte-for-byte unchanged',w().localStorage.getItem(KEY)===untouched&&snap().appearance.paint==='339cff'&&snap().loadout.paint==='paint-mint'&&snap().shopPreview.id==='paint-blue');
+ click('#shop-cancel');check('cancel restores actual equipped paint',snap().appearance.paint==='42e6c5'&&!snap().shopPreview&&w().localStorage.getItem(KEY)===untouched);
+ click('[data-item="paint-blue"]');click('[data-category="wheels"]');check('category change cancels unconfirmed paint',!snap().shopPreview&&snap().appearance.paint==='42e6c5'&&w().localStorage.getItem(KEY)===untouched);
+ click('[data-category="paint"]');click('[data-item="paint-blue"]');click('#start');check('departure discards unconfirmed purchase',!snap().shopPreview&&stored().coins===baseline.coins&&stored().garage.tavaculo.paint==='paint-mint');qa().advance(3.6,{});garage();
+ click('[data-category="paint"]');click('[data-item="paint-blue"]');click('#shop-confirm');const bought=stored();check('purchase charges existing balance once',bought.coins===baseline.coins-250&&bought.owned.includes('paint-blue')&&bought.garage.tavaculo.paint==='paint-blue');
+ click('[data-item="paint-stock"]');click('#shop-confirm');click('[data-item="paint-blue"]');click('#shop-confirm');check('owned item re-equips without charging',stored().coins===bought.coins);
+ await load();garage();check('purchase and equipment survive reopening',stored().coins===bought.coins&&snap().loadout.paint==='paint-blue'&&snap().appearance.paint==='339cff');
+ start('tavaculo');check('Ferrari source cockpit and four physical wheels',snap().cockpitStats.construction==='original-ferrari-458'&&snap().cockpitStats.geometryUnchanged&&snap().wheelCount===4);
+ qa().advance(1,{left:true,brake:true});check('left steering turns rim left',rimX()<-.1,{x:rimX()});qa().advance(1,{right:true,brake:true});check('right steering turns rim right',rimX()>.1,{x:rimX()});qa().advance(3,{});check('release centres rim',Math.abs(rimX())<.001);
+ for(const [value,id] of [['45','left'],['-65','right']]){const b=q('[data-city-look="'+value+'"]');b.dispatchEvent(new(w().KeyboardEvent)('keydown',{code:'Space',bubbles:true}));qa().advance(0);check(id+' rear mirror works',snap().sideMirrorStats.find(m=>m.id===id).active);b.dispatchEvent(new(w().KeyboardEvent)('keyup',{code:'Space',bubbles:true}));qa().advance(0);}
+ check('look release returns forward',Math.abs(snap().cockpitStats.lookDegrees)<.01);
+ garage();click('[data-car="porsche"]');check('Porsche has its own name and default geometry',snap().vehicleName==='Porsche 911 Turbo S'&&Math.abs(snap().appearance.dimensions[2]-4.535)<1e-9&&snap().appearance.paint==='e8e9e5',snap().appearance);
+ const prePorsche=stored(),oldSlots=JSON.stringify([prePorsche.garage.tavaculo,prePorsche.garage.f2002]);click('[data-category="paint"]');click('[data-item="paint-sunset"]');check('Porsche preview displays source paint without saving',snap().appearance.paint==='ff8b3d'&&stored().coins===prePorsche.coins&&stored().garage.porsche.paint==='paint-stock');click('#shop-cancel');check('Porsche cancel restores stock without charging',snap().appearance.paint==='e8e9e5'&&stored().coins===prePorsche.coins);
+ click('[data-item="paint-sunset"]');click('#shop-confirm');check('Porsche purchase charges exactly one existing price',stored().coins===prePorsche.coins-250&&stored().garage.porsche.paint==='paint-sunset');const paidPorsche=stored().coins;
+ click('[data-category="wheels"]');click('[data-item="wheels-gold"]');click('#shop-confirm');check('Porsche uses already owned gold without another purchase',stored().coins===paidPorsche&&snap().appearance.rim==='ffce64');check('Porsche customization leaves old two slots unchanged',JSON.stringify([stored().garage.tavaculo,stored().garage.f2002])===oldSlots);
+ await load();garage();click('[data-car="porsche"]');check('Porsche selection and customization survive reopening',snap().appearance.paint==='ff8b3d'&&snap().appearance.rim==='ffce64'&&stored().coins===paidPorsche);
+ start('porsche');check('Porsche original cockpit, geometry and steering connected',snap().cockpitStats.construction==='original-porsche-911'&&snap().cockpitStats.geometryUnchanged&&snap().wheelCount===4);
+ check('Porsche race has exactly two of each road car',snap().racers.filter(r=>r.car==='porsche').length===2&&snap().racers.filter(r=>r.car==='tavaculo').length===2);
+ qa().advance(1,{left:true,brake:true});check('Porsche wheel follows left input',snap().cockpitStats.steeringAmount<-.1);qa().advance(1,{right:true,brake:true});check('Porsche wheel follows right input',snap().cockpitStats.steeringAmount>.1);qa().advance(3,{});check('Porsche release returns wheel to centre',Math.abs(snap().cockpitStats.steeringAmount)<.001);
+ check('Porsche has live rear texture',snap().mirrorStats.active&&snap().cockpitStats.mirrorReady);garage();
+ for(const car of ['tavaculo','porsche','f2002']){start(car);const before=stored();check(car+' equipped tuning reaches physics',Math.abs(snap().tuning.force-(car==='tavaculo'?1.18:1))<1e-9);
+  if(car==='f2002')check('F2002 keeps own cockpit and hides Ferrari look',snap().proceduralCockpitVisible&&!snap().originalCockpitVisible&&w().getComputedStyle(q('#city-look')).display==='none');
+  qa().setAssist(true);for(let sec=0;sec<180&&snap().mode!=='result';sec+=3){qa().advanceDriver(3);$('#status').textContent=car+' 완주 검사 '+sec+'초';await sleep(5);}
+  const after=stored();check(car+' completes and receives prize once',snap().mode==='result'&&after.races===before.races+1&&[1000,650,400,150].includes(after.coins-before.coins),{coins:after.coins,races:after.races});
+  check(car+' old records and all loadouts remain',JSON.stringify(after.best)===JSON.stringify(before.best)&&JSON.stringify(after.garage)===JSON.stringify(before.garage)&&JSON.stringify(after.owned)===JSON.stringify(before.owned));
+  check(car+' records new course time',Number.isFinite(after.courseBest['bayfront-long-1'][car]));qa().advanceDriver(3);check(car+' no duplicate payout',stored().coins===after.coins&&stored().races===after.races);
+ }
+ const earned=stored();await load();garage();check('both race results survive reopening',JSON.stringify(stored())===JSON.stringify(earned));
+ const {createTransfer,parseTransfer}=await import('/save-transfer.mjs');const transferred=parseTransfer(createTransfer(earned)).save;check('existing transfer format round trips all progress',JSON.stringify(transferred)===JSON.stringify(earned));
+ click('[data-save-transfer-open]');check('transfer dialog still opens',q('#save-transfer').open);click('#transfer-close');
+ check('runtime errors absent',w().__cockpitReviewErrors.length===0,w().__cockpitReviewErrors);check('actual browser save untouched',localStorage.getItem(KEY)===original);
+ $('#status').textContent='완료 '+checks.length+'개';report();
+}
+$('#run').onclick=()=>run().catch(e=>{$('#status').textContent='실패 '+e.message;report();});
+$('#show').onclick=()=>{start('porsche');qa().advanceDriver(6);qa().advance(0);report();};
+$('#stock').onclick=()=>{garage();click('[data-car="tavaculo"]');click('[data-category="paint"]');click('[data-item="paint-stock"]');if(!q('#shop-confirm').disabled&&snap().shopPreview)click('#shop-confirm');click('[data-category="wheels"]');click('[data-item="wheels-stock"]');if(snap().shopPreview)click('#shop-confirm');qa().advance(0);report();};
+$('#viewport').onclick=()=>{garage();document.body.classList.add('viewport-only');d().addEventListener('click',()=>setTimeout(()=>qa().advance(0),0));setTimeout(()=>qa().advance(0),100);};
+$('#portrait').onclick=async()=>{garage();frame.width=402;frame.height=874;await sleep(100);qa().advance(0);report();};
+</script>

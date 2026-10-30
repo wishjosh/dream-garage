@@ -14,9 +14,9 @@
   <link rel="stylesheet" href="./race-hud.css?v=race-hud-1">
   <link rel="stylesheet" href="./drive-console.css?v=graphite-1">
   <link rel="stylesheet" href="./race-safety.css?v=race-safety-1">
-  <script type="module" src="./game.mjs?v=garage-main-1"></script>
-  <link rel="stylesheet" href="./ferrari-main.css?v=ferrari-main-1">
-  <link rel="stylesheet" href="./garage-preview.css?v=garage-main-1">
+  <script type="module" src="./game.mjs?v=porsche-main-1"></script>
+  <link rel="stylesheet" href="./ferrari-main.css?v=porsche-main-1">
+  <link rel="stylesheet" href="./garage-preview.css?v=porsche-main-1">
 </head>
 <body>
   <canvas id="world" aria-label="수변 야간 도심 레이싱 코스"></canvas>
@@ -46,7 +46,7 @@
       <p class="invitation">수변 도시에서 초대장이 도착했어요.<br>너만의 차로 첫 번째 그랑프리에 도전해 봐!</p>
       <button id="enter-garage" class="primary" disabled>차고를 준비하고 있어요…</button>
       <button class="save-transfer-entry" data-save-transfer-open>저장 기록 옮기기</button>
-      <p class="ferrari-update">페라리가 새로 왔어요. 이전 차량의 꾸미기와 기록을 그대로 이어갑니다.</p><p class="welcome-loop">나만의 차고 <span>→</span> 도시 레이스 <span>→</span> 상금으로 꾸미기</p>
+      <p class="ferrari-update">포르쉐가 추가됐어요. 기존 상금·보유품·차량별 꾸미기와 기록을 이어갑니다.</p><p class="welcome-loop">나만의 차고 <span>→</span> 도시 레이스 <span>→</span> 상금으로 꾸미기</p>
       <p class="save-note">로그인 없이 바로 플레이 · 진행은 이 브라우저에 저장돼요</p>
       <div id="welcome-status" role="status">도시와 자동차를 불러오는 중</div>
     </section>
@@ -60,7 +60,8 @@
       <div class="garage-top"><button id="title-back" class="text-button">‹ 시작 화면</button><div class="wallet"><small>모은 상금</small><strong id="wallet">0 C</strong></div></div>
       <div class="car-picker" role="group" aria-label="차량 선택">
         <button data-car="tavaculo" class="selected" aria-pressed="true"><span class="car-mark">01</span><strong>Ferrari 458</strong><small>슈퍼카 · 나만의 스타일</small></button>
-        <button data-car="f2002" aria-pressed="false"><span class="car-mark formula">02</span><strong>클래식 F2002</strong><small>포뮬러 · 빠른 가속</small></button>
+        <button data-car="porsche" aria-pressed="false"><span class="car-mark">02</span><strong>Porsche 911<br>Turbo S</strong><small>양산 슈퍼카 · 원본 실내</small></button>
+        <button data-car="f2002" aria-pressed="false"><span class="car-mark formula">03</span><strong>클래식 F2002</strong><small>포뮬러 · 빠른 가속</small></button>
       </div>
       <div id="shop-tabs" class="shop-tabs" role="group" aria-label="꾸미기 종류"></div>
       <div class="garage-scroll">
@@ -115,7 +116,7 @@
   <p>PC: 방향키/WASD · 브레이크 ↓/S/Space · 후진 X · 드리프트 Shift · 시점 C · 일시정지 P · 복귀 R</p>
   <p>순위별 상금 1,000 / 650 / 400 / 150 C. 차고에서 도색·휠·성능 파츠를 사고 두 차에서 다시 장착해요. 진행은 이 브라우저에 저장돼요.</p>
   <button class="primary" data-close="help">알겠어요</button></dialog>
-  <dialog id="credits" aria-labelledby="credits-title"><h2 id="credits-title" tabindex="-1">함께 만든 도시</h2><p>Ferrari 458 Italia의 원본 외관과 실내에 바퀴·조향·계기판·후방 거울을 연결했어요. 길이는 4.527m에 맞췄고 원본 형상은 유지했어요. F2002는 게임용 중앙 운전석이에요.</p><ul><li>Ferrari 458 Italia · vicent091036 / Three.js 공식 예제 — CC BY 4.0. <a href="./assets/vehicle-compare/ferrari/NOTICE.txt" target="_blank" rel="noopener">제작자·이용 조건·변경 내용</a></li><li>Venice Sunset · Greg Zaal / Poly Haven — CC0 환경광</li><li><a href="https://som-natalino.itch.io/iconic-open-wheelers-low-poly-car-pack" target="_blank" rel="noopener">F2002 · som_natalino</a> — CC0 무료 차량</li><li><a href="https://kenney.nl/assets/city-kit-commercial" target="_blank" rel="noopener">City Kit Commercial · Kenney</a> — CC0</li><li><a href="https://kenney.nl/assets/nature-kit" target="_blank" rel="noopener">Nature Kit · Kenney</a> — CC0</li><li><a href="https://github.com/pmndrs/cannon-es" target="_blank" rel="noopener">cannon-es · 차량·벽 충돌</a> — MIT</li><li><a href="https://ambientcg.com/view?id=Asphalt012" target="_blank" rel="noopener">Asphalt012 · ambientCG</a> — CC0 도로 재질</li><li><a href="https://threejs.org/" target="_blank" rel="noopener">Three.js</a> — MIT</li></ul><p>싱가포르의 수변 야간 경주에서 영감을 얻은 가상의 코스예요. 제조사의 공식 게임은 아니며 주행 수치·기어·회전수는 게임용 표현이에요.</p><button class="primary" data-close="credits">닫기</button></dialog>
+  <dialog id="credits" aria-labelledby="credits-title"><h2 id="credits-title" tabindex="-1">함께 만든 도시</h2><p>Ferrari 458 Italia의 원본 외관과 실내에 바퀴·조향·계기판·후방 거울을 연결했어요. 길이는 4.527m에 맞췄고 원본 형상은 유지했어요. Porsche는 원본 실내와 실시간 거울을 사용하며 길이는 4.535m예요. 원본 계기는 정지 텍스처이고 실제 속도·기어는 공통 정보창에 표시해요. F2002는 게임용 중앙 운전석이에요.</p><ul><li>Ferrari 458 Italia · vicent091036 / Three.js 공식 예제 — CC BY 4.0. <a href="./assets/vehicle-compare/ferrari/NOTICE.txt" target="_blank" rel="noopener">제작자·이용 조건·변경 내용</a></li><li>Porsche 911 with interior · n.brizitskaya — CC BY 4.0. <a href="./assets/vehicle-compare/porsche-911/NOTICE.txt" target="_blank" rel="noopener">출처·이용 조건·변경 내용</a></li><li>Venice Sunset · Greg Zaal / Poly Haven — CC0 환경광</li><li><a href="https://som-natalino.itch.io/iconic-open-wheelers-low-poly-car-pack" target="_blank" rel="noopener">F2002 · som_natalino</a> — CC0 무료 차량</li><li><a href="https://kenney.nl/assets/city-kit-commercial" target="_blank" rel="noopener">City Kit Commercial · Kenney</a> — CC0</li><li><a href="https://kenney.nl/assets/nature-kit" target="_blank" rel="noopener">Nature Kit · Kenney</a> — CC0</li><li><a href="https://github.com/pmndrs/cannon-es" target="_blank" rel="noopener">cannon-es · 차량·벽 충돌</a> — MIT</li><li><a href="https://ambientcg.com/view?id=Asphalt012" target="_blank" rel="noopener">Asphalt012 · ambientCG</a> — CC0 도로 재질</li><li><a href="https://threejs.org/" target="_blank" rel="noopener">Three.js</a> — MIT</li></ul><p>싱가포르의 수변 야간 경주에서 영감을 얻은 가상의 코스예요. 제조사의 공식 게임은 아니며 주행 수치·기어·회전수는 게임용 표현이에요.</p><button class="primary" data-close="credits">닫기</button></dialog>
   <div id="fatal" class="overlay" hidden><section class="panel compact"><h2>게임을 열지 못했어요</h2><p id="fatal-message"></p><button class="save-transfer-entry" data-save-transfer-open>저장 기록 옮기기</button><button class="primary" onclick="location.reload()">다시 열기</button></section></div>
 </body>
 </html>

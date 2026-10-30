@@ -1,4 +1,4 @@
-import {CARS,CATEGORIES,CATALOG,normalizeSave,itemById} from './garage-core.mjs?v=city-tour-1';
+import {CARS,CATEGORIES,CATALOG,DEFAULT_LOADOUT,normalizeSave,itemById} from './garage-core.mjs?v=porsche-main-1';
 
 export const SAVE_KEY='hojin-city-gp:save:v1';
 export const BACKUP_KEY='hojin-city-gp:save:before-import:v1';
@@ -35,7 +35,9 @@ function checkSave(value,legacy=false){
   if(!legacy&&CATALOG.some(item=>item.price===0&&!value.owned.includes(item.id)))invalid();
  }
  if(own(value,'garage')){
-  shape(value.garage,CARS,legacy?[]:CARS);
+  shape(value.garage,CARS,legacy?[]:['tavaculo','f2002']);
+  // Original version-1 exports have two garages. Only the new slot may be absent.
+  if(!legacy&&!own(value.garage,'porsche')&&(value.car==='porsche'||own(value.best,'porsche')||Object.values(value.courseBest||{}).some(times=>own(times,'porsche'))))invalid();
   for(const car of Object.keys(value.garage)){
    const loadout=value.garage[car];shape(loadout,Object.keys(CATEGORIES),legacy?[]:Object.keys(CATEGORIES));
    for(const [category,id] of Object.entries(loadout))if(typeof id!=='string'||!owned.has(id)||itemById(id)?.category!==category)invalid();
@@ -44,7 +46,7 @@ function checkSave(value,legacy=false){
 }
 export function validateSave(value){
  checkSave(value);
- return {version:1,...(value.courseBest?{courseBest:JSON.parse(JSON.stringify(value.courseBest))}:{}),coins:value.coins,best:{...value.best},car:value.car,view:value.view,assist:value.assist,auto:value.auto,owned:[...value.owned],garage:Object.fromEntries(CARS.map(car=>[car,{...value.garage[car]}])),races:value.races};
+ return {version:1,...(value.courseBest?{courseBest:JSON.parse(JSON.stringify(value.courseBest))}:{}),coins:value.coins,best:{...value.best},car:value.car,view:value.view,assist:value.assist,auto:value.auto,owned:[...value.owned],garage:Object.fromEntries(CARS.map(car=>[car,{...(value.garage[car]||DEFAULT_LOADOUT)}])),races:value.races};
 }
 function storedSave(value){checkSave(value,true);return validateSave(normalizeSave(value));}
 function timestamp(value){
