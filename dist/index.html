@@ -17,7 +17,7 @@
   <script type="module" src="./game.mjs?v=porsche-main-1"></script>
   <link rel="stylesheet" href="./ferrari-main.css?v=porsche-main-1">
   <link rel="stylesheet" href="./garage-preview.css?v=porsche-main-1">
-  <link rel="stylesheet" href="./game-controls.css?v=game-controls-1">
+  <link rel="stylesheet" href="./game-controls.css?v=game-controls-2">
 </head>
 <body>
   <canvas id="world" aria-label="수변 야간 도심 레이싱 코스"></canvas>
@@ -33,7 +33,7 @@
       <div id="thumb-steering" role="slider" tabindex="0" aria-label="좌우 드래그 조향" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0" hidden><span class="console-art steering-rail" data-console-art="steer"></span><span class="console-art thumb-knob" data-console-art="grip"></span><span class="thumb-caption">조향</span></div><div class="steering"><button data-control="left" aria-label="왼쪽으로 조향" aria-pressed="false"><svg class="control-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M23 16H8M15 7l-9 9 9 9"/></svg><span class="control-label">왼쪽</span></button><button data-control="right" aria-label="오른쪽으로 조향" aria-pressed="false"><svg class="control-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M9 16H24M17 7l9 9 -9 9"/></svg><span class="control-label">오른쪽</span></button></div>
       <div id="drive-console" class="pedals drive-console" aria-label="가속·브레이크·중앙 복귀형 보조 레일">
         <div class="pedal-faces"><span class="console-art brake-face" data-console-art="brake"></span><span class="console-art gas-face" data-console-art="gas"></span><button data-control="brake" data-drive-target="brake" class="brake" aria-label="브레이크" aria-pressed="false"></button><button data-control="throttle" data-drive-target="throttle" class="throttle" aria-label="가속" aria-pressed="false"></button><span class="pedal-text brake-text">브레이크</span><span class="pedal-text gas-text">가속</span></div>
-        <div id="drive-lever" data-drive-target="lever" role="slider" tabindex="0" aria-label="위로 후진·아래로 드리프트·놓으면 중앙" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0"><span class="console-art lever-rail" data-console-art="rail"></span><span class="console-art lever-knob" data-console-art="grip"></span><span class="lever-label lever-up">R ↑</span><span class="lever-label lever-down">↓ DRIFT</span></div>
+        <div id="drive-lever" data-drive-target="lever" role="slider" tabindex="0" aria-label="위로 후진·아래로 드리프트·놓으면 중앙" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0"><span class="console-art lever-rail" data-console-art="rail"></span><span class="console-art lever-knob" data-console-art="grip"></span><span class="lever-label lever-up">R 후진</span><span class="lever-label lever-down">드리프트</span></div>
       </div>
     </div>
     <button id="rescue">도로로 복귀 ↗</button>
