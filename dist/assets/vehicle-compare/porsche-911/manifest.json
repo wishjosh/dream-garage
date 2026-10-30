@@ -68,7 +68,7 @@
   "variants": [
     {
       "file": "porsche-reference.glb.gz",
-      "bytes": 29818823,
+      "bytes": 29818824,
       "decodedBytes": 33699400,
       "imagePixels": 53542912,
       "rgba8MiB": 204.25,
@@ -77,7 +77,7 @@
     },
     {
       "file": "porsche-mobile.glb.gz",
-      "bytes": 13958314,
+      "bytes": 13958315,
       "decodedBytes": 17732712,
       "imagePixels": 11862016,
       "rgba8MiB": 45.25,

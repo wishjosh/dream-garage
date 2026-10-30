@@ -126,7 +126,7 @@ assert sum(counts.values())==sum(len(p['indices'])//3 for p in parts)
 assert 4000<counts['steering_wheel']<25000,counts
 
 def write_variant(cap,name):
- g={'asset':copy.deepcopy(src['asset']),'scene':0,'scenes':[{'nodes':[0]}],'nodes':[{'name':'porsche_911_turbo_s','children':[]}],'meshes':[],'materials':copy.deepcopy(src['materials']),'textures':copy.deepcopy(src['textures']),'samplers':copy.deepcopy(src.get('samplers',[])),'images':[],'bufferViews':[],'accessors':[],'buffers':[{}],'extensionsUsed':list(set(src.get('extensionsUsed',[])+['KHR_mesh_quantization'])),'extensionsRequired':['KHR_mesh_quantization']}
+ g={'asset':copy.deepcopy(src['asset']),'scene':0,'scenes':[{'nodes':[0]}],'nodes':[{'name':'porsche_911_turbo_s','children':[]}],'meshes':[],'materials':copy.deepcopy(src['materials']),'textures':copy.deepcopy(src['textures']),'samplers':copy.deepcopy(src.get('samplers',[])),'images':[],'bufferViews':[],'accessors':[],'buffers':[{}],'extensionsUsed':list(dict.fromkeys(src.get('extensionsUsed',[])+['KHR_mesh_quantization'])),'extensionsRequired':['KHR_mesh_quantization']}
  g['asset']['generator']='Dream Garage Porsche study builder';g['asset']['extras']['modifications']='Closed source door pose; preserved all source triangles; split wheels and steering; quantized attributes; '+('source image resolution' if cap is None else 'texture resolution capped at '+str(cap))
  data=bytearray();max_error=0;pixel_count=0
  def view(blob,target=None,stride=None):
@@ -167,4 +167,4 @@ def write_variant(cap,name):
 args.output.mkdir(parents=True,exist_ok=True)
 variants=[write_variant(None,'porsche-reference.glb'),write_variant(512,'porsche-mobile.glb')]
 manifest={'sourceSha256':hashlib.sha256(raw).hexdigest(),'sourceBytes':len(raw),'sourceTriangles':sum(counts.values()),'trianglesPreserved':True,'lengthMetres':4.535,'bodyDimensions':[scale*(hi[k]-lo[k]) for k in range(3)],'wheelCenters':wheel_centers,'wheelRadius':(max(p[1] for p in tire['attributes']['POSITION'])-min(p[1] for p in tire['attributes']['POSITION']))/2,'steeringCenter':steer_center,'steeringAxis':steer_axis,'eye':[steer_center[0],steer_center[1]+.25,steer_center[2]+.45],'forward':[0,0,-1],'triangleGroups':dict(counts),'wheelCrossingTriangles':wheel_crossings,'variants':variants,'doorPose':'closed using source mirrored transform','sourceUrl':src['asset']['extras']['source'],'author':src['asset']['extras']['author'],'license':'CC BY 4.0'}
-(args.output/'manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8',newline='\n');print(json.dumps(manifest,indent=2))
+(args.output/'manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8',newline=chr(10));print(json.dumps(manifest,indent=2))
