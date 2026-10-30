@@ -16,8 +16,8 @@
   <link rel="stylesheet" href="./drive-console.css?v=graphite-1">
   <link rel="stylesheet" href="./race-safety.css?v=race-safety-1">
   <link rel="stylesheet" href="./studies/ferrari-city/city.css?v=ferrari-city-2">
-  <script type="module" src="./studies/mixed-city/game.mjs?v=mixed-city-2"></script>
-<link rel="stylesheet" href="./studies/mixed-city/city.css?v=mixed-city-2">
+  <script type="module" src="./studies/mixed-city/game.mjs?v=mixed-city-3"></script>
+<link rel="stylesheet" href="./studies/mixed-city/city.css?v=mixed-city-3">
 </head>
 <body>
   <canvas id="world" aria-label="수변 야간 도심 레이싱 코스"></canvas>
@@ -78,7 +78,7 @@
       <div class="launch-bar"><button id="start" class="primary" disabled>차량을 준비하고 있어요…</button></div>
   </main>
   <div id="pause-menu" class="overlay" hidden>
-    <section class="panel compact"><div class="eyebrow">PIT STOP</div><h2>잠깐 쉬어요</h2><p>달리던 자리에서 이어갈 수 있어요.</p><label class="gaze-option"><input type="checkbox" id="pause-gaze-follow" checked> 조향 따라 시선 이동</label><label class="gaze-option"><input type="checkbox" id="pause-body-motion" checked> 차체 움직임</label><label class="gaze-option"><input type="checkbox" id="pause-impact-audio" checked> 충돌 소리</label><label class="steering-choice">조향 방식<select id="pause-steering-mode"><option value="buttons">좌우 버튼</option><option value="slide">엄지 슬라이드</option></select></label><p class="steering-hint">방식을 바꾸고 처음부터 다시 달리면 같은 출발 조건으로 비교해요.</p><div class="city-tools"><button id="city-auto" aria-pressed="false">검토용 자동 주행</button></div><button class="city-measure-entry" data-city-measure disabled>도시 성능 측정 · 약 1분 40초</button><button id="resume" class="primary">계속 달리기</button><button id="restart" class="secondary">처음부터 다시</button><button id="back-menu" class="text-button">차고로 돌아가기</button></section>
+    <section class="panel compact"><div class="eyebrow">PIT STOP</div><h2>잠깐 쉬어요</h2><p id="pause-reason">달리던 자리에서 이어갈 수 있어요.</p><label class="gaze-option"><input type="checkbox" id="pause-gaze-follow" checked> 조향 따라 시선 이동</label><label class="gaze-option"><input type="checkbox" id="pause-body-motion" checked> 차체 움직임</label><label class="gaze-option"><input type="checkbox" id="pause-impact-audio" checked> 충돌 소리</label><label class="steering-choice">조향 방식<select id="pause-steering-mode"><option value="buttons">좌우 버튼</option><option value="slide">엄지 슬라이드</option></select></label><p class="steering-hint">방식을 바꾸고 처음부터 다시 달리면 같은 출발 조건으로 비교해요.</p><div class="city-tools"><button id="city-auto" aria-pressed="false">검토용 자동 주행</button></div><button class="city-measure-entry" data-city-measure disabled>도시 성능 측정 · 약 1분 40초</button><button id="resume" class="primary">계속 달리기</button><button id="restart" class="secondary">처음부터 다시</button><button id="back-menu" class="text-button">차고로 돌아가기</button></section>
   </div>
   <div id="course-map" class="overlay" role="dialog" aria-modal="true" aria-labelledby="course-title" hidden>
     <section class="panel course-panel"><div class="course-heading"><h2 id="course-title">베이프런트 시티 투어</h2><span>일시정지 · 전체 코스</span></div><canvas id="full-map" width="720" height="520" aria-label="전체 서킷과 내 차·상대 차량 위치"></canvas><div class="course-legend"><b>▲ 내 차 · 진행 방향</b><i>● 상대 차량</i><small>▣ 출발·결승선</small></div><button id="map-resume" class="primary">계속 달리기</button></section>

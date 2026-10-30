@@ -1,4 +1,5 @@
-export const STUDY_VERSION='mixed-city-2';
+import {installPageActivity} from './activity.mjs?v=mixed-city-3';
+export const STUDY_VERSION='mixed-city-3';
 export const carLabel=car=>car==='porsche'?'포르쉐':'페라리';
 export function profilesFor(reverse=false){const cars=reverse?['porsche','tavaculo']:['tavaculo','porsche'];return ['chase','cockpit'].flatMap(view=>cars.map(car=>({car,view})));}
 export function summarize(values){const a=[...values].sort((a,b)=>a-b),sum=values.reduce((a,b)=>a+b,0),at=p=>a[Math.min(a.length-1,Math.floor(a.length*p))]||0;return{frames:values.length,averageFps:sum?1000*values.length/sum:0,p95Ms:at(.95),over33ms:values.filter(v=>v>33.4).length};}
@@ -14,8 +15,7 @@ export function installStudy({start,pause,drive,state,look,phase}){
  function begin(){started=last=0;sampleStart=null;intervals=[];start(profiles[index]);}
  $('city-measure-start').onclick=()=>{active=true;autoDrive=false;document.body.dataset.cityMeasuring='true';look(null);profiles=profilesFor($('city-order').value==='porsche');index=0;results=[];size=innerWidth+'x'+innerHeight;$('city-share').value='';$('city-performance-state').textContent='{}';$('city-copy').textContent='결과 복사';dialog.close();$('city-progress').hidden=false;begin();};
  $('city-measure-cancel').onclick=()=>stop('측정을 중단했습니다. 중간 결과는 폐기했습니다.');
- document.addEventListener('visibilitychange',()=>{if(document.hidden&&active)stop('화면이 숨겨져 측정을 중단했습니다.');});
- addEventListener('blur',()=>{look(null);if(active)stop('다른 창으로 이동해 측정을 중단했습니다.');});
+ installPageActivity({onRelease:()=>look(null),onSuspend:reason=>{if(active)stop(reason==='window-blur'?'다른 창으로 이동해 측정을 중단했습니다.':'화면을 벗어나 측정을 중단했습니다.');}});
  addEventListener('resize',()=>{if(active&&size!==innerWidth+'x'+innerHeight)stop('화면 크기가 바뀌었습니다. 방향을 고정하고 다시 실행해 주세요.');});
  return{drive:()=>active||autoDrive?drive():null,frame(now){
   let current=null;if(now-lastAudit>500){current=state();$('city-state').textContent=JSON.stringify({...current,version:STUDY_VERSION,storage:'memory-only',measuring:active,autoDrive});lastAudit=now;}
