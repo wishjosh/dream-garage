@@ -7,7 +7,8 @@ import {preparePorscheExterior,setPorscheSteering} from '../dist/studies/mixed-c
 import {splitWheelVisuals,syncWheelVisuals} from '../dist/wheel-visual.mjs';
 import {vehicleConfig,RacePhysics} from '../dist/race-handling.mjs';
 import {createCityCourse} from '../dist/city-course.mjs';
-import {makeRacer} from '../dist/race-core.mjs';
+import {RacePhysics as MixedPhysics} from '../dist/studies/mixed-city/physics.mjs';
+import {makeRacer,finishRacer} from '../dist/race-core.mjs';
 import {normalizeSave,transact,tuning} from '../dist/studies/mixed-city/core.mjs';
 import {profilesFor,summarize} from '../dist/studies/mixed-city/measure.mjs';
 const dir=new URL('../dist/studies/mixed-city/',import.meta.url);
@@ -43,4 +44,14 @@ test('measurement order contains identical four cases and reports frame cadence 
 test('mixed study entire import graph has no persistence or transfer dependency',async()=>{
  const queue=[new URL('game.mjs',dir)],seen=new Set();while(queue.length){const url=queue.pop();url.search='';if(seen.has(url.href))continue;seen.add(url.href);assert.doesNotMatch(url.pathname,/save-transfer|original-cockpit/);const code=await readFile(url,'utf8');assert.doesNotMatch(code,/\b(?:localStorage|sessionStorage|indexedDB)\b/,url.pathname);for(const match of code.matchAll(/(?:from\s*|import\s*)['"]([^'"]+)['"]/g))if(match[1].startsWith('.'))queue.push(new URL(match[1],url));}assert.ok(seen.size>20);
  const html=await readFile(new URL('index.html',dir),'utf8');assert.match(html,/data-car="porsche"/);assert.doesNotMatch(html,/<dialog id="save-transfer"/);
+});
+
+for(const selected of ['tavaculo','porsche'])test(selected+' mixed fleet completes the entire city without a permanently stalled rival',async()=>{
+ const t=await source(),{rig}=preparePorscheExterior(t),track=createCityCourse(),racers=[makeRacer(track,{car:selected,lane:-2.3}),...[0,1,2].map(i=>makeRacer(track,{id:'bot'+i,car:i===1?selected:selected==='tavaculo'?'porsche':'tavaculo',s:7+i*7,lane:i%2?-2.3:2.3}))],p=new MixedPhysics(track,racers,{tavaculo:rig,porsche:rig},{autoRecovery:true});
+ for(let i=0;i<180*120&&!racers.every(r=>r.finished);i++){p.step(1/120,racers[0].finished?{brake:1}:{...p.route(p.entries[0]),wheelCommand:true},true);racers.forEach(r=>finishRacer(r,track,i/120));}
+ assert.ok(racers.every(r=>r.finished),JSON.stringify(racers.map(r=>({car:r.car,distance:r.distance,speed:r.speed}))));assert.ok(p.aiRecoveryCount>0,'regression case actually exercised bot recovery');assert.ok(p.aiRecoveryCount<10);p.dispose();
+});
+test('bot recovery preserves progress, adds no speed and leaves player physics unchanged',async()=>{
+ const t=await source(),{rig}=preparePorscheExterior(t),track=createCityCourse(),racers=[makeRacer(track,{car:'porsche'}),makeRacer(track,{id:'bot',car:'tavaculo',s:400})],p=new MixedPhysics(track,racers,{tavaculo:rig,porsche:rig},{barriers:false});const original=p.drive.bind(p);p.drive=(e,input,assist)=>e.index?undefined:original(e,input,assist);
+ const distance=racers[1].distance;for(let i=0;i<510;i++)p.step(1/120,{},false);assert.equal(p.aiRecoveryCount,1);assert.equal(racers[1].distance,distance);assert.equal(racers[1].speed,0);assert.equal(racers[0].speed,0);p.dispose();
 });

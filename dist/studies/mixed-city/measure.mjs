@@ -1,4 +1,4 @@
-export const STUDY_VERSION='mixed-city-1';
+export const STUDY_VERSION='mixed-city-2';
 export const carLabel=car=>car==='porsche'?'포르쉐':'페라리';
 export function profilesFor(reverse=false){const cars=reverse?['porsche','tavaculo']:['tavaculo','porsche'];return ['chase','cockpit'].flatMap(view=>cars.map(car=>({car,view})));}
 export function summarize(values){const a=[...values].sort((a,b)=>a-b),sum=values.reduce((a,b)=>a+b,0),at=p=>a[Math.min(a.length-1,Math.floor(a.length*p))]||0;return{frames:values.length,averageFps:sum?1000*values.length/sum:0,p95Ms:at(.95),over33ms:values.filter(v=>v>33.4).length};}
@@ -29,7 +29,7 @@ export function installStudy({start,pause,drive,state,look,phase}){
   if(index<profiles.length){begin();return;}
   const data={version:STUDY_VERSION,results,userAgent:navigator.userAgent,devicePixelRatio,conditions:'Same city and stock game handling. Ferrari 2 + Porsche 2. Per case 5s warm-up + 20s measured. Fixed renderer ratio; real rear/visible side mirrors in cockpit. No long heat assessment.'};
   $('city-performance-state').textContent=JSON.stringify(data);
-  $('city-share').value=STUDY_VERSION+' · 페라리 2대 + 포르쉐 2대 도시 주행\n'+results.map(r=>`${label(r)}: ${r.averageFps.toFixed(1)} fps / 33ms 초과 ${r.over33ms}/${r.frames} / p95 ${r.p95Ms.toFixed(1)}ms\n화면 ${r.end.viewport.width}×${r.end.viewport.height} / 배율 ${r.start.pixelRatio}→${r.end.pixelRatio} / ${r.end.mirrorStats.active?'룸미러 '+r.end.mirrorStats.width+'×'+r.end.mirrorStats.height+' / '+r.end.mirrorStats.hz+'Hz / 사이드미러 '+r.end.sideMirrorStats.filter(m=>m.active).length+'개':'거울 꺼짐'}`).join('\n')+'\n도시·물리·상대차 3대 포함 / 각 20초 측정 / 장시간 발열 별도\n'+navigator.userAgent;
+  $('city-share').value=STUDY_VERSION+' · 페라리 2대 + 포르쉐 2대 도시 주행\n'+results.map(r=>`${label(r)}: ${r.averageFps.toFixed(1)} fps / 33ms 초과 ${r.over33ms}/${r.frames} / p95 ${r.p95Ms.toFixed(1)}ms\n화면 ${r.end.viewport.width}×${r.end.viewport.height} / 배율 ${r.start.pixelRatio}→${r.end.pixelRatio} / 상대차 복귀 ${r.end.aiRecoveryCount}회 / ${r.end.mirrorStats.active?'룸미러 '+r.end.mirrorStats.width+'×'+r.end.mirrorStats.height+' / '+r.end.mirrorStats.hz+'Hz / 사이드미러 '+r.end.sideMirrorStats.filter(m=>m.active).length+'개':'거울 꺼짐'}`).join('\n')+'\n도시·물리·상대차 3대 포함 / 각 20초 측정 / 장시간 발열 별도\n'+navigator.userAgent;
   stop('측정 완료. 결과를 복사해 전달해 주세요.',true);
  }};
 }

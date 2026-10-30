@@ -2,7 +2,7 @@ import * as T from '../../vendor/three.module.js';
 import {createOriginalCockpit as createFerrari} from '../ferrari-city/cockpit.mjs?v=ferrari-city-2';
 import {loadTemplate} from '../porsche-garage/assets.mjs?v=porsche-1';
 import {setCabinUp} from '../../cockpit-attitude.mjs';
-import {setPorscheSteering} from './rig.mjs?v=mixed-city-1';
+import {setPorscheSteering} from './rig.mjs?v=mixed-city-2';
 import {drivingReadout} from '../../race-hud.mjs';
 const up=new T.Vector3(0,1,0),flip=new T.Quaternion().setFromAxisAngle(up,Math.PI);
 export async function createOriginalCockpit(args){const [f,p]=await Promise.all([createFerrari(args),createPorsche(args)]);return{tavaculo:f,porsche:p};}

@@ -1,8 +1,8 @@
 import * as T from '../../vendor/three.module.js';
 import {loadFerrari,dressCar as dressFerrari,disposeDress,buildGarage} from '../ferrari-city/asset.mjs?v=ferrari-city-2';
 import {loadTemplate} from '../porsche-garage/assets.mjs?v=porsche-1';
-import {itemById} from './core.mjs?v=mixed-city-1';
-import {preparePorscheExterior,setPorscheSteering} from './rig.mjs?v=mixed-city-1';
+import {itemById} from './core.mjs?v=mixed-city-2';
+import {preparePorscheExterior,setPorscheSteering} from './rig.mjs?v=mixed-city-2';
 export {disposeDress,buildGarage};
 let pending;const baseline=[];
 export function loadFleet(){return pending??=Promise.all([loadFerrari(),loadTemplate('porsche',percent=>{const node=document.getElementById('welcome-status');if(node)node.textContent='포르쉐 준비 '+percent+'%';})]).then(([f,p])=>{p.root.traverse(o=>{if(o.isMesh)baseline.push({geometry:o.geometry,position:o.geometry.attributes.position,version:o.geometry.attributes.position.version});});const prepared=preparePorscheExterior(p),dimensions=new T.Box3().setFromObject(prepared.exterior).getSize(new T.Vector3()).toArray();return{...f,porsche:{...prepared,dimensions,template:p}};});}

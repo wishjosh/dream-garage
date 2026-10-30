@@ -14,18 +14,18 @@ import {installCitySteering} from '../../city-steering.mjs?v=graphite-1';
 
 import {createCockpit} from '../../cockpit-visual.mjs?v=gallardo-cockpit-1';
 import {createRearView} from '../../rear-view.mjs?v=cockpit-detail-1';
-import {createOriginalCockpit} from './cockpit.mjs?v=mixed-city-1';
+import {createOriginalCockpit} from './cockpit.mjs?v=mixed-city-2';
 import {createSteeringState,stepSteering,MAX_LOOK_DEGREES} from '../../cockpit-study-steering.mjs?v=steering-look-1';
 import {splitWheelVisuals,syncWheelVisuals} from '../../wheel-visual.mjs?v=wheels-1';
 import * as T from '../../vendor/three.module.js';
 import {GLTFLoader} from '../../vendor/GLTFLoader.js';
 
 import {clamp,mod,trackFrame,nearestTrack,makeRacer,rankOf,finishRacer,PRIZES} from '../../race-core.mjs?v=city-tour-1';
-import {RacePhysics,FIXED_DT} from '../../race-handling.mjs?v=race-safety-1';
-import {CATALOG as ORIGINAL_CATALOG,CATEGORIES,normalizeSave,transact,tuning,itemById} from './core.mjs?v=mixed-city-1';
+import {RacePhysics,FIXED_DT} from './physics.mjs?v=mixed-city-2';
+import {CATALOG as ORIGINAL_CATALOG,CATEGORIES,normalizeSave,transact,tuning,itemById} from './core.mjs?v=mixed-city-2';
 const CATALOG=ORIGINAL_CATALOG.map(i=>i.category==='wheels'&&i.color?{...i,name:i.id==='wheels-gold'?'골드 림':'민트 림',description:'원본 휠의 색상만 변경'}:{...i});
-import {loadFleet,dressCar,disposeDress,buildGarage,geometryUnchanged,steerExterior} from './asset.mjs?v=mixed-city-1';
-import {installStudy} from './measure.mjs?v=mixed-city-1';
+import {loadFleet,dressCar,disposeDress,buildGarage,geometryUnchanged,steerExterior} from './asset.mjs?v=mixed-city-2';
+import {installStudy} from './measure.mjs?v=mixed-city-2';
 
 const $=id=>document.getElementById(id),canvas=$('world');
 // Memory only: no access to any browser persistence or original save key.
@@ -308,7 +308,7 @@ async function boot(){
   start:profile=>{selected=profile.car;view=profile.view;save.view=view;resetRace();},pause:setPause,look:value=>originalCockpit.setLook(value),
   phase:()=>({mode,car:selected,view,pixelRatio:renderer.getPixelRatio()}),
   drive:()=>physics?{...physics.route(physics.entries[0]),wheelCommand:true}:null,
-  state:()=>({mode,car:selected,view,elapsed,previewAngle,geometryUnchanged:geometryUnchanged(),fleet:racers.map(r=>({id:r.id,car:r.car,speed:r.speed,distance:r.distance})),viewport:{width:innerWidth,height:innerHeight},pixelRatio:renderer.getPixelRatio(),cameraFov:camera.fov,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,racers:racers.length,speed:player?.speed||0,heading:player?.heading||0,wheels:visuals[0]?.wheels.map(w=>({name:w.name,position:w.position.toArray(),quaternion:w.quaternion.toArray()})),mirrorStats:rearView.stats(),sideMirrorStats:sideViews.map(s=>({id:s.id,...s.view.stats()})),cockpit:view==='cockpit'?originalCockpit.stats():null,exterior:{dimensions:selected==='porsche'?ferrari.porsche.dimensions:ferrari.dimensions,paint:itemById(save.garage[selected].paint)?.color,metalness:1,roughness:.5,clearcoat:1,clearcoatRoughness:.03,exposure:renderer.toneMappingExposure,environment:'Venice Sunset 1K',directLights:0},coins:save.coins,races:save.races})
+  state:()=>({mode,car:selected,view,elapsed,previewAngle,aiRecoveryCount:physics?.aiRecoveryCount||0,geometryUnchanged:geometryUnchanged(),fleet:racers.map(r=>({id:r.id,car:r.car,speed:r.speed,distance:r.distance})),viewport:{width:innerWidth,height:innerHeight},pixelRatio:renderer.getPixelRatio(),cameraFov:camera.fov,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,racers:racers.length,speed:player?.speed||0,heading:player?.heading||0,wheels:visuals[0]?.wheels.map(w=>({name:w.name,position:w.position.toArray(),quaternion:w.quaternion.toArray()})),mirrorStats:rearView.stats(),sideMirrorStats:sideViews.map(s=>({id:s.id,...s.view.stats()})),cockpit:view==='cockpit'?originalCockpit.stats():null,exterior:{dimensions:selected==='porsche'?ferrari.porsche.dimensions:ferrari.dimensions,paint:itemById(save.garage[selected].paint)?.color,metalness:1,roughness:.5,clearcoat:1,clearcoatRoughness:.03,exposure:renderer.toneMappingExposure,environment:'Venice Sunset 1K',directLights:0},coins:save.coins,races:save.races})
  });
  let last=performance.now(),lastDt=1/60,frameCount=0,avgFrame=16;
  function frame(now){lastDt=clamp((now-last)/1000,0,.05);last=now;step(lastDt,cityStudy.drive());if(mode!=='menu'){syncVisuals();if(frameCount%3===0)updateHUD();}updateCamera();wheel.rotation.z+=lastDt*.035;capsules.forEach(c=>c.rotation.z=-wheel.rotation.z);if(toastTime>0){toastTime-=lastDt;if(toastTime<=0)$('toast').classList.remove('visible');}renderScene(false,now);frameCount++;cityStudy.frame(now);
