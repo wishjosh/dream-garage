@@ -4,14 +4,14 @@ import {RacePhysics} from '../dist/course-race-physics.mjs';
 import {makeRacer,finishRacer} from '../dist/race-core.mjs';
 import assert from 'node:assert/strict';
 import {RACE_COURSES,raceCourse,courseURL} from '../dist/race-courses.mjs';
-import {COURSE_IDS} from '../dist/race-course-ids.mjs';
+import {COURSE_IDS,ACTIVE_COURSE_IDS,resetRetiredRecords} from '../dist/race-course-ids.mjs';
 import {normalizeSave} from '../dist/garage-core.mjs';
 import {createTransfer,parseTransfer,prepareImport,applyImport,prepareRestore,applyRestore,readSnapshot,SAVE_KEY,BACKUP_KEY} from '../dist/save-transfer.mjs';
 class Memory{constructor(save){this.data=new Map([[SAVE_KEY,JSON.stringify(save)]]);this.writes=[];}getItem(k){return this.data.get(k)??null;}setItem(k,v){this.writes.push(k);this.data.set(k,v);}removeItem(k){this.data.delete(k);}}
 const old=()=>normalizeSave({version:1,coins:4321,races:12,best:{tavaculo:29.5},courseBest:{'bayfront-long-1':{tavaculo:80}},owned:['paint-mint'],garage:{tavaculo:{paint:'paint-mint'}}});
 test('known links keep the old tour; choices use stable, distinct record identities',()=>{
- assert.equal(raceCourse(null).id,'bayfront-long-1');assert.equal(raceCourse('unknown').id,'bayfront-long-1');
- assert.deepEqual(RACE_COURSES.map(c=>c.id),COURSE_IDS);for(const c of RACE_COURSES)assert.equal(c.create().id,c.id);
+ assert.equal(raceCourse(null).id,'city-geometry-1');assert.equal(raceCourse('unknown').id,'city-geometry-1');
+ assert.deepEqual(RACE_COURSES.map(c=>c.id),ACTIVE_COURSE_IDS);for(const c of RACE_COURSES)assert.equal(c.create().id,c.id);
  const url=new URL(courseURL('https://example.test/dream-garage/?v=old&view=cockpit#garage','speed'));
  assert.equal(url.pathname,'/dream-garage/');assert.equal(url.searchParams.get('course'),'speed');assert.equal(url.searchParams.get('view'),'cockpit');assert.equal(url.searchParams.get('garage'),'1');assert.equal(url.hash,'#garage');
 });
@@ -44,4 +44,12 @@ for(const key of ['speed','rhythm','braking'])test('formula field can complete '
  const track=raceCourse(key).create(),rigs=JSON.parse(readFileSync(new URL('../dist/assets/vehicle-rigs.json',import.meta.url))),racers=Array.from({length:4},(_,i)=>makeRacer(track,{id:i?'bot'+i:'player',car:'f2002',s:i?7+(i-1)*7:0,lane:i%2?2.3:-2.3}));
  const physics=new RacePhysics(track,racers,rigs);for(let ticks=0;ticks<180*60&&!racers.every(r=>r.finished);ticks++){const e=physics.entries[0];physics.step(1/60,e.r.finished?{brake:1}:{...physics.route(e),wheelCommand:true},false);racers.forEach(r=>finishRacer(r,track,ticks/60));}
  assert.ok(racers.every(r=>r.finished));assert.equal(physics.aiRecoveryCount,0);physics.dispose();
+});
+
+test('permitted reset removes old times, preserves current times and economy, and is idempotent',()=>{
+ const save=old();save.courseBest['geometry-speed-1']={porsche:112};const before=structuredClone(save);
+ resetRetiredRecords(save);assert.deepEqual(save.best,{});assert.equal(save.courseBest['bayfront-long-1'],undefined);assert.deepEqual(save.courseBest['geometry-speed-1'],{porsche:112});
+ for(const k of ['coins','owned','garage','races','car','view','assist','auto'])assert.deepEqual(save[k],before[k]);
+ const once=structuredClone(save);resetRetiredRecords(save);assert.deepEqual(save,once);
+ assert.deepEqual(parseTransfer(createTransfer(save)).save,save);
 });

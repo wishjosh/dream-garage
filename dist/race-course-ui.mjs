@@ -1,4 +1,4 @@
-import {RACE_COURSES,courseURL} from './race-courses.mjs?v=courses-main-1';
+import {RACE_COURSES,courseURL} from './race-courses.mjs?v=geometry-main-1';
 import {mapProjection} from './race-hud.mjs?v=race-hud-1';
 const time=value=>{const m=Math.floor(value/60),s=(value%60).toFixed(2).padStart(5,'0');return m+':'+s;};
 function diagram(track){const projection=mapProjection(track.bounds,120,96,12),points=track.frames.filter((_,i)=>i%3===0).map(f=>projection.point(f.x,f.z));const path=points.map(([x,y],i)=>(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1)).join(' ')+'Z',p=projection.point(track.frames[0].x,track.frames[0].z);return `<svg viewBox="0 0 120 96" aria-hidden="true"><path d="${path}"/><rect x="${p[0]-2}" y="${p[1]-2}" width="4" height="4"/></svg>`;}

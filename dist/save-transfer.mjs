@@ -1,5 +1,5 @@
-import {COURSE_IDS} from './race-course-ids.mjs?v=courses-main-1';
-import {CARS,CATEGORIES,CATALOG,DEFAULT_LOADOUT,normalizeSave,itemById} from './garage-core.mjs?v=courses-main-1';
+import {COURSE_IDS} from './race-course-ids.mjs?v=geometry-main-1';
+import {CARS,CATEGORIES,CATALOG,DEFAULT_LOADOUT,normalizeSave,itemById} from './garage-core.mjs?v=geometry-main-1';
 
 export const SAVE_KEY='hojin-city-gp:save:v1';
 export const BACKUP_KEY='hojin-city-gp:save:before-import:v1';
