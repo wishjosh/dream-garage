@@ -1,0 +1,9 @@
+/* Study keeps the original city, HDR, vehicles, view and touch targets. */
+.prize,#total-prize,[data-study-unused-transfer]{display:none!important}
+body #hud .top-actions{gap:5px}
+body #hud .top-actions #choose-course{padding:8px 10px;min-width:44px}
+body #hud .race-stats{max-width:calc(100% - 185px)}
+#pause-course{color:#c1d8cf;font-size:13px}
+
+/* Keep the cockpit map separate from the new course-choice button. */
+body:is([data-car="tavaculo"],[data-car="porsche"])[data-view="cockpit"] #map-open{top:66px!important;right:var(--ui-right)!important}

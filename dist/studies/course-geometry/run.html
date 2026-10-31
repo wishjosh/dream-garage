@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <base href="../../">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#08192c">
+  <meta name="description" content="꿈꾸던 차를 만들고, 도시를 달려라! 차고에서 차를 고르고 경주 상금으로 도색·휠·파츠를 꾸미는 스마트폰 레이싱.">
+  <title>설계 코스 주행 · 드림 개러지</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect rx='16' width='64' height='64' fill='%230b2035'/%3E%3Cpath d='M10 44V20h9v8h12v-8h9v24h-9v-9H19v9M48 20h6v24h-6' fill='%235de6ed'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css?v=wheels-1">
+  <link rel="stylesheet" href="./design-v1.css?v=city-tour-1">
+  <link rel="stylesheet" href="./save-transfer.css?v=save-transfer-1">
+  <link rel="stylesheet" href="./responsive-ui.css?v=cockpit-detail-1">
+  <link rel="stylesheet" href="./race-hud.css?v=race-hud-1">
+  <link rel="stylesheet" href="./drive-console.css?v=graphite-1">
+  <link rel="stylesheet" href="./race-safety.css?v=race-safety-1">
+  <script type="module" src="./studies/course-geometry/game.mjs?v=course-geometry-1"></script>
+  <link rel="stylesheet" href="./ferrari-main.css?v=porsche-main-1">
+  <link rel="stylesheet" href="./garage-preview.css?v=porsche-main-1">
+  <link rel="stylesheet" href="./game-controls.css?v=game-controls-3">
+<link rel="stylesheet" href="./studies/course-geometry/run.css?v=course-geometry-1">
+</head>
+<body>
+  <canvas id="world" aria-label="수변 야간 도심 레이싱 코스"></canvas>
+  <div id="recovery-effect" role="status" aria-live="polite" hidden><span class="recovery-notice">도로로 복귀했어요</span></div>
+  <div id="hud" hidden><div id="city-look"><button data-city-look="45" aria-label="누르는 동안 왼쪽 거울 확인">← 보기</button><button data-city-look="-65" aria-label="누르는 동안 오른쪽 거울 확인">보기 →</button></div>
+    <div class="race-stats"><div><small>순위</small><strong id="rank">4<span>/ 4</span></strong></div><div><small>진행</small><strong id="progress">0<span>%</span></strong></div><div><small>시간</small><strong id="time">0:00.00</strong></div><div class="race-progress" id="race-progress"></div></div>
+    <div class="top-actions"><button id="choose-course">코스</button><button id="camera" aria-label="운전석 시점으로 전환">운전석</button><button id="pause" aria-label="일시정지">Ⅱ</button></div>
+    <button id="map-open" type="button" aria-label="전체 서킷 지도 보기 · 일시정지" aria-haspopup="dialog"><canvas id="map" width="240" height="200" aria-label="전체 코스와 차량 위치 · 민트 화살표가 내 차"></canvas></button>
+    <div id="near-car" class="near-car" aria-label="옆 차량 접근" hidden></div>
+    <div id="speedometer"><strong id="speed">0</strong><small>km/h</small><div id="gear">N</div><span id="gear-mode">AT</span><div class="hud-shift" aria-hidden="true"><span id="rpm-fill"></span></div></div><div id="drive-state" role="status" aria-live="polite"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <div id="controls" aria-label="운전 조작">
+      <div id="thumb-steering" role="slider" tabindex="0" aria-label="좌우 드래그 조향" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0" hidden><span class="console-art steering-rail" data-console-art="steer"></span><span class="console-art thumb-knob" data-console-art="grip"></span><span class="thumb-caption">조향</span></div><div class="steering"><button data-control="left" aria-label="왼쪽으로 조향" aria-pressed="false"><svg class="control-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M23 16H8M15 7l-9 9 9 9"/></svg><span class="control-label">왼쪽</span></button><button data-control="right" aria-label="오른쪽으로 조향" aria-pressed="false"><svg class="control-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M9 16H24M17 7l9 9 -9 9"/></svg><span class="control-label">오른쪽</span></button></div>
+      <div id="drive-console" class="pedals drive-console" aria-label="가속·브레이크·중앙 복귀형 보조 레일">
+        <div class="pedal-faces"><span class="console-art brake-face" data-console-art="brake"></span><span class="console-art gas-face" data-console-art="gas"></span><button data-control="brake" data-drive-target="brake" class="brake" aria-label="브레이크" aria-pressed="false"></button><button data-control="throttle" data-drive-target="throttle" class="throttle" aria-label="가속" aria-pressed="false"></button><span class="pedal-text brake-text">브레이크</span><span class="pedal-text gas-text">가속</span></div>
+        <div id="drive-lever" data-drive-target="lever" role="slider" tabindex="0" aria-label="위로 후진·아래로 드리프트·놓으면 중앙" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0"><span class="console-art lever-rail" data-console-art="rail"></span><span class="console-art lever-knob" data-console-art="grip"></span><span class="lever-label lever-up">R 후진</span><span class="lever-label lever-down">드리프트</span></div>
+      </div>
+    </div>
+    <button id="rescue">도로로 복귀 ↗</button>
+  </div>
+  <div id="countdown" hidden aria-live="assertive"></div>
+  <main id="welcome" class="overlay welcome-overlay">
+    <section class="welcome-card">
+      <div class="eyebrow">YOUR GARAGE. YOUR GRAND PRIX.</div>
+      <h1>드림 개러지<span>스피드 그랑프리</span></h1>
+      <p class="tagline">꿈꾸던 차를 만들고,<br>도시를 달려라!</p>
+      <p class="invitation">수변 도시에서 초대장이 도착했어요.<br>너만의 차로 첫 번째 그랑프리에 도전해 봐!</p>
+      <button id="enter-garage" class="primary" disabled>차고를 준비하고 있어요…</button>
+      <button class="save-transfer-entry" hidden data-study-unused-transfer>저장 기록 옮기기</button>
+      <p class="ferrari-update">포르쉐가 추가됐어요. 기존 상금·보유품·차량별 꾸미기와 기록을 이어갑니다.</p><p class="welcome-loop">나만의 차고 <span>→</span> 도시 레이스 <span>→</span> 상금으로 꾸미기</p>
+      <p class="save-note">로그인 없이 바로 플레이 · 진행은 이 브라우저에 저장돼요</p>
+      <div id="welcome-status" role="status">도시와 자동차를 불러오는 중</div>
+    </section>
+  </main>
+  <main id="menu" class="overlay garage-overlay" hidden>
+    <div class="garage-stage" aria-label="좌우로 끌어 돌리는 차량 미리보기">
+      <div class="garage-heading"><div class="eyebrow">DREAM GARAGE</div><h2>나만의 드림 개러지</h2><p>좌우로 끌어 차를 돌려보세요</p></div>
+      <div class="preview-label"><small id="garage-preview-badge">장착된 모습</small><strong id="preview-name">Ferrari 458</strong><span id="preview-style"></span><div class="rotate-buttons"><button id="rotate-left" aria-label="차량 왼쪽 모습 보기">↶</button><button id="rotate-right" aria-label="차량 오른쪽 모습 보기">↷</button></div></div>
+    </div>
+    <section class="panel garage-panel" aria-label="차고와 꾸미기 상점">
+      <div class="garage-top"><button id="title-back" class="text-button">‹ 시작 화면</button><div class="wallet"><small>모은 상금</small><strong id="wallet">0 C</strong></div></div>
+      <div class="car-picker" role="group" aria-label="차량 선택">
+        <button data-car="tavaculo" class="selected" aria-pressed="true"><span class="car-mark">01</span><strong>Ferrari 458</strong><small>슈퍼카 · 나만의 스타일</small></button>
+        <button data-car="porsche" aria-pressed="false"><span class="car-mark">02</span><strong>Porsche 911<br>Turbo S</strong><small>양산 슈퍼카 · 원본 실내</small></button>
+        <button data-car="f2002" aria-pressed="false"><span class="car-mark formula">03</span><strong>클래식 F2002</strong><small>포뮬러 · 빠른 가속</small></button>
+      </div>
+      <div id="shop-tabs" class="shop-tabs" role="group" aria-label="꾸미기 종류"></div>
+      <div class="garage-scroll">
+        <div id="shop-items" class="shop-items"></div>
+        <div id="shop-status" role="status" aria-live="polite">상품을 골라 먼저 확인해 보세요.</div>
+        <details class="garage-settings"><summary>주행 설정·성능·기록</summary>
+          <p id="garage-story" class="garage-story"></p><small id="tuning-label">장착한 성능</small><div id="tuning-stats" class="tuning-stats" aria-label="차량 성능"></div>
+      <div class="race-setup"><label class="steering-choice">조향 방식<select id="steering-mode"><option value="buttons">좌우 버튼</option><option value="slide">엄지 슬라이드</option></select></label><label>시점<select id="view-select"><option value="chase">차 뒤에서 보기</option><option value="cockpit">운전석에서 보기</option></select></label><div class="options"><label><input type="checkbox" id="assist" checked> 운전 보조</label><label><input type="checkbox" id="auto-throttle"> 자동 가속</label><label><input type="checkbox" id="gaze-follow" checked> 조향 따라 시선 이동</label><label><input type="checkbox" id="body-motion" checked> 차체 움직임</label><label><input type="checkbox" id="impact-audio" checked> 충돌 소리</label></div></div><p class="steering-hint">슬라이드는 놓으면 중앙으로 · 운전 보조는 감도와 접지 회복을 도와요. 코너에서는 직접 브레이크를 사용해요.</p>
+      <p class="steering-hint">베이프런트 시티 투어 · 수변부터 도심까지 6개 구간 · 한 바퀴</p><div id="load-status" role="status">도시와 차량 불러오는 중</div>
+      <div id="best"></div>
+      <button class="save-transfer-entry" hidden data-study-unused-transfer>저장 기록 옮기기</button>
+      <div class="menu-footer"><button id="help-open">조작 방법</button><button id="credits-open">만든 자료</button><button id="fullscreen">전체화면</button></div>
+        </details>
+      </div>
+      <div class="launch-bar">
+        <div id="shop-offer" aria-live="polite" hidden><div class="offer-line"><strong id="shop-offer-name"></strong><span id="shop-offer-cost"></span></div><p id="shop-offer-description"></p><div id="shop-offer-balance"></div><div class="shop-actions"><button id="shop-cancel">취소</button><button id="shop-confirm" class="primary">구매하고 장착</button></div></div>
+        <button id="start" class="primary" disabled>차량을 준비하고 있어요…</button>
+      </div>
+    </section>
+    <script id="garage-preview-state" type="application/json">{}</script>
+  </main>
+  <div id="pause-menu" class="overlay" hidden>
+    <section class="panel compact"><div class="eyebrow">PIT STOP</div><h2>잠깐 쉬어요</h2><p id="pause-course"></p><p>달리던 자리에서 이어갈 수 있어요.</p><label class="gaze-option"><input type="checkbox" id="pause-gaze-follow" checked> 조향 따라 시선 이동</label><label class="gaze-option"><input type="checkbox" id="pause-body-motion" checked> 차체 움직임</label><label class="gaze-option"><input type="checkbox" id="pause-impact-audio" checked> 충돌 소리</label><label class="steering-choice">조향 방식<select id="pause-steering-mode"><option value="buttons">좌우 버튼</option><option value="slide">엄지 슬라이드</option></select></label><p class="steering-hint">방식을 바꾸고 처음부터 다시 달리면 같은 출발 조건으로 비교해요.</p><button id="resume" class="primary">계속 달리기</button><button id="restart" class="secondary">처음부터 다시</button><button id="back-menu" class="text-button">차량·시점 고르기</button></section>
+  </div>
+  <div id="course-map" class="overlay" role="dialog" aria-modal="true" aria-labelledby="course-title" hidden>
+    <section class="panel course-panel"><div class="course-heading"><h2 id="course-title">베이프런트 시티 투어</h2><span>일시정지 · 전체 코스</span></div><canvas id="full-map" width="720" height="520" aria-label="전체 서킷과 내 차·상대 차량 위치"></canvas><div class="course-legend"><b>▲ 내 차 · 진행 방향</b><i>● 상대 차량</i><small>▣ 출발·결승선</small></div><button id="map-resume" class="primary">계속 달리기</button></section>
+  </div>
+  <div id="result" class="overlay" hidden>
+    <section class="panel compact"><div class="eyebrow">RACE COMPLETE</div><h2 id="result-title">완주했어요!</h2><div id="result-rank"></div><p id="result-time"></p><div class="prize"><small>이번 상금</small><strong id="prize"></strong></div><p id="total-prize"></p><p id="record-note"></p><p id="result-story">상금으로 우리 차를 더 멋지게 만들어 볼까?</p><button id="result-menu" class="primary">차량·시점 고르기 →</button><button id="again" class="secondary">한 번 더 달리기</button></section>
+  </div>
+  <dialog id="save-transfer" aria-labelledby="transfer-title">
+    <header class="transfer-header"><div><div class="eyebrow">MY GARAGE, ANYWHERE</div><h2 id="transfer-title">저장 기록 옮기기</h2></div><button id="transfer-close" type="button" autofocus>닫기</button></header>
+    <div class="transfer-body">
+      <p class="transfer-intro">같은 스마트폰에서 원래 하던 브라우저로 <a href="https://hojin-city-gp.wishbridge7.chatgpt.site/?v=save-transfer-1" target="_blank" rel="noopener">기존 게임</a>을 열어 파일을 내려받고, <a href="https://wishjosh.github.io/dream-garage/?v=ferrari-main-1" target="_blank" rel="noopener">현재 GitHub 게임</a>에서 불러와 주세요.</p>
+      <p id="transfer-current" class="transfer-location"></p>
+      <div class="transfer-steps">
+        <section class="transfer-step"><h3><span>1</span>이 기록 내려받기</h3><p>이 주소의 상금·구매한 물건·차량별 꾸미기·최고 기록과 설정을 파일 하나에 담아요. 현재 기록의 백업으로 보관할 수도 있어요.</p><button id="transfer-export" class="primary" type="button">현재 기록 파일 내려받기</button></section>
+        <section class="transfer-step"><h3><span>2</span>저장 파일 불러오기</h3><p>내려받은 파일을 골라 내용을 확인해 주세요. 파일을 고르는 것만으로 기록이 바뀌지는 않아요.</p><label class="transfer-small" for="transfer-file">드림 개러지 저장 파일 선택</label><input id="transfer-file" type="file" accept=".json,application/json,text/plain"></section>
+      </div>
+      <section id="transfer-backup" class="transfer-backup" hidden><button id="transfer-restore" type="button">가져오기 전 기록 확인</button><p id="transfer-backup-note">가져오기 전에 보관한 기록이 있어요. 내용을 확인하고 되돌릴 수 있습니다.</p></section>
+      <div id="transfer-preview" class="transfer-preview" aria-label="현재 기록과 불러올 기록 비교" hidden></div>
+      <p id="transfer-preview-note" hidden></p>
+    </div>
+    <footer class="transfer-footer"><p id="transfer-status" class="transfer-status" role="status" aria-live="polite" tabindex="-1"></p><div class="transfer-actions"><button id="transfer-cancel" type="button" hidden>취소</button><button id="transfer-apply" type="button" hidden disabled>이 기록으로 바꾸기</button></div></footer>
+  </dialog>
+  <dialog id="help" aria-labelledby="help-title"><h2 id="help-title" tabindex="-1">두 엄지로 달려요</h2>
+  <p><b>왼손은 곡선 조향, 오른손은 가속·브레이크와 세로 레일.</b> 가속과 브레이크 사이로 손가락을 옮길 수 있어요. 세로 레일에서는 처음 댄 자리에서 위·아래로 밀어요. 손을 떼면 두 손잡이가 중앙으로 돌아오고 입력이 풀려요.</p>
+  <p>차고·일시정지에서 <b>좌우 버튼 / 엄지 슬라이드</b>를 고를 수 있어요. 슬라이드는 누른 자리에서 좌우로 밀고, 같은 위치에서 각도를 유지해요. 손을 떼면 중앙으로 돌아와요. 조향 선택은 현재 탭에서 유지돼요. 공정하게 비교하려면 같은 운전 보조 설정으로 처음부터 다시 달려 보세요.</p><p><b>가속:</b> 누르면 달리고, 떼면 관성으로 굴러가요. <b>브레이크:</b> 코너 전에 속도를 줄여요. 가속과 겹치면 브레이크가 우선이에요.</p>
+  <p><b>후진:</b> 세로 레일을 위로 밀어요. 멈춘 상태에서 사용하면 천천히 뒤로 가요. 달리는 중 위로 밀면 먼저 멈춰요. 레일을 중앙으로 놓았다가 다시 위로 밀어야 후진해요. 후진 중에는 자동 가속도 멈춰요.</p>
+  <p><b>드리프트는 선택 기술!</b> 속도가 붙었을 때 조향하면서 세로 레일을 아래로 밀면 차가 옆으로 미끄러져요. 드리프트는 가속도 겸하므로 오른손을 가속에서 레일로 옮기면 돼요. 놓고 가속으로 돌아오면 다시 접지하며 달려요. 부스터는 없으며 보통 주행만으로도 완주할 수 있어요.</p>
+  <p>운전 보조·자동 가속은 차고에서 골라요. 운전 보조는 고속 조향과 미끄러짐 회복을 돕고 자동으로 코스를 돌지는 않아요. 코너 안내가 나오면 브레이크로 속도를 줄여 주세요. 물에 빠지거나 코스에서 크게 벗어나면 잠시 뒤 마지막 안전 지점으로 자동 복귀해요. 짧은 깜빡임이 복귀를 알려줘요. 다른 차와 겹치면 빈자리가 생길 때 복귀해요. 도로 복귀 버튼은 직접 복귀하고 싶을 때 사용해요. 운전석에서도 같은 버튼으로 조작해요. Ferrari 458는 방향 버튼을 누르면 시선이 조금 따라가고 놓으면 정면으로 돌아와요. 차고나 일시정지에서 시선 이동과 차체 움직임을 각각 끄고 비교할 수 있어요. 차체는 가속·제동·코너 힘에 반응하고 바퀴는 도로를 붙잡아요. 슈퍼카의 룸미러로 뒤따라오는 차와 도로를 볼 수 있어요. 페라리 운전석 위쪽의 보기 버튼을 누르면 왼쪽·오른쪽 거울을 보고, 놓으면 정면으로 돌아와요.</p>
+  <p>PC: 방향키/WASD · 브레이크 ↓/S/Space · 후진 X · 드리프트 Shift · 시점 C · 일시정지 P · 복귀 R</p>
+  <p>순위별 상금 1,000 / 650 / 400 / 150 C. 차고에서 도색·휠·성능 파츠를 사고 두 차에서 다시 장착해요. 진행은 이 브라우저에 저장돼요.</p>
+  <button class="primary" data-close="help">알겠어요</button></dialog>
+  <dialog id="credits" aria-labelledby="credits-title"><h2 id="credits-title" tabindex="-1">함께 만든 도시</h2><p>Ferrari 458 Italia의 원본 외관과 실내에 바퀴·조향·계기판·후방 거울을 연결했어요. 길이는 4.527m에 맞췄고 원본 형상은 유지했어요. Porsche는 원본 실내와 실시간 거울을 사용하며 길이는 4.535m예요. 원본 계기는 정지 텍스처이고 실제 속도·기어는 공통 정보창에 표시해요. F2002는 게임용 중앙 운전석이에요.</p><ul><li>Ferrari 458 Italia · vicent091036 / Three.js 공식 예제 — CC BY 4.0. <a href="./assets/vehicle-compare/ferrari/NOTICE.txt" target="_blank" rel="noopener">제작자·이용 조건·변경 내용</a></li><li>Porsche 911 with interior · n.brizitskaya — CC BY 4.0. <a href="./assets/vehicle-compare/porsche-911/NOTICE.txt" target="_blank" rel="noopener">출처·이용 조건·변경 내용</a></li><li>Venice Sunset · Greg Zaal / Poly Haven — CC0 환경광</li><li><a href="https://som-natalino.itch.io/iconic-open-wheelers-low-poly-car-pack" target="_blank" rel="noopener">F2002 · som_natalino</a> — CC0 무료 차량</li><li><a href="https://kenney.nl/assets/city-kit-commercial" target="_blank" rel="noopener">City Kit Commercial · Kenney</a> — CC0</li><li><a href="https://kenney.nl/assets/nature-kit" target="_blank" rel="noopener">Nature Kit · Kenney</a> — CC0</li><li><a href="https://github.com/pmndrs/cannon-es" target="_blank" rel="noopener">cannon-es · 차량·벽 충돌</a> — MIT</li><li><a href="https://ambientcg.com/view?id=Asphalt012" target="_blank" rel="noopener">Asphalt012 · ambientCG</a> — CC0 도로 재질</li><li><a href="https://threejs.org/" target="_blank" rel="noopener">Three.js</a> — MIT</li></ul><p>싱가포르의 수변 야간 경주에서 영감을 얻은 가상의 코스예요. 제조사의 공식 게임은 아니며 주행 수치·기어·회전수는 게임용 표현이에요.</p><button class="primary" data-close="credits">닫기</button></dialog>
+  <div id="fatal" class="overlay" hidden><section class="panel compact"><h2>게임을 열지 못했어요</h2><p id="fatal-message"></p><button class="save-transfer-entry" hidden data-study-unused-transfer>저장 기록 옮기기</button><button class="primary" onclick="location.reload()">다시 열기</button></section></div>
+<script id="course-errors" type="application/json">[]</script><script>const courseErrors=[];for(const kind of ['error','unhandledrejection'])addEventListener(kind,e=>{courseErrors.push(String(e.message||e.reason||'Resource error'));document.getElementById('course-errors').textContent=JSON.stringify(courseErrors);});</script></body>
+</html>
