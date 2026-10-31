@@ -1,4 +1,5 @@
-import {CARS,CATEGORIES,CATALOG,DEFAULT_LOADOUT,normalizeSave,itemById} from './garage-core.mjs?v=porsche-main-1';
+import {COURSE_IDS} from './race-course-ids.mjs?v=courses-main-1';
+import {CARS,CATEGORIES,CATALOG,DEFAULT_LOADOUT,normalizeSave,itemById} from './garage-core.mjs?v=courses-main-1';
 
 export const SAVE_KEY='hojin-city-gp:save:v1';
 export const BACKUP_KEY='hojin-city-gp:save:before-import:v1';
@@ -27,7 +28,7 @@ function checkSave(value,legacy=false){
   shape(value.best,CARS,[]);
   for(const time of Object.values(value.best))if(typeof time!=='number'||!Number.isFinite(time)||time<0)invalid();
  }
- if(own(value,'courseBest')){shape(value.courseBest,['bayfront-long-1'],[]);for(const times of Object.values(value.courseBest)){shape(times,CARS,[]);for(const time of Object.values(times))if(typeof time!=='number'||!Number.isFinite(time)||time<0)invalid();}}
+ if(own(value,'courseBest')){shape(value.courseBest,COURSE_IDS,[]);for(const times of Object.values(value.courseBest)){shape(times,CARS,[]);for(const time of Object.values(times))if(typeof time!=='number'||!Number.isFinite(time)||time<0)invalid();}}
  const owned=new Set(CATALOG.filter(item=>item.price===0).map(item=>item.id));
  if(own(value,'owned')){
   if(!Array.isArray(value.owned)||value.owned.length>CATALOG.length||new Set(value.owned).size!==value.owned.length)invalid();
@@ -98,7 +99,7 @@ function rollback(storage,key,raw){
  try{writeExact(storage,key,raw);return true;}catch{return false;}
 }
 function equalityKey(save){
- return JSON.stringify([CARS.map(car=>save.courseBest?.['bayfront-long-1']?.[car]??null),save.coins,save.races,save.car,save.view,save.assist,save.auto,[...save.owned].sort(),CARS.map(car=>save.best[car]??null),CARS.map(car=>Object.keys(CATEGORIES).map(category=>save.garage[car][category]))]);
+ return JSON.stringify([COURSE_IDS.map(id=>CARS.map(car=>save.courseBest?.[id]?.[car]??null)),save.coins,save.races,save.car,save.view,save.assist,save.auto,[...save.owned].sort(),CARS.map(car=>save.best[car]??null),CARS.map(car=>Object.keys(CATEGORIES).map(category=>save.garage[car][category]))]);
 }
 function unchanged(raw,save){
  const current=snapshot(raw);return !current.invalid&&equalityKey(current.save)===equalityKey(save);

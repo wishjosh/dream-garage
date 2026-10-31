@@ -1,5 +1,6 @@
-import {CARS,CATEGORIES,itemById} from './garage-core.mjs?v=porsche-main-1';
-import {SAVE_KEY,BACKUP_KEY,MAX_TRANSFER_BYTES,createTransfer,readSnapshot,prepareImport,applyImport,prepareRestore,applyRestore} from './save-transfer.mjs?v=porsche-main-1';
+import {RACE_COURSES} from './race-courses.mjs?v=courses-main-1';
+import {CARS,CATEGORIES,itemById} from './garage-core.mjs?v=courses-main-1';
+import {SAVE_KEY,BACKUP_KEY,MAX_TRANSFER_BYTES,createTransfer,readSnapshot,prepareImport,applyImport,prepareRestore,applyRestore} from './save-transfer.mjs?v=courses-main-1';
 
 import {CAR_NAMES as carNames,presentItem} from './vehicle-presentation.mjs?v=porsche-main-1';
 const amount=value=>value.toLocaleString('ko-KR')+' C';
@@ -16,7 +17,7 @@ function saveCard(save,title){
   const section=el('div',undefined,'transfer-car');section.append(el('h5',carNames[car]));
   const dl=el('dl');
   for(const [category,label] of Object.entries(CATEGORIES)){dl.append(el('dt',label),el('dd',presentItem(itemById(save.garage[car][category]),car)?.name||'알 수 없음'));}
-  dl.append(el('dt','이전 코스 최고'),el('dd',time(save.best[car])),el('dt','시티 투어 최고'),el('dd',time(save.courseBest?.['bayfront-long-1']?.[car])));section.append(dl);card.append(section);
+  dl.append(el('dt','이전 코스 최고'),el('dd',time(save.best[car])));for(const course of RACE_COURSES)dl.append(el('dt',course.name+' 최고'),el('dd',time(save.courseBest?.[course.id]?.[car])));section.append(dl);card.append(section);
  }
  const settings=el('p','선택 차량 '+carNames[save.car]+' · '+(save.view==='cockpit'?'운전석 시점':'차 뒤 시점')+' · 운전 보조 '+(save.assist?'켜짐':'꺼짐')+' · 자동 가속 '+(save.auto?'켜짐':'꺼짐'),'transfer-small');card.append(settings);return card;
 }

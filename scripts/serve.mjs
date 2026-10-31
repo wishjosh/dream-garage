@@ -52,7 +52,9 @@ http.createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://localhost'),pathname=decodeURIComponent(url.pathname);
   let file,body,type;
-  if(pathname==='/__qa__/porsche-main-review.html'){
+  if(pathname==='/__qa__/courses-main-review.html'){
+   file=fileURLToPath(new URL('./courses-main-review.html',import.meta.url));type=types['.html'];body=await readFile(file);
+  }else if(pathname==='/__qa__/porsche-main-review.html'){
    file=fileURLToPath(new URL('./porsche-main-review.html',import.meta.url));type=types['.html'];body=await readFile(file);
   }else if(pathname==='/__qa__/ferrari-main-review.html'){
    file=fileURLToPath(new URL('./ferrari-main-review.html',import.meta.url));type=types['.html'];body=await readFile(file);

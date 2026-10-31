@@ -1,6 +1,9 @@
-import {readFile,writeFile} from 'node:fs/promises';
+import {writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-const root=new URL('../',import.meta.url),get=path=>readFile(new URL(path,root),'utf8');
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+const root=new URL('../',import.meta.url),BASE='154dac4ecd7b91ce80310ddc187c75ad8b772ee7';
+const get=path=>execFileSync('git',['show',BASE+':'+path],{cwd:fileURLToPath(root),encoding:'utf8'});
 const source=(await get('dist/game.mjs')).replace(/\r\n/g,'\n');let game=source;
 function replace(before,after){if(!game.includes(before))throw Error('Course study source changed: '+before.slice(0,90));game=game.replace(before,after);}
 replace("import {installSaveTransfer} from './save-transfer-ui.mjs?v=porsche-main-1';",'');
