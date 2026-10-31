@@ -7,3 +7,6 @@
 참고한 자료는 [러쉬플러스 공식 소개](https://kartrush.nexon.com/kr-launching?spot=1), [Porsche 2020 Turbo S 공식 실내 소개](https://newsroom.porsche.com/en_AU/2020/products/porsche-911-turbo-s-a-leap-in-pure-performance-20820.html), [458 공개 실내 사진](https://www.autoweek.com/news/auto-shows/a2016926/ferrari-puts-interior-458-italia-display-new-photos/)이다. Porsche 사진은 우핸들 사양이라 형태·질감만 참고하며 현재 왼쪽 운전석 배치를 바꾸지 않았다. 페달은 확인한 사진만으로 실차 페달의 정확한 복제를 주장하지 않는다.
 
 후속 조작부 정리에서는 사용자가 GRID의 좌우 화살표 사이를 직사각형으로 잇는 조향과, 같은 표현으로 크기를 조절한 후진·드리프트를 요청했다. 하나의 가로 드래그 영역과 더 좁은 세로 보조 레일로 연결하고 얇은 선·무채색·반투명 바탕을 사용한다. 가속·브레이크도 같은 표현에 맞추되 각각 한 개를 유지한다. 보조 레일의 터치 폭은 44px, 길이는 112~140px이고 기존 높이 대응 입력 코드를 사용한다. 조향의 72px 입력 감도는 유지한다. 화살표는 별도 탭 버튼이 아니라 방향 표시이며 원본 벡터 도형이다.
+
+
+2026-10-31 후속 마감: 연결 직사각형과 작은 보조 레일을 유지하고 모서리·안쪽 테두리·금속 느낌의 손잡이 홈·페달 면의 눌림을 다듬었다. 공통 CSS `game-controls-3`를 본게임과 비교 화면이 공유한다. 조향과 가속·브레이크의 입력 코드는 유지한다.
