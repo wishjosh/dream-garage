@@ -2,7 +2,7 @@
 
 Independent planar driving preview of the reviewed 1.93 km City Tour alignment.
 
-- Entry: `/studies/city-geometry/?v=city-geometry-1`.
+- Entry: `/studies/city-geometry/?v=city-geometry-2`.
 - Ferrari/Porsche, stock tuning, four road cars, drag steering and original vehicle rendering.
 - Session-only state. No main save reads/writes and no awarded coins.
 - Geometry: six 90-degree turns, one reversed; radii in driving order 70/65/50/65/85/85 m; 40 m entry/exit curvature ramps; width 16.4 m. Uniform distance frames preserve the analytical alignment for the race-core lookup contract.
@@ -12,3 +12,7 @@ Independent planar driving preview of the reviewed 1.93 km City Tour alignment.
 - The planning speed graph is not the AI controller: this run uses the existing beginner-course predictive controller, with targets bounded by road curvature.
 
 Validation: `node --test tests/city-geometry.test.mjs`, `npm test`, `npm run check`. Four-car CPU completion took 84.38 s; maximum lateral displacement 5.09 m; automatic recoveries 0. This is a scripted simulation, not novice difficulty or phone performance evidence.
+
+## Phone frame timing
+
+The game RAF samples unclamped intervals during visible racing after a one-second warmup. Pause/hidden/loading/countdown and context changes reset the interval anchor. Groups are split by car, view, viewport and pixel ratio. Results appear on returning to the picker; no data is stored or uploaded. Moving seconds distinguish driving from stationary rendering. Metrics are presentation cadence, not direct input latency, GPU timing or thermal measurements.
