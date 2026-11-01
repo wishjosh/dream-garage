@@ -1,6 +1,6 @@
 import {createCityCourse} from './course.mjs';
 import {mapProjection} from '../../race-hud.mjs';
-import {formatMeasure} from '../course-geometry/performance.mjs';
+import {formatMeasure} from './performance.mjs';
 import {DATA} from './data.mjs';
 import {worldPoint} from './terrain.mjs';
 const $=id=>document.getElementById(id),track=createCityCourse(),projection=mapProjection(track.bounds,420,250,25);
@@ -21,4 +21,4 @@ async function launch(value){
  });
 }
 document.querySelectorAll('[data-scenario]').forEach(b=>b.onclick=()=>launch(b.dataset.scenario));$('cancel-load').onclick=choose;
-addEventListener('message',event=>{if(!frame||event.source!==frame.contentWindow||event.origin!==location.origin)return;if(event.data?.type==='circuit-elevation:choose')choose();if(event.data?.type==='circuit-elevation:configured'){$('loading').hidden=true;frame.focus();$('course-study-state').textContent=JSON.stringify({scenario,car:$('car').value,view:$('view').value,storage:'memory-only',length:track.length});}if(event.data?.type==='circuit-elevation:performance'&&event.data.rows?.length){$('performance-results').hidden=false;$('performance-text').value='스피드 링 · '+scenario+'\n'+formatMeasure(event.data.rows,navigator.userAgent).replace('세 코스 실제 주행 · course-geometry-1','스피드 링 독립 지형 주행 · circuit-elevation-1');}});
+addEventListener('message',event=>{if(!frame||event.source!==frame.contentWindow||event.origin!==location.origin)return;if(event.data?.type==='circuit-elevation:choose')choose();if(event.data?.type==='circuit-elevation:configured'){$('loading').hidden=true;frame.focus();$('course-study-state').textContent=JSON.stringify({scenario,car:$('car').value,view:$('view').value,storage:'memory-only',length:track.length});}if(event.data?.type==='circuit-elevation:performance'&&event.data.rows?.length){$('performance-results').hidden=false;$('performance-text').value='스피드 링 · '+scenario+'\n'+formatMeasure(event.data.rows,navigator.userAgent);}});
