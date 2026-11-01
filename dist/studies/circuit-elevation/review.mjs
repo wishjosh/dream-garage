@@ -25,12 +25,17 @@ $('run').onclick=async()=>{
    check(true,car+' 여섯 위치 실제 운전석 시선 표본',sightSamples);
    check(w.__cockpitReviewErrors.length===0,car+' 실행 오류 없음',w.__cockpitReviewErrors);
   }
+  const campus=frame.contentWindow.__raceQA.snapshot().campus;
+  check(campus.markers.length===9&&campus.markers.filter(m=>m.direction==='left').map(m=>m.number).join(',')==='4,6','코너 방향·번호와 시설 구성',{markers:campus.markers,pitBays:campus.pitBays,standRows:campus.standRows});
+  check(campus.surfaceChecks.length===4&&campus.surfaceChecks.every(r=>r.minHeightAboveTerrain>.08),'관리·진입·보행 포장이 지형 표시 위에 있음',campus.surfaceChecks);
   $('status').textContent='회복 공간에서 직접 복귀';let w=await load('tavaculo','chase','runoff'),q=w.__raceQA;
   const before=q.snapshot();q.advanceDriver(12);let s=q.snapshot();
   check(before.player.surface==='runoff'&&s.player.surface==='road'&&s.recovery.count===0,'런오프에서 조향·가속으로 복귀',{before:before.player.surface,after:s.player.surface,recovery:s.recovery.count,grounded:s.player.grounded});
   $('status').textContent='피트 대기·합류';w=await load('porsche','cockpit','pit');q=w.__raceQA;
+  check(q.snapshot().campus.signal.state==='approach','피트 진입에서는 정지 안내');
   q.advanceDriver(6);const wait=q.snapshot();q.advanceDriver(20);s=q.snapshot();
   check(s.study.metrics.gateWait>1&&s.study.metrics.mergeReleases===1&&s.player.pit.merged,'교통 대기 뒤 피트 합류',{wait:wait.study,final:s.study,player:s.player});
+  check(s.campus.signal.state==='go'||s.campus.signal.state==='idle','해제·합류 뒤 신호 표시',s.campus.signal);
   check(w.__cockpitReviewErrors.length===0,'피트 실행 오류 없음',w.__cockpitReviewErrors);
   const original={coins:s.coins,races:s.races,best:s.best};
   check(s.coins===0&&s.races===0&&Object.keys(s.best).length===0,'상금·기록 없음',original);

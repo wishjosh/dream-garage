@@ -5,6 +5,7 @@ import {trackFrame,nearestTrack,clamp} from '../../race-core.mjs';
 import {markRecovered} from '../../course-recovery.mjs';
 import {terrainHeight,terrainGradient,inRunoff,inside,SITE,ROAD_Y,campusPoint} from './terrain.mjs';
 import {DATA} from './data.mjs';
+import {pitSignal} from './trackside.mjs';
 import {nearestPit,pitFrame,pitGuide,predictMerge,PIT_SPEED,HOLD_Z,HOLD_S,EXIT_Z} from './pit.mjs';
 export {FIXED_DT};
 const G=9.81,UP=new C.Vec3(0,1,0);
@@ -96,5 +97,5 @@ export class RacePhysics extends FlatPhysics{
   this.entries.forEach(o=>{o.ground=null;this.placeBody(o);this.sync(o,false);});this.predictAt=0;this.merge={clear:false,reason:'출구 접근 전',horizon:15};
  }
  studySnapshot(){return{metrics:{...this.metrics},merge:{...this.merge},cars:this.entries.map(e=>({id:e.r.id,y:e.r.y,grade:e.r.grade,grounded:e.r.grounded,surface:e.r.surface,pit:{...e.pit}}))};}
- advice(r){const e=this.entries.find(e=>e.r===r);if(e?.pit?.active)return e.pit.released?'피트 50 · 안내선을 따라 합류':this.merge.reason+' · 제한 50';if(r.surface==='runoff')return'회복 공간 · 속도를 줄이고 도로로 복귀';if(r.surface==='grass')return'잔디 · 낮은 속도로 복귀';return super.advice(r);}
+ advice(r){const e=this.entries.find(e=>e.r===r);if(e?.pit?.active)return pitSignal(r,this.merge).advice;if(r.surface==='runoff')return'회복 공간 · 속도를 줄이고 도로로 복귀';if(r.surface==='grass')return'잔디 · 낮은 속도로 복귀';return super.advice(r);}
 }
