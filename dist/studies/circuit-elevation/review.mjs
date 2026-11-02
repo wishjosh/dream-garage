@@ -66,3 +66,5 @@ $('layout-run').onclick=async()=>{
  }catch(error){$('status').textContent='검사 실패: '+error.message;rows.push({ok:false,error:String(error.stack||error)});$('report').textContent=JSON.stringify(rows,null,2);}
  finally{$('layout-run').disabled=false;}
 };
+
+$('facility-view').onclick=async()=>{const w=await load('tavaculo','chase','start',1200,540,'compact'),r=w.__raceQA.reviewFacility($('facility').value);$('status').textContent=r.name+' · 현행 시설 / Ferrari 같은 크기 / 점검용 카메라';$('report').textContent=JSON.stringify(r,null,2);};

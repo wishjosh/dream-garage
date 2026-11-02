@@ -6,7 +6,7 @@ import {DATA} from './data.mjs';
 import {terrainHeight,worldPoint,SITE,START_X} from './terrain.mjs';
 import {createPit,HOLD_Z} from './pit.mjs';
 import {SURFACE,cornerMarkers,pitSignal} from './trackside.mjs';
-export async function buildCampus(scene,track,{realism=true,renderer,layoutId='spacious'}={}){
+export async function buildCampus(scene,track,{realism=true,renderer,layoutId='compact'}={}){
  const layout=pitLayout(layoutId),{PIT}=createPit(layout),pitX=layout.centerX,laneEdge=pitX+layout.halfWidth;
  const art=realism?await prepareCircuitArt():null;
  scene.background=new T.Color(realism?'#c6d0d4':'#adc6d5');scene.fog=new T.Fog(realism?'#c6d0d4':'#adc6d5',470,1500);

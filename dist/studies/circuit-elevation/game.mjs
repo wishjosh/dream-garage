@@ -1,3 +1,5 @@
+import {pitLayout,campusFacilities} from './layout.mjs';
+import {START_X} from './terrain.mjs';
 import {buildCampus} from './scene.mjs';
 import {terrainHeight} from './terrain.mjs';
 import {createFrameMeasure} from './performance.mjs?v=circuit-elevation-2';
@@ -55,7 +57,7 @@ async function boot(){
  const mats={road:material('#707c87',.86),walk:material('#64778a'),navy:material('#142b43'),white:material('#c1d3de'),cyan:basic('#66f4f1'),pink:basic('#ff7197'),gold:basic('#ffdc9d'),dark:material('#143b53',.3,.5)};
  function box(w,h,d,x,y,z,mat=mats.navy,parent=scene){const m=new T.Mesh(unit,mat);m.scale.set(w,h,d);m.position.set(x,y,z);parent.add(m);return m;}
  const track=createCityCourse(),{length,frames}=track,N=frames.length;
- const layoutId=sessionParams.get('layout')||'spacious';
+ const layoutId=sessionParams.get('layout')||'compact';
  const campus=await buildCampus(scene,track,{layoutId,realism:sessionParams.get('art')!=='baseline',renderer});
  const gltf=new GLTFLoader(),models={};let loaded=0;
  const originalCockpitPromise=createOriginalCockpit({scene,camera,loader:gltf});
@@ -253,8 +255,8 @@ async function boot(){
  for(const id of ['restart','again'])$(id).onclick=resetRace;for(const id of ['back-menu','result-menu'])$(id).onclick=toMenu;
  const chooseCourse=()=>{clearInput();setPause();if(parent!==window)parent.postMessage({type:'circuit-elevation:choose'},location.origin);else location.href='./studies/circuit-elevation/';};
  $('compare-layout').onclick=()=>parent.postMessage({type:'circuit-elevation:compare-layout',view},location.origin);
- $('compare-layout').textContent=layoutId==='compact'?'이전 배치':'조정안';
- $('compare-layout').title=layoutId==='compact'?'같은 시작 장면을 이전 배치로 보기':'같은 시작 장면을 조정안으로 보기';
+ $('compare-layout').textContent=layoutId==='compact'?'이전 배치':'기준 배치';
+ $('compare-layout').title=layoutId==='compact'?'같은 시작 장면을 이전 배치로 보기':'같은 시작 장면을 기준 배치로 보기';
  $('choose-course').onclick=chooseCourse;$('back-menu').onclick=chooseCourse;$('result-menu').onclick=chooseCourse;
  $('course-title').textContent=COURSE_NAME;$('pause-course').textContent=COURSE_NAME+' · 한 바퀴';
  $('rescue').onclick=()=>{if(mode==='race'){const recovered=physics.recover(player);clearInput();syncVisuals();updateCamera(true);showToast(recovered?'도로에서 다시 출발해요':'다른 차가 지나가면 다시 눌러요');}};
@@ -290,7 +292,14 @@ mirrorPixels:()=>rearView.pixels(),inspectSideMirror:id=>{const side=sideViews.f
    const forward=new T.Vector3(Math.sin(player.heading),0,Math.cos(player.heading)),right=new T.Vector3(-forward.z,0,forward.x);
    mirrorProbeObject.position.set(player.x,(player.y||0)+1.05,player.z).addScaledVector(forward,(options.behind===false?1:-1)*(options.distance||12)).addScaledVector(right,options.x||0);mirrorProbeObject.rotation.y=player.heading;
    renderScene(true);return{position:mirrorProbeObject.position.toArray(),xMeaning:'driver right positive',behind:options.behind!==false};
-  },placeOffCourse:({s=length*.04,lateral=20}={})=>{if(!window.__cockpitReviewStorageIsolated)throw Error('Local isolated review only');clearInput();const e=physics.entries[0],f=trackFrame(track,s);e.recovery.anchorS=f.s;Object.assign(e.s,{x:f.x+f.rx*lateral,z:f.z+f.rz*lateral,heading:Math.atan2(f.tx,f.tz),u:0,v:0,yawRate:0});physics.placeBody(e);physics.sync(e,false);syncVisuals();updateCamera(true);renderScene(true);},setWheelInspection:value=>{wheelInspection=!!value;updateCamera(true);},setAssist:value=>{save.assist=value;},track:()=>track,reviewScene:({progress=.34,closing=null,side=false}={})=>{
+  },placeOffCourse:({s=length*.04,lateral=20}={})=>{if(!window.__cockpitReviewStorageIsolated)throw Error('Local isolated review only');clearInput();const e=physics.entries[0],f=trackFrame(track,s);e.recovery.anchorS=f.s;Object.assign(e.s,{x:f.x+f.rx*lateral,z:f.z+f.rz*lateral,heading:Math.atan2(f.tx,f.tz),u:0,v:0,yawRate:0});physics.placeBody(e);physics.sync(e,false);syncVisuals();updateCamera(true);renderScene(true);},reviewFacility:(id)=>{
+   if(!window.__cockpitReviewStorageIsolated)throw Error('Local isolated review only');
+   const f=campusFacilities(pitLayout(layoutId)).find(f=>f.id===id);if(!f)throw Error('Unknown facility');
+   const [a,b,c,d]=f.box,side=id==='parking'?1:-1,x=side===1?-b:-d,z=(a+c)/2-START_X,e=physics.entries[0];
+   clearInput();Object.assign(e.s,{x:x+side*7,z,heading:0,u:0,v:0,yawRate:0});physics.placeBody(e);physics.sync(e,false);syncVisuals();updateCamera(true);
+   camera.position.set(x+side*30,terrainHeight(x,z)+12,z-30);camera.lookAt(x,terrainHeight(x,z)+2,z+12);camera.fov=62;camera.updateProjectionMatrix();renderScene(true);
+   return {id,name:f.name,footprint:[c-a,d-b],car:window.__raceQA.snapshot().appearance.dimensions,view:'facility review only; car parked outside front; same camera offset',errors:[...window.__cockpitReviewErrors]};
+  },setWheelInspection:value=>{wheelInspection=!!value;updateCamera(true);},setAssist:value=>{save.assist=value;},track:()=>track,reviewScene:({progress=.34,closing=null,side=false}={})=>{
    if(!window.__cockpitReviewStorageIsolated)throw Error('Local isolated review only');
    recentImpact=null;clearInput();
    const base=trackFrame(track,progress*length),heading=Math.atan2(base.tx,base.tz);
