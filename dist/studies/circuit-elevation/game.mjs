@@ -3,7 +3,7 @@ import {signageReviewPose} from './signage.mjs';
 import {spectatorReviewPose} from './spectators.mjs';
 import {pitLayout,campusFacilities} from './layout.mjs';
 import {START_X} from './terrain.mjs';
-import {buildCampus} from './scene.mjs?v=t1-readable-1';
+import {buildCampus} from './scene.mjs?v=distance-extension-1';
 import {terrainHeight} from './terrain.mjs';
 import {createFrameMeasure} from './performance.mjs?v=circuit-elevation-2';
 // Isolated terrain study. Original vehicle, cabin and input assets reused.
@@ -26,7 +26,7 @@ import * as T from '../../vendor/three.module.js';
 import {GLTFLoader} from '../../vendor/GLTFLoader.js';
 import {CAR_NAMES,presentItem} from '../../vehicle-presentation.mjs?v=porsche-main-1';
 import {clamp,mod,trackFrame,nearestTrack,makeRacer,rankOf,finishRacer,PRIZES} from '../../race-core.mjs?v=city-tour-1';
-import {RacePhysics,FIXED_DT} from './physics.mjs?v=t1-distance-1';
+import {RacePhysics,FIXED_DT} from './physics.mjs?v=distance-extension-1';
 import {createPreviewSession} from '../../garage-preview-core.mjs?v=porsche-main-1';
 import {bindDragRotation} from '../../studies/garage-preview/drag-rotation.mjs?v=garage-preview-2';
 import {CATALOG,CATEGORIES,normalizeSave,tuning,itemById} from '../../garage-core.mjs?v=porsche-main-1';
@@ -195,12 +195,12 @@ async function boot(){
   visuals.forEach(v=>{scene.remove(v.root);disposeDress(v.body);});visuals=[];if(preview)preview.visible=false;
   player=makeRacer(track,{car:selected,lane:-2.3});racers=[player,...opponentCars(selected).map((car,i)=>makeRacer(track,{id:'bot'+i,car,s:7+i*7,lane:i%2?-2.3:2.3}))];
   for(const r of racers){const root=new T.Group(),body=models[r.car].clone(true);if(r===player||r.car==='porsche')dressCar(body,r.car,r===player?save.garage[selected]:{paint:'paint-stock',wheels:'wheels-stock'},rigs[r.car]);root.add(body);const {wheels,calipers}=splitWheelVisuals(body,rigs[r.car]);wheels.forEach(w=>root.add(w));calipers.forEach(c=>root.add(c));const shadow=new T.Mesh(new T.PlaneGeometry(3.6,6.0),shadowMat);shadow.rotation.x=-Math.PI/2;shadow.position.y=.06;root.add(shadow);scene.add(root);visuals.push({root,body,wheels,calipers,shadow});}
-  physics=new RacePhysics(track,racers,rigs,{autoRecovery:true,layout:layoutId,facilities:facilityId,spectators:spectatorId,playerTuning:tuning(save,selected)});physics.presentationEnabled=bodyMotion;physics.setupScenario(sessionParams.get('scenario')||'start',sessionParams.get('traffic')||'pack');
+  physics=new RacePhysics(track,racers,rigs,{autoRecovery:true,layout:layoutId,facilities:facilityId,spectators:spectatorId,playerTuning:tuning(save,selected)});physics.presentationEnabled=bodyMotion;physics.setupScenario(sessionParams.get('scenario')||'start',sessionParams.get('traffic')||'pack',Number(sessionParams.get('corner')||1));
   elapsed=0;awarded=false;count=3.3;clearInput();mode='countdown';$('welcome').hidden=true;$('menu').hidden=$('pause-menu').hidden=$('result').hidden=true;$('hud').hidden=false;$('countdown').hidden=false;syncVisuals();updateCamera(true);persist();
  }
- function configureSession({car='tavaculo',view:nextView='cockpit',scenario='start',traffic='pack'}={}){
-  if(!['tavaculo','porsche'].includes(car)||!['cockpit','chase'].includes(nextView)||!['start','slope','runoff','pit','pitlane','corner'].includes(scenario)||!['pack','clear'].includes(traffic))throw Error('Unknown study configuration');
-  driveMeasure=createFrameMeasure();sessionParams.set('scenario',scenario);sessionParams.set('traffic',traffic);selected=car;view=nextView;save.car=car;save.view=view;refreshPreview();resetRace();
+ function configureSession({car='tavaculo',view:nextView='cockpit',scenario='start',traffic='pack',corner=1}={}){
+  if(!['tavaculo','porsche'].includes(car)||!['cockpit','chase'].includes(nextView)||!['start','slope','runoff','pit','pitlane','corner'].includes(scenario)||!['pack','clear'].includes(traffic)||![1,2,7,8].includes(Number(corner)))throw Error('Unknown study configuration');
+  driveMeasure=createFrameMeasure();sessionParams.set('scenario',scenario);sessionParams.set('traffic',traffic);sessionParams.set('corner',String(corner));selected=car;view=nextView;save.car=car;save.view=view;refreshPreview();resetRace();
  }
  addEventListener('message',event=>{if(event.source!==parent||event.origin!==location.origin||event.data?.type!=='circuit-elevation:configure')return;configureSession(event.data.options);parent.postMessage({type:'circuit-elevation:configured'},location.origin);});
  function syncVisuals(){racers.forEach((r,i)=>{const v=visuals[i];v.body.position.set(r.x,r.y??.045,r.z);v.body.quaternion.fromArray(r.quaternion||[0,0,0,1]);steerExterior(v.body,r.car,clamp(-(r.steeringAngle||0)/.46,-1,1),fleet.porsche.template.axis);v.shadow.position.set(r.x,terrainHeight(r.x,r.z)+.062,r.z);v.shadow.rotation.z=-r.heading;syncWheelVisuals(v.wheels,v.calipers,r.wheels);});}

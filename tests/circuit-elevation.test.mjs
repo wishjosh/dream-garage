@@ -158,3 +158,19 @@ test('corner comparison restarts both cars at the identical stationary approach'
  }
  assert.deepEqual(states[0],states[1]);
 });
+
+test('expanded corner scenes restart both cars at the selected reference with contact',()=>{
+ for(const number of [2,7,8]){
+  const starts=[];
+  for(const car of ['tavaculo','porsche']){
+   const p=make(car,4,'compact','split','scaled'),r=p.entries[0].r;
+   p.setupScenario('corner','clear',number);const initial=[r.x,r.y,r.z,r.heading,r.s,r.distance];
+   assert.ok(Math.abs(r.s-(DATA.corners.find(c=>c.number===number).s-240))<1e-6);
+   assert.equal(r.grounded,4);assert.equal(r.pit.active,false);
+   run(p,1,{throttle:true});assert.ok(r.speed>0);
+   p.setupScenario('corner','clear',number);assert.deepEqual([r.x,r.y,r.z,r.heading,r.s,r.distance],initial);assert.equal(r.speed,0);
+   starts.push(initial);p.dispose();
+  }
+  assert.deepEqual(starts[0],starts[1]);
+ }
+});

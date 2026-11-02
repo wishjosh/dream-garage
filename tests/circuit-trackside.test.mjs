@@ -57,3 +57,15 @@ test('distance typography fits complete glyph bounds without horizontal squeeze'
  }
  assert.equal(sizes[0],sizes[1]);assert.equal(sizes[1],sizes[2]);
 });
+
+test('expanded distance boards preserve T1 and clear all selected corner approaches',()=>{
+ const track=createCityCourse(),base=approachBoards(track,'readable'),expanded=approachBoards(track,'circuit');
+ assert.equal(expanded.length,12);assert.deepEqual(expanded.filter(b=>b.corner===1),base);
+ assert.deepEqual([...new Set(expanded.map(b=>b.corner))],[1,2,7,8]);
+ for(const b of expanded){
+  const corner=DATA.corners.find(c=>c.number===b.corner);
+  assert.ok(Math.abs((corner.s-b.s+track.length)%track.length-b.distance)<1e-7);
+  assert.ok(nearestTrack(track,b.x,b.z).distance>8.2+b.width/2+.5);
+ }
+ for(const n of [1,2,7,8])assert.deepEqual(expanded.filter(b=>b.corner===n).map(b=>b.distance),[150,100,50]);
+});

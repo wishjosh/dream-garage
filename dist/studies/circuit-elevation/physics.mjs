@@ -8,7 +8,7 @@ import {trackFrame,nearestTrack,clamp} from '../../race-core.mjs';
 import {markRecovered} from '../../course-recovery.mjs';
 import {terrainHeight,terrainGradient,inRunoff,inside,SITE,ROAD_Y,campusPoint} from './terrain.mjs';
 import {DATA} from './data.mjs';
-import {pitSignal} from './trackside.mjs';
+import {pitSignal,cornerApproachS} from './trackside.mjs?v=distance-extension-1';
 import {createPit,DEFAULT_PIT,PIT_SPEED,HOLD_Z,EXIT_Z} from './pit.mjs';
 export {FIXED_DT};
 const G=9.81,UP=new C.Vec3(0,1,0);
@@ -92,9 +92,9 @@ export class RacePhysics extends FlatPhysics{
   if(e.offTime>6&&this.time>=e.recovery.nextCheck){if(this.recover(e.r,{atS:e.recovery.anchorS,reason:'outside-campus'}))e.offTime=0;}
  }
  recover(r,options={}){const e=this.entries.find(e=>e.r===r);if(e)e.pit={active:false,released:false,wait:0,merged:false};const ok=super.recover(r,options);if(ok&&e){e.ground=null;this.sync(e,false);}return ok;}
- setupScenario(scenario='start',traffic='pack'){
+ setupScenario(scenario='start',traffic='pack',corner=1){
   const tour=scenario==='pitlane';if(tour)scenario='pit';
-  const e=this.entries[0];let s=scenario==='corner'?DATA.corners[0].s-240:scenario==='slope'?this.track.length*.28:scenario==='runoff'?DATA.corners[2].s:0,lateral=scenario==='runoff'?19:-2.3;
+  const e=this.entries[0];let s=scenario==='corner'?cornerApproachS(this.track,corner):scenario==='slope'?this.track.length*.28:scenario==='runoff'?DATA.corners[2].s:0,lateral=scenario==='runoff'?19:-2.3;
   const f=trackFrame(this.track,s);Object.assign(e.s,{x:f.x+f.rx*lateral,z:f.z+f.rz*lateral,heading:Math.atan2(f.tx,f.tz),u:0,v:0,yawRate:0});Object.assign(e.r,{s,distance:s,gate:Math.floor(s/this.track.length*4),finished:false});
   e.pit={active:scenario==='pit',released:false,wait:0,merged:false};
   if(scenario==='pit')Object.assign(e.s,{x:this.layout.centerX,z:HOLD_Z-(tour?110:24),heading:0});
