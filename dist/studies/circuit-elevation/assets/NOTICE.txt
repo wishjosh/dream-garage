@@ -1,4 +1,4 @@
-Circuit material study - local comparison only
+Circuit material study - isolated comparison and driving
 Downloaded 2026-11-02. All models/textures below are CC0-1.0.
 Asset license: https://polyhaven.com/license
 Legal text: https://creativecommons.org/publicdomain/zero/1.0/

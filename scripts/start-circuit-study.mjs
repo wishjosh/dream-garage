@@ -5,7 +5,7 @@ let response=null;
 try{response=await fetch(url,{signal:AbortSignal.timeout(2500)});}catch{}
 if(response){
  const body=await response.text();
- if(response.ok&&body.includes('data-scenario="pit"')&&body.includes('<title>스피드 링 · 독립 지형 주행</title>')&&body.includes('LOCAL STUDY')){
+ if(response.ok&&body.includes('data-scenario="pit"')&&body.includes('<title>스피드 링 · 독립 지형 주행</title>')&&body.includes('STUDY /')){
   console.log('The local study server is already running. Open the link above.');
  }else{
   console.error('Port 4187 is used by another page. No process was changed.');process.exitCode=1;

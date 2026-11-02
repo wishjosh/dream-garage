@@ -12,12 +12,12 @@ async function show(){
  try{
   if(!frame||loaded!==variant){frame?.remove();frame=document.createElement('iframe');frame.id='facility-frame';frame.title='차량과 시설 배치 비교';loaded=variant;
    const ready=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('불러오기가 지연됩니다. 배치를 다시 선택해 주세요.')),30000);frame.onload=()=>{clearTimeout(timer);resolve();};frame.onerror=()=>{clearTimeout(timer);reject(Error('화면을 불러오지 못했습니다.'));};});
-   frame.src='./run.html?'+new URLSearchParams({layout:'compact',signage:signs?(variant==='split'?'scaled':'before'):'scaled',facilities:(visitor||signs)?'split':variant,spectators:visitor?(variant==='split'?'scaled':'before'):'scaled',car,view:'chase',scenario:'start',traffic:'clear',qa:'1',review:'1'});$('stage').prepend(frame);await ready;
+   frame.src='./run.html?'+new URLSearchParams({layout:'compact',signage:signs?(variant==='split'?'scaled':'before'):'scaled',facilities:(visitor||signs)?'split':variant,spectators:visitor?(variant==='split'?'scaled':'before'):'scaled',car,view:'chase',scenario:'start',traffic:'clear',comparison:'1'});$('stage').prepend(frame);await ready;
    const w=frame.contentWindow,start=performance.now();
-   while(!w.__raceQA){if(!frame.contentDocument.getElementById('fatal')?.hidden)throw Error(frame.contentDocument.getElementById('fatal-message')?.textContent||'불러오기 실패');if(performance.now()-start>90000)throw Error('불러오기가 지연됩니다. 배치를 다시 선택해 주세요.');await new Promise(r=>setTimeout(r,100));if(current!==token)return;}
-   w.__cockpitReviewSetFrozen(true);
+   while(!w.__raceQA){if(!frame.contentDocument.getElementById('fatal')?.hidden)throw Error(frame.contentDocument.getElementById('fatal-message')?.textContent||'불러오기 실패');const errors=JSON.parse(frame.contentDocument.getElementById('course-errors')?.textContent||'[]');if(errors.length)throw Error('화면 파일을 불러오지 못했습니다: '+errors[0]);if(performance.now()-start>180000)throw Error('불러오기가 지연됩니다. 배치를 다시 선택해 주세요.');await new Promise(r=>setTimeout(r,100));if(current!==token)return;}
+   w.__circuitComparison.setFrozen(true);
   }
-  if(current!==token)return;const w=frame.contentWindow;if(!w.__cockpitReviewStorageIsolated)throw Error('비교 화면 격리 실패');
+  if(current!==token)return;const w=frame.contentWindow;if(!w.__circuitComparison?.enabled)throw Error('비교 화면 준비 실패');
   w.__raceQA.configureReview({car,view:'chase',scenario:'start',traffic:'clear'});w.__raceQA.advance(4,{});
   const result=w.__raceQA[signs?'reviewSignage':'reviewFacility'](zone,{wide:$('framing').value==='wide'});frame.contentDocument.getElementById('hud').hidden=true;$('comparison-state').textContent=JSON.stringify({...result,carId:car,variant});
   $('status').textContent=zoneNames[zone]+' · '+(variant==='split'?afterLabel:'이전 모습');$('details').textContent=notes[zone][variant];$('toggle').textContent=variant==='split'?'이전 모습 보기':afterLabel+' 보기';
