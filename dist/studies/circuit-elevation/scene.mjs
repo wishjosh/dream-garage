@@ -1,3 +1,4 @@
+import {signageLayout} from './signage.mjs';
 import {STAND,PARKING,spectatorVariant,spectatorStats} from './spectators.mjs';
 import {drawSpectators} from './spectator-scene.mjs';
 import {FACILITY_BUILDINGS,FACILITY_YARDS,FACILITY_ACCESS,facilityStats,facilityVariant} from './facilities.mjs';
@@ -9,7 +10,8 @@ import {DATA} from './data.mjs';
 import {terrainHeight,worldPoint,SITE,START_X} from './terrain.mjs';
 import {createPit,HOLD_Z} from './pit.mjs';
 import {SURFACE,cornerMarkers,pitSignal} from './trackside.mjs';
-export async function buildCampus(scene,track,{realism=true,renderer,layoutId='compact',facilities='split',spectators='scaled'}={}){
+export async function buildCampus(scene,track,{realism=true,renderer,layoutId='compact',facilities='split',spectators='scaled',signage='scaled'}={}){
+ const signs=signageLayout(signage);
  const facilityId=facilityVariant(facilities),spectatorId=spectatorVariant(spectators);
  const layout=pitLayout(layoutId),{PIT}=createPit(layout),pitX=layout.centerX,laneEdge=pitX+layout.halfWidth;
  const art=realism?await prepareCircuitArt():null;
@@ -115,16 +117,18 @@ export async function buildCampus(scene,track,{realism=true,renderer,layoutId='c
  access(DATA.campus.service.map(worldPoint),3,mat('#8a8e7d'),'service road');
  for(let i=0;i<SITE.length;i++){const a=SITE[i],b=SITE[(i+1)%SITE.length],len=Math.hypot(b.x-a.x,b.z-a.z),count=Math.ceil(len/8);for(let j=0;j<count;j++)box(a.x+(b.x-a.x)*(j+.5)/count,.7,a.z+(b.z-a.z)*(j+.5)/count,.5,1.4,len/count+.1,white,Math.atan2(b.x-a.x,b.z-a.z));}
  const markers=cornerMarkers(track);
- for(const m of markers){label(m.label,m.x,m.z,1.65,3.8,m.heading,2.5);box(m.x,.65,m.z,.12,1.3,.12,navy);}
- label('PIT 50',pitX+8,160-START_X,2.5,6,Math.PI,2.5);label('PIT EXIT',pitX,HOLD_Z+2.26,5.65,8,Math.PI,6);
+ for(const m of markers){label(m.label,m.x,m.z,signs.corner.height,signs.corner.width,m.heading,signs.corner.aspect);box(m.x,.65,m.z,.12,1.3,.12,navy);}
+ label('PIT 50',pitX+8,160-START_X,signs.entry.height,signs.entry.width,Math.PI,signs.entry.aspect);label('PIT EXIT',pitX,HOLD_Z+2.26,signs.exit.height,signs.exit.width,Math.PI,signs.exit.aspect);
+ if(signs.id==='scaled')box(pitX+8,.8,160-START_X,.10,1.6,.10,navy);
  for(const sx of [pitX-7,pitX+7])box(sx,2.5,HOLD_Z+2.4,.16,5,.16,navy);
  box(pitX,5,HOLD_Z+2.4,14,.16,.16,navy);
- const signalMeshes={};for(const [key,text,color] of [['idle','PIT 50','#344c59'],['approach','STOP 50','#71501c'],['wait','WAIT','#71501c'],['go','GO →','#1c5947']]){signalMeshes[key]=label(text,pitX,HOLD_Z+2.35,3.5,7,Math.PI,4,color);signalMeshes[key].visible=key==='idle';}
- label('MERGE →',24*pitX/38,500-START_X,1.8,5,Math.PI,3);
+ const signalMeshes={};for(const [key,text,color] of [['idle','PIT 50','#344c59'],['approach','STOP 50','#71501c'],['wait','WAIT','#71501c'],['go','GO →','#1c5947']]){signalMeshes[key]=label(text,pitX,HOLD_Z+2.35,signs.signal.height,signs.signal.width,Math.PI,signs.signal.aspect,color);signalMeshes[key].visible=key==='idle';}
+ label('MERGE →',24*pitX/38,500-START_X,signs.merge.height,signs.merge.width,Math.PI,signs.merge.aspect);
+ if(signs.id==='scaled'){box(24*pitX/38,.8,500-START_X,.10,1.6,.10,navy);for(const side of [-1,1])box(pitX+side*1.4,4.45,HOLD_Z+2.4,.06,1.1,.06,navy);}
  label('SPEED RING',0,15,7,18);for(const side of [-1,1])box(9*side,3.5,15,.35,7,.35,navy);
  for(let row=0;row<2;row++)for(let i=0;i<16;i++)box(-7.5+i,.065,row*.7,.9,.02,.65,(row+i)%2?white:navy);
  const lamp=new T.Mesh(new T.SphereGeometry(.28,10,8),new T.MeshBasicMaterial({color:'#a7b7bd'}));lamp.position.set(pitX+4,3.5,HOLD_Z+2.25);scene.add(lamp);let signal=pitSignal(null,null);
  for(const [material,matrices] of batches){const inst=new T.InstancedMesh(unit,material,matrices.length);matrices.forEach((matrix,i)=>inst.setMatrixAt(i,matrix));inst.instanceMatrix.needsUpdate=true;inst.castShadow=realism&&material!==runoff&&material!==white;inst.receiveShadow=realism;scene.add(inst);}
  const artStats=art?installCircuitProps(scene,art,layout):{source:'baseline'};if(realism)renderer.shadowMap.needsUpdate=true;
- return{update:(merge,player)=>{signal=pitSignal(player,merge);lamp.material.color.set(signal.color);for(const [key,m] of Object.entries(signalMeshes))m.visible=key===signal.state;},stats:()=>({layout:layoutMeasurements(layout),facilities:facilityStats(facilityId),spectators:spectatorStats(spectatorId),art:artStats,markers,pitBays,standRows,surfaceChecks,signal})};
+ return{update:(merge,player)=>{signal=pitSignal(player,merge);lamp.material.color.set(signal.color);for(const [key,m] of Object.entries(signalMeshes))m.visible=key===signal.state;},stats:()=>({signage:signs,layout:layoutMeasurements(layout),facilities:facilityStats(facilityId),spectators:spectatorStats(spectatorId),art:artStats,markers,pitBays,standRows,surfaceChecks,signal})};
 }

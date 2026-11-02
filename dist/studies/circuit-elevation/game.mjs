@@ -1,3 +1,4 @@
+import {signageReviewPose} from './signage.mjs';
 import {spectatorReviewPose} from './spectators.mjs';
 import {pitLayout,campusFacilities} from './layout.mjs';
 import {START_X} from './terrain.mjs';
@@ -59,7 +60,7 @@ async function boot(){
  function box(w,h,d,x,y,z,mat=mats.navy,parent=scene){const m=new T.Mesh(unit,mat);m.scale.set(w,h,d);m.position.set(x,y,z);parent.add(m);return m;}
  const track=createCityCourse(),{length,frames}=track,N=frames.length;
  const layoutId=sessionParams.get('layout')||'compact',facilityId=sessionParams.get('facilities')||'split',spectatorId=sessionParams.get('spectators')||'scaled';
- const campus=await buildCampus(scene,track,{layoutId,facilities:facilityId,spectators:spectatorId,realism:sessionParams.get('art')!=='baseline',renderer});
+ const campus=await buildCampus(scene,track,{layoutId,facilities:facilityId,spectators:spectatorId,signage:sessionParams.get('signage')||'scaled',realism:sessionParams.get('art')!=='baseline',renderer});
  const gltf=new GLTFLoader(),models={};let loaded=0;
  const originalCockpitPromise=createOriginalCockpit({scene,camera,loader:gltf});
  const items=['tavaculo','f2002','porsche'];
@@ -301,6 +302,12 @@ mirrorPixels:()=>rearView.pixels(),inspectSideMirror:id=>{const side=sideViews.f
    clearInput();Object.assign(e.s,{x:pose?pose.car.x:x+side*7,z:pose?pose.car.along-START_X:z,heading:pose?pose.car.heading:0,u:0,v:0,yawRate:0});physics.placeBody(e);physics.sync(e,false);syncVisuals();updateCamera(true);
    camera.position.set(x+side*(wide?55:30),terrainHeight(x,z)+(wide?24:12),z-(wide?55:30));camera.lookAt(x+(wide?12:0),terrainHeight(x,z)+2,z+12);if(pose){camera.position.set(pose.camera[0],pose.camera[1],pose.camera[2]-START_X);camera.lookAt(pose.target[0],pose.target[1],pose.target[2]-START_X);}camera.fov=62;camera.updateProjectionMatrix();renderScene(true);
    return {id,name:f.name,footprint:[c-a,d-b],spectators:campus.stats().spectators,carPosition:[e.s.x,e.s.z,e.s.heading],facilities:campus.stats().facilities,camera:camera.position.toArray(),cameraFov:camera.fov,car:window.__raceQA.snapshot().appearance.dimensions,view:'facility review only; car parked outside front; same camera offset',errors:[...window.__cockpitReviewErrors]};
+  },reviewSignage:(id,{wide=false}={})=>{
+   if(!window.__cockpitReviewStorageIsolated)throw Error('Local isolated review only');
+   const pose=signageReviewPose(track,pitLayout(layoutId),id,wide),e=physics.entries[0];
+   clearInput();Object.assign(e.s,{...pose.car,u:0,v:0,yawRate:0});physics.placeBody(e);physics.sync(e,false);syncVisuals();updateCamera(true);
+   const ground=terrainHeight(pose.car.x,pose.car.z);camera.position.set(pose.camera[0],ground+pose.camera[1],pose.camera[2]);camera.lookAt(pose.target[0],ground+pose.target[1],pose.target[2]);camera.fov=62;camera.updateProjectionMatrix();renderScene(true);
+   return {id,signage:campus.stats().signage,carPosition:[e.s.x,e.s.z,e.s.heading],camera:camera.position.toArray(),cameraFov:camera.fov,car:window.__raceQA.snapshot().appearance.dimensions,errors:[...window.__cockpitReviewErrors]};
   },setWheelInspection:value=>{wheelInspection=!!value;updateCamera(true);},setAssist:value=>{save.assist=value;},track:()=>track,reviewScene:({progress=.34,closing=null,side=false}={})=>{
    if(!window.__cockpitReviewStorageIsolated)throw Error('Local isolated review only');
    recentImpact=null;clearInput();
