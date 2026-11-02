@@ -1,0 +1,73 @@
+{
+  "source": "https://polyhaven.com/a/concrete_road_barrier",
+  "license": "CC0-1.0",
+  "downloaded": "2026-11-02",
+  "authors": {
+    "Amal Kumar": "All"
+  },
+  "asset": "concrete_road_barrier",
+  "files": [
+    {
+      "name": "concrete_road_barrier.gltf",
+      "value": {
+        "include": {
+          "textures/concrete_road_barrier_nor_gl_1k.jpg": {
+            "size": 961760,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/concrete_road_barrier/concrete_road_barrier_nor_gl_1k.jpg",
+            "md5": "5cc77a0a52de7f3e6c7405b5bfedfc6f"
+          },
+          "textures/concrete_road_barrier_arm_1k.jpg": {
+            "size": 619502,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/concrete_road_barrier/concrete_road_barrier_arm_1k.jpg",
+            "md5": "a289412cc7fe2c265f0975b31d8edda1"
+          },
+          "textures/concrete_road_barrier_diff_1k.jpg": {
+            "size": 792641,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/concrete_road_barrier/concrete_road_barrier_diff_1k.jpg",
+            "md5": "0fc11541996e1ddbdb1875dff35bc1c9"
+          },
+          "concrete_road_barrier.bin": {
+            "size": 1374016,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/concrete_road_barrier/concrete_road_barrier.bin",
+            "md5": "f256cb4d2bd9e5623b062502605dfcf2"
+          }
+        },
+        "size": 2868,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/concrete_road_barrier/concrete_road_barrier_1k.gltf",
+        "md5": "6d6feaf068f434e8dc163a1a9d983f4a"
+      }
+    },
+    {
+      "name": "textures/concrete_road_barrier_nor_gl_1k.jpg",
+      "value": {
+        "size": 961760,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/concrete_road_barrier/concrete_road_barrier_nor_gl_1k.jpg",
+        "md5": "5cc77a0a52de7f3e6c7405b5bfedfc6f"
+      }
+    },
+    {
+      "name": "textures/concrete_road_barrier_arm_1k.jpg",
+      "value": {
+        "size": 619502,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/concrete_road_barrier/concrete_road_barrier_arm_1k.jpg",
+        "md5": "a289412cc7fe2c265f0975b31d8edda1"
+      }
+    },
+    {
+      "name": "textures/concrete_road_barrier_diff_1k.jpg",
+      "value": {
+        "size": 792641,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/concrete_road_barrier/concrete_road_barrier_diff_1k.jpg",
+        "md5": "0fc11541996e1ddbdb1875dff35bc1c9"
+      }
+    },
+    {
+      "name": "concrete_road_barrier.bin",
+      "value": {
+        "size": 1374016,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/concrete_road_barrier/concrete_road_barrier.bin",
+        "md5": "f256cb4d2bd9e5623b062502605dfcf2"
+      }
+    }
+  ]
+}

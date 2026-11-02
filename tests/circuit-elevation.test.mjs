@@ -73,3 +73,9 @@ test('four mixed cars complete the elevated route without road departure',ctx=>{
 test('parallel pit separator prevents an early sideways exit onto main road',()=>{
  const p=make();p.setupScenario('pit');const e=p.entries[0];Object.assign(e.s,{x:20,z:HOLD_Z-20,heading:-Math.PI/2,u:5,v:0});p.sync(e,false);let hit=false;for(let i=0;i<120;i++){p.step(1/60,{},false);hit||=p.hits.some(h=>h.kind==='barrier');}assert.ok(e.s.x>16);assert.ok(hit);p.dispose();
 });
+
+test('pitlane art comparison starts beside bays and obeys existing pit exit',()=>{
+ const p=make('tavaculo',4);p.setupScenario('pitlane');const e=p.entries[0];assert.equal(e.pit.active,true);assert.ok(Math.abs(e.s.z-(HOLD_Z-110))<.01);assert.equal(e.r.surface,'pit');
+ let maxPit=0;for(let i=0;i<50*60&&!e.pit.merged;i++){p.step(1/60,{...p.route(e),wheelCommand:true},false);if(e.pit.active)maxPit=Math.max(maxPit,e.r.speed);}
+ assert.equal(e.pit.merged,true);assert.ok(maxPit<50/3.6+.05);assert.ok(p.metrics.gateWait>=.5);assert.equal(p.recoveryStats().count,0);p.dispose();
+});

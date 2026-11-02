@@ -55,7 +55,7 @@ async function boot(){
  const mats={road:material('#707c87',.86),walk:material('#64778a'),navy:material('#142b43'),white:material('#c1d3de'),cyan:basic('#66f4f1'),pink:basic('#ff7197'),gold:basic('#ffdc9d'),dark:material('#143b53',.3,.5)};
  function box(w,h,d,x,y,z,mat=mats.navy,parent=scene){const m=new T.Mesh(unit,mat);m.scale.set(w,h,d);m.position.set(x,y,z);parent.add(m);return m;}
  const track=createCityCourse(),{length,frames}=track,N=frames.length;
- const campus=buildCampus(scene,track);
+ const campus=await buildCampus(scene,track,{realism:sessionParams.get('art')!=='baseline',renderer});
  const gltf=new GLTFLoader(),models={};let loaded=0;
  const originalCockpitPromise=createOriginalCockpit({scene,camera,loader:gltf});
  const items=['tavaculo','f2002','porsche'];
@@ -190,7 +190,7 @@ async function boot(){
   elapsed=0;awarded=false;count=3.3;clearInput();mode='countdown';$('welcome').hidden=true;$('menu').hidden=$('pause-menu').hidden=$('result').hidden=true;$('hud').hidden=false;$('countdown').hidden=false;syncVisuals();updateCamera(true);persist();
  }
  function configureSession({car='tavaculo',view:nextView='cockpit',scenario='start',traffic='pack'}={}){
-  if(!['tavaculo','porsche'].includes(car)||!['cockpit','chase'].includes(nextView)||!['start','slope','runoff','pit'].includes(scenario)||!['pack','clear'].includes(traffic))throw Error('Unknown study configuration');
+  if(!['tavaculo','porsche'].includes(car)||!['cockpit','chase'].includes(nextView)||!['start','slope','runoff','pit','pitlane'].includes(scenario)||!['pack','clear'].includes(traffic))throw Error('Unknown study configuration');
   driveMeasure=createFrameMeasure();sessionParams.set('scenario',scenario);sessionParams.set('traffic',traffic);selected=car;view=nextView;save.car=car;save.view=view;refreshPreview();resetRace();
  }
  addEventListener('message',event=>{if(event.source!==parent||event.origin!==location.origin||event.data?.type!=='circuit-elevation:configure')return;configureSession(event.data.options);parent.postMessage({type:'circuit-elevation:configured'},location.origin);});

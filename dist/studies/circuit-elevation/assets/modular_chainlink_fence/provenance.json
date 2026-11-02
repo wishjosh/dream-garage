@@ -1,0 +1,121 @@
+{
+  "source": "https://polyhaven.com/a/modular_chainlink_fence",
+  "license": "CC0-1.0",
+  "downloaded": "2026-11-02",
+  "authors": {
+    "James Ray Cock": "All",
+    "Amal Kumar": "Fence Wire Material"
+  },
+  "asset": "modular_chainlink_fence",
+  "files": [
+    {
+      "name": "modular_chainlink_fence.gltf",
+      "value": {
+        "include": {
+          "modular_chainlink_fence.bin": {
+            "size": 3168016,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/modular_chainlink_fence/modular_chainlink_fence.bin",
+            "md5": "953d32ee509142cf2ceb1e6b278b2430"
+          },
+          "textures/modular_chainlink_fence_posts_nor_gl_1k.jpg": {
+            "size": 505743,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_chainlink_fence/modular_chainlink_fence_posts_nor_gl_1k.jpg",
+            "md5": "e6b2e0015cef4bb58487f889efae88bf"
+          },
+          "textures/modular_chainlink_fence_wire_arm_1k.jpg": {
+            "size": 694743,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_chainlink_fence/modular_chainlink_fence_wire_arm_1k.jpg",
+            "md5": "0a53847d3ba9891c9a90c637151684e4"
+          },
+          "textures/modular_chainlink_fence_wire_nor_gl_1k.jpg": {
+            "size": 664165,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_chainlink_fence/modular_chainlink_fence_wire_nor_gl_1k.jpg",
+            "md5": "bd794c542c0843354e0838ff4e05788b"
+          },
+          "textures/modular_chainlink_fence_wire_diff_1k.jpg": {
+            "size": 670536,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_chainlink_fence/modular_chainlink_fence_wire_diff_1k.jpg",
+            "md5": "fa424a20c04764d770826c865635b84c"
+          },
+          "textures/modular_chainlink_fence_posts_arm_1k.jpg": {
+            "size": 839858,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_chainlink_fence/modular_chainlink_fence_posts_arm_1k.jpg",
+            "md5": "839c6fce0c0583e8205b8f9281e853f8"
+          },
+          "textures/modular_chainlink_fence_posts_diff_1k.jpg": {
+            "size": 707116,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_chainlink_fence/modular_chainlink_fence_posts_diff_1k.jpg",
+            "md5": "f36646ffbf9f952747c3d4535b30c24a"
+          }
+        },
+        "size": 41838,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/modular_chainlink_fence/modular_chainlink_fence_1k.gltf",
+        "md5": "8c8f0c91cf48ba68fb32178bcbd6351a"
+      }
+    },
+    {
+      "name": "modular_chainlink_fence.bin",
+      "value": {
+        "size": 3168016,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/modular_chainlink_fence/modular_chainlink_fence.bin",
+        "md5": "953d32ee509142cf2ceb1e6b278b2430"
+      }
+    },
+    {
+      "name": "textures/modular_chainlink_fence_posts_nor_gl_1k.jpg",
+      "value": {
+        "size": 505743,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_chainlink_fence/modular_chainlink_fence_posts_nor_gl_1k.jpg",
+        "md5": "e6b2e0015cef4bb58487f889efae88bf"
+      }
+    },
+    {
+      "name": "textures/modular_chainlink_fence_wire_arm_1k.jpg",
+      "value": {
+        "size": 694743,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_chainlink_fence/modular_chainlink_fence_wire_arm_1k.jpg",
+        "md5": "0a53847d3ba9891c9a90c637151684e4"
+      }
+    },
+    {
+      "name": "textures/modular_chainlink_fence_wire_nor_gl_1k.jpg",
+      "value": {
+        "size": 664165,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_chainlink_fence/modular_chainlink_fence_wire_nor_gl_1k.jpg",
+        "md5": "bd794c542c0843354e0838ff4e05788b"
+      }
+    },
+    {
+      "name": "textures/modular_chainlink_fence_wire_diff_1k.jpg",
+      "value": {
+        "size": 670536,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_chainlink_fence/modular_chainlink_fence_wire_diff_1k.jpg",
+        "md5": "fa424a20c04764d770826c865635b84c"
+      }
+    },
+    {
+      "name": "textures/modular_chainlink_fence_posts_arm_1k.jpg",
+      "value": {
+        "size": 839858,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_chainlink_fence/modular_chainlink_fence_posts_arm_1k.jpg",
+        "md5": "839c6fce0c0583e8205b8f9281e853f8"
+      }
+    },
+    {
+      "name": "textures/modular_chainlink_fence_posts_diff_1k.jpg",
+      "value": {
+        "size": 707116,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/modular_chainlink_fence/modular_chainlink_fence_posts_diff_1k.jpg",
+        "md5": "f36646ffbf9f952747c3d4535b30c24a"
+      }
+    },
+    {
+      "name": "textures/wire_opacity.png",
+      "value": {
+        "size": 162276,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/modular_chainlink_fence/modular_chainlink_fence_wire_opacity_1k.png",
+        "md5": "60de816363ee08a40d88a2db5aac4c9c"
+      }
+    }
+  ]
+}

@@ -6,11 +6,11 @@ import {worldPoint} from './terrain.mjs';
 const $=id=>document.getElementById(id),track=createCityCourse(),projection=mapProjection(track.bounds,420,250,25);
 function path(points){return points.map((p,i)=>{const a=projection.point(p.x,p.z);return(i?'L':'M')+a.map(n=>n.toFixed(1)).join(',');}).join(' ');}
 $('map-preview').innerHTML='<svg viewBox="0 0 420 250" role="img" aria-label="스피드 링과 피트 평면도"><path d="'+path(track.frames)+' Z" fill="#274541" stroke="#708e80" stroke-width="12" stroke-linejoin="round"/><path d="'+path(track.frames)+' Z" fill="none" stroke="#d4dfc6" stroke-width="3"/><path d="'+path(DATA.campus.pit.map(worldPoint))+'" fill="none" stroke="#7aafc3" stroke-width="3"/><text x="26" y="235" fill="#bfd0bd" font-size="11">출발·피트 0m → 높은 구간 +8m</text></svg>';
-let frame=null,ready=false,token=0,scenario='start';
+let frame=null,ready=false,token=0,scenario='start',loadedArt=null;
 function choose(){token++;if(!ready){frame?.remove();frame=null;}$('drive').hidden=true;$('picker').hidden=false;document.body.style.overflow='';document.querySelector('[data-scenario="'+scenario+'"]')?.focus({preventScroll:true});}
 async function launch(value){
- scenario=value;$('performance-results').hidden=true;$('performance-text').value='';const current=++token;$('picker').hidden=true;$('drive').hidden=false;$('loading').hidden=false;document.body.style.overflow='hidden';
- const params=new URLSearchParams({scenario,car:$('car').value,view:$('view').value,traffic:$('traffic').value,qa:'1',review:'1',v:'circuit-elevation-1'});
+ scenario=value;if(loadedArt!==$('art').value){frame?.remove();frame=null;ready=false;loadedArt=$('art').value;}$('performance-results').hidden=true;$('performance-text').value='';const current=++token;$('picker').hidden=true;$('drive').hidden=false;$('loading').hidden=false;document.body.style.overflow='hidden';
+ const params=new URLSearchParams({scenario,art:$('art').value,car:$('car').value,view:$('view').value,traffic:$('traffic').value,qa:'1',review:'1',v:'circuit-elevation-1'});
  if(ready&&frame){frame.contentWindow.postMessage({type:'circuit-elevation:configure',options:{scenario,car:$('car').value,view:$('view').value,traffic:$('traffic').value}},location.origin);return;}
  frame=document.createElement('iframe');frame.id='game';frame.title='스피드 링 독립 지형 주행';frame.allow='fullscreen';$('drive').prepend(frame);frame.src='./run.html?'+params;
  frame.addEventListener('load',async()=>{const win=frame.contentWindow,doc=frame.contentDocument,start=performance.now();while(token===current&&performance.now()-start<120000){

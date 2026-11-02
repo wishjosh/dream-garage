@@ -2,7 +2,7 @@ const $=id=>document.getElementById(id);let frame;
 const rows=[];
 function check(ok,message,data){rows.push({ok:!!ok,message,data});$('report').textContent=JSON.stringify(rows,null,2);if(!ok)throw Error(message);}
 async function load(car,view,scenario,width=874,height=402){
- if(frame?.contentWindow?.__raceQA){const w=frame.contentWindow;frame.width=width;frame.height=height;w.__raceQA.configureReview({car,view,scenario,traffic:'pack'});w.__raceQA.advance(4,{});return w;}
+ if(frame?.contentWindow?.__raceQA){const w=frame.contentWindow;frame.width=width;frame.height=height;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));w.__raceQA.configureReview({car,view,scenario,traffic:'pack'});w.__raceQA.advance(4,{});return w;}
  frame=document.createElement('iframe');frame.width=width;frame.height=height;$('stage').append(frame);
  const params=new URLSearchParams({car,view,scenario,traffic:'pack',qa:'1',review:'1'});
  frame.src='./run.html?'+params;
@@ -26,6 +26,7 @@ $('run').onclick=async()=>{
    check(w.__cockpitReviewErrors.length===0,car+' 실행 오류 없음',w.__cockpitReviewErrors);
   }
   const campus=frame.contentWindow.__raceQA.snapshot().campus;
+  check(campus.art.barriers===120&&campus.art.fencePanels===84&&campus.art.tyres===36&&campus.art.fenceAlphaTest===.5,'외부 원본 파츠 로드·투명 철망 구성',campus.art);
   check(campus.markers.length===9&&campus.markers.filter(m=>m.direction==='left').map(m=>m.number).join(',')==='4,6','코너 방향·번호와 시설 구성',{markers:campus.markers,pitBays:campus.pitBays,standRows:campus.standRows});
   check(campus.surfaceChecks.length===4&&campus.surfaceChecks.every(r=>r.minHeightAboveTerrain>.08),'관리·진입·보행 포장이 지형 표시 위에 있음',campus.surfaceChecks);
   $('status').textContent='회복 공간에서 직접 복귀';let w=await load('tavaculo','chase','runoff'),q=w.__raceQA;
@@ -43,3 +44,6 @@ $('run').onclick=async()=>{
  }catch(error){$('status').textContent='검사 실패: '+error.message;rows.push({ok:false,error:String(error.stack||error)});$('report').textContent=JSON.stringify(rows,null,2);}
  finally{$('run').disabled=false;}
 };
+
+$('pit-view').onclick=async()=>{await load('tavaculo','chase','pitlane',1200,640);$('status').textContent='피트 비교 · 정지된 동일 시점';};
+$('cockpit-view').onclick=async()=>{await load('porsche','cockpit','start',1200,640);$('status').textContent='포르쉐 운전석 · 출발 직선';};

@@ -1,0 +1,39 @@
+{
+  "asset": "grass_ground",
+  "source": "https://polyhaven.com/a/grass_ground",
+  "dimensions": [
+    2509.999990463257,
+    2509.999990463257
+  ],
+  "files": [
+    {
+      "value": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grass_ground/grass_ground_diff_1k.jpg",
+        "md5": "299047258586c762735b7284d3c662c3",
+        "size": 876584
+      },
+      "name": "Diffuse.jpg"
+    },
+    {
+      "value": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grass_ground/grass_ground_nor_gl_1k.jpg",
+        "md5": "d518c5b2af6f2c0297bc807b351f511f",
+        "size": 1310516
+      },
+      "name": "nor_gl.jpg"
+    },
+    {
+      "value": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/grass_ground/grass_ground_rough_1k.jpg",
+        "md5": "2e6afca246cf6b80bdb53f46fe7e5ce5",
+        "size": 328190
+      },
+      "name": "Rough.jpg"
+    }
+  ],
+  "authors": {
+    "Charlotte Baglioni": "All"
+  },
+  "license": "CC0-1.0",
+  "downloaded": "2026-11-02"
+}

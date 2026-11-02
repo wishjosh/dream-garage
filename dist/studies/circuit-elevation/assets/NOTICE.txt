@@ -1,0 +1,47 @@
+Circuit material study - local comparison only
+Downloaded 2026-11-02. All models/textures below are CC0-1.0.
+Asset license: https://polyhaven.com/license
+Legal text: https://creativecommons.org/publicdomain/zero/1.0/
+Downloaded files are self-hosted: the game makes no live Poly Haven API calls.
+
+Concrete Road Barrier - Amal Kumar / Poly Haven
+https://polyhaven.com/a/concrete_road_barrier
+Original glTF + 1K textures retained unchanged. Runtime uses barrier-study.gltf/bin.
+Derived mesh: spatial clustering, 60,928 -> 7,573 triangles; maximum source vertex
+movement 0.03925 m. UV/normal seams retained by clustering keys; topology is approximate.
+Scaled to fit the existing separator footprint (1.50 x 0.96 x 0.60 m per segment).
+120 instances. Not a real-world safety certification. See optimization.json.
+
+Modular Chainlink Fence - James Ray Cock; fence wire material Amal Kumar / Poly Haven
+https://polyhaven.com/a/modular_chainlink_fence
+Original 1K glTF has JPEG diffuse without transparency. Official wire opacity PNG
+added as alpha map; original texture transform preserved; alpha test 0.5.
+Double panel and post nodes selected from the modular source; unused parts not drawn.
+84 panels, 85 posts, atop existing divider; ends 12 m before separator end.
+
+Old Tyre - MP / Poly Haven
+https://polyhaven.com/a/old_tyre
+Original model and 1K textures; rotated into horizontal stacks. 36 instances.
+Decorative spare tyres on apron, not new collision objects.
+
+Grass Ground - Charlotte Baglioni / Poly Haven
+https://polyhaven.com/a/grass_ground
+1K diffuse, normal, roughness. 2.51 m tile; no displacement geometry.
+
+Concrete Wall 001 - Dimitrios Savva (photography), Rico Cilliers (processing) / Poly Haven
+https://polyhaven.com/a/concrete_wall_001
+1K diffuse, normal, roughness; metric projection at 1.5 m tile.
+Used on existing facility geometry; the pit building itself is still study geometry.
+
+Concrete Wall 003 - Dimitrios Savva (photography), Rico Cilliers (processing) / Poly Haven
+https://polyhaven.com/a/concrete_wall_003
+Inspected alternative retained as source evidence; NOT loaded in the game.
+
+Asphalt012 - ambientCG (previously present in project)
+https://ambientcg.com/view?id=Asphalt012
+CC0. Existing color, OpenGL normal and roughness now all connected in this study.
+3 m repeating game scale; see ../../../assets/materials/LICENSE.txt for originals.
+
+Per-asset provenance.json records exact source URLs, authors, download dates,
+byte sizes and verified MD5 hashes. Runtime paths and placement are in art.mjs.
+Original driving UI, vehicle art, save isolation and course layout are retained.

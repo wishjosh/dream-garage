@@ -1,0 +1,40 @@
+{
+  "asset": "concrete_wall_003",
+  "source": "https://polyhaven.com/a/concrete_wall_003",
+  "dimensions": [
+    3000,
+    3000.000238418579
+  ],
+  "files": [
+    {
+      "value": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_wall_003/concrete_wall_003_diff_1k.jpg",
+        "size": 264756,
+        "md5": "1277cc6bcfc8e4f074f9852fbf19b2d3"
+      },
+      "name": "Diffuse.jpg"
+    },
+    {
+      "value": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_wall_003/concrete_wall_003_nor_gl_1k.jpg",
+        "size": 228062,
+        "md5": "ba9639f62ebd5434f5bd8fb97415c1ad"
+      },
+      "name": "nor_gl.jpg"
+    },
+    {
+      "value": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_wall_003/concrete_wall_003_rough_1k.jpg",
+        "size": 258206,
+        "md5": "ab6b1e23e0040d5e467d27d10fad998e"
+      },
+      "name": "Rough.jpg"
+    }
+  ],
+  "authors": {
+    "Dimitrios Savva": "Photography",
+    "Rico Cilliers": "Processing"
+  },
+  "license": "CC0-1.0",
+  "downloaded": "2026-11-02"
+}

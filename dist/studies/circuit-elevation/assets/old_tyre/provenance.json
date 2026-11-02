@@ -1,0 +1,73 @@
+{
+  "source": "https://polyhaven.com/a/old_tyre",
+  "license": "CC0-1.0",
+  "downloaded": "2026-11-02",
+  "authors": {
+    "MP": "All"
+  },
+  "asset": "old_tyre",
+  "files": [
+    {
+      "name": "old_tyre.gltf",
+      "value": {
+        "include": {
+          "textures/old_tyre_diff_1k.jpg": {
+            "size": 650708,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_tyre/old_tyre_diff_1k.jpg",
+            "md5": "f52b712b8373b1d1a7c46702613f76cb"
+          },
+          "textures/old_tyre_arm_1k.jpg": {
+            "size": 776823,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_tyre/old_tyre_arm_1k.jpg",
+            "md5": "c9256d0d7cac005512cba4744ab29ab4"
+          },
+          "old_tyre.bin": {
+            "size": 84160,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/old_tyre/old_tyre.bin",
+            "md5": "e29bd9703ad64da8883d8389b0cfb797"
+          },
+          "textures/old_tyre_nor_gl_1k.jpg": {
+            "size": 722778,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_tyre/old_tyre_nor_gl_1k.jpg",
+            "md5": "e5eb6dd2cf7a8e80813bbc1bc21a6d3d"
+          }
+        },
+        "size": 2734,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/old_tyre/old_tyre_1k.gltf",
+        "md5": "e29d7aee130a850f2224ac0dd103617b"
+      }
+    },
+    {
+      "name": "textures/old_tyre_diff_1k.jpg",
+      "value": {
+        "size": 650708,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_tyre/old_tyre_diff_1k.jpg",
+        "md5": "f52b712b8373b1d1a7c46702613f76cb"
+      }
+    },
+    {
+      "name": "textures/old_tyre_arm_1k.jpg",
+      "value": {
+        "size": 776823,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_tyre/old_tyre_arm_1k.jpg",
+        "md5": "c9256d0d7cac005512cba4744ab29ab4"
+      }
+    },
+    {
+      "name": "old_tyre.bin",
+      "value": {
+        "size": 84160,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/old_tyre/old_tyre.bin",
+        "md5": "e29bd9703ad64da8883d8389b0cfb797"
+      }
+    },
+    {
+      "name": "textures/old_tyre_nor_gl_1k.jpg",
+      "value": {
+        "size": 722778,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_tyre/old_tyre_nor_gl_1k.jpg",
+        "md5": "e5eb6dd2cf7a8e80813bbc1bc21a6d3d"
+      }
+    }
+  ]
+}
