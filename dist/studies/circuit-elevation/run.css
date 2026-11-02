@@ -12,3 +12,22 @@ body:is([data-car="tavaculo"],[data-car="porsche"])[data-view="cockpit"] #map-op
 @media(max-height:400px){#study-telemetry{top:47px;font-size:10px;padding:3px 6px}}
 
 body #hud .top-actions #compare-layout{padding:8px 10px;min-height:44px;font-size:12px}body #hud .race-stats{max-width:calc(100% - 270px)}
+
+/* Keep study readouts on one line below the actions on narrow portrait screens. */
+@media(max-width:600px) and (orientation:portrait){
+ body #hud .race-stats{top:64px;display:flex;max-width:calc(100% - 78px);gap:10px;flex-wrap:nowrap;white-space:nowrap}
+ body #hud .race-stats>div:not(.race-progress){display:flex;align-items:baseline;gap:4px;flex-shrink:0}
+ body #hud .race-stats small{font-size:10px;letter-spacing:0}
+ body #hud .race-stats strong,body #hud .race-stats #time{font-size:13px;line-height:18px}
+ body #hud .race-stats span{font-size:10px;margin-left:2px}
+ #study-telemetry{top:134px}
+ #city-look{top:168px}
+ body:is([data-car="tavaculo"],[data-car="porsche"])[data-view="cockpit"] #rescue{top:210px!important}
+}
+@media(orientation:landscape) and (max-height:600px){
+ body #hud .race-stats{display:flex;gap:10px;flex-wrap:nowrap;white-space:nowrap}
+ body #hud .race-stats>div:not(.race-progress){flex-shrink:0;gap:4px}
+ body #hud .race-stats small{font-size:10px}
+ body #hud .race-stats strong,body #hud .race-stats #time{font-size:13px;line-height:18px}
+ body #hud .race-stats span{font-size:10px}
+}
