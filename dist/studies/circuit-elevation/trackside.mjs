@@ -22,11 +22,12 @@ export function pitSignal(player,merge){
 }
 
 // Pilot: distances along the centreline to the existing T1 reference, not brake commands.
-export function approachBoards(track){
+export function approachBoards(track,variant='distance'){
+ if(!['distance','readable'].includes(variant))throw Error('Unknown distance board variant');
  const corner=DATA.corners[0],direction=cornerMarkers(track)[0].direction;
  return [150,100,50].map(distance=>{
   const s=mod(corner.s-distance,track.length),f=trackFrame(track,s),side=direction==='right'?-1:1;
   return {corner:1,distance,s,x:f.x+f.rx*side*10.5,z:f.z+f.rz*side*10.5,
-   heading:Math.atan2(f.tx,f.tz)+Math.PI,width:1,height:1.25,centreHeight:1.2};
+   heading:Math.atan2(f.tx,f.tz)+Math.PI,width:variant==='readable'?2.4:1,height:variant==='readable'?1.8:1.25,centreHeight:1.2};
  });
 }

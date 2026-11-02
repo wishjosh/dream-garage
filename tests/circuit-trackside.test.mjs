@@ -30,3 +30,30 @@ test('T1 distance boards count down to the same reference and clear the road',()
  }
  assert.deepEqual(approachBoards(track),boards);
 });
+
+test('readable boards preserve old reference positions and leave road clearance',()=>{
+ const track=createCityCourse(),old=approachBoards(track,'distance'),readable=approachBoards(track,'readable');
+ for(let i=0;i<old.length;i++){
+  const a=old[i],b=readable[i];
+  for(const key of ['distance','s','x','z','heading','centreHeight'])assert.equal(b[key],a[key]);
+  assert.ok(b.width>a.width*2);assert.ok(b.height>a.height);
+  assert.ok(nearestTrack(track,b.x,b.z).distance>8.2+b.width/2+.5);
+  assert.ok(b.centreHeight-b.height/2>0);
+ }
+ assert.throws(()=>approachBoards(track,'unknown'));
+});
+import {paintDistanceBoard} from '../dist/studies/circuit-elevation/distance-board.mjs';
+test('distance typography fits complete glyph bounds without horizontal squeeze',()=>{
+ const draws=[],ctx={fillRect(){},strokeRect(){},fillText(...args){draws.push(args);},measureText(text){const size=Number(this.font.match(/([0-9.]+)px/)[1]);return {actualBoundingBoxLeft:.04*size,actualBoundingBoxRight:(text.length*.6-.04)*size,actualBoundingBoxAscent:.72*size,actualBoundingBoxDescent:.02*size};}};
+ const sizes=[];
+ for(const text of ['150','100','50']){
+  const fit=paintDistanceBoard(ctx,text,1024,768),[value,x,y]=draws.at(-1),m=ctx.measureText(value);
+  assert.equal(draws.at(-1).length,3,'no maxWidth squeeze');
+  assert.ok(fit.inkWidth<=1024*.88+.001);assert.ok(fit.inkHeight<=768*.8+.001);
+  assert.ok(x-m.actualBoundingBoxLeft>=1024*.06-.001);
+  assert.ok(x+m.actualBoundingBoxRight<=1024*.94+.001);
+  assert.ok(y-m.actualBoundingBoxAscent>=768*.1-.001);assert.ok(y+m.actualBoundingBoxDescent<=768*.9+.001);
+  sizes.push(fit.fontSize);
+ }
+ assert.equal(sizes[0],sizes[1]);assert.equal(sizes[1],sizes[2]);
+});

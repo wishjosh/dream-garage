@@ -1,3 +1,4 @@
+import {paintDistanceBoard} from './distance-board.mjs?v=t1-readable-1';
 import {signageLayout} from './signage.mjs';
 import {STAND,PARKING,spectatorVariant,spectatorStats} from './spectators.mjs';
 import {drawSpectators} from './spectator-scene.mjs';
@@ -9,7 +10,7 @@ import {trackFrame} from '../../race-core.mjs';
 import {DATA} from './data.mjs';
 import {terrainHeight,worldPoint,SITE,START_X} from './terrain.mjs';
 import {createPit,HOLD_Z} from './pit.mjs';
-import {SURFACE,cornerMarkers,pitSignal,approachBoards} from './trackside.mjs?v=t1-distance-1';
+import {SURFACE,cornerMarkers,pitSignal,approachBoards} from './trackside.mjs?v=t1-readable-1';
 export async function buildCampus(scene,track,{realism=true,renderer,layoutId='compact',facilities='split',spectators='scaled',signage='scaled',approach='before'}={}){
  const signs=signageLayout(signage);
  const facilityId=facilityVariant(facilities),spectatorId=spectatorVariant(spectators);
@@ -39,10 +40,10 @@ export async function buildCampus(scene,track,{realism=true,renderer,layoutId='c
  box(pitX,.065,430-START_X,12,.025,.4,white);if(!art)box(layout.separatorX,.5,340-START_X,.6,1,180,white);
  for(let i=2;i<PIT.length-2;i+=3){const p=PIT[i];box(p.x,.06,p.z,.16,.025,2.2,white,Math.atan2(PIT[i+1].x-p.x,PIT[i+1].z-p.z));}
  const signCache=new Map();
- function label(text,x,z,height=3,width=20,heading=Math.PI,aspect=8,color='#173344',ink='#f1f6ee'){
-  const key=JSON.stringify([text,aspect,color,ink]);let tex=signCache.get(key);
-  if(!tex){const c=document.createElement('canvas');c.width=1024;c.height=Math.round(1024/aspect);const ctx=c.getContext('2d');ctx.fillStyle=color;ctx.fillRect(0,0,c.width,c.height);ctx.strokeStyle='#c9d9d4';ctx.lineWidth=5;ctx.strokeRect(5,5,c.width-10,c.height-10);ctx.fillStyle=ink;ctx.font='bold '+Math.floor(c.height*.55)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,c.width/2,c.height/2,c.width-40);tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;signCache.set(key,tex);}
-  const m=new T.Mesh(new T.PlaneGeometry(width,width/aspect),new T.MeshBasicMaterial({map:tex,side:T.DoubleSide}));m.position.set(x,terrainHeight(x,z)+height,z);m.rotation.y=heading;m.name='trackside '+text;scene.add(m);return m;
+ function label(text,x,z,height=3,width=20,heading=Math.PI,aspect=8,color='#173344',ink='#f1f6ee',readable=false){
+  const key=JSON.stringify([text,aspect,color,ink,readable]);let tex=signCache.get(key);
+  if(!tex){const c=document.createElement('canvas');c.width=1024;c.height=Math.round(1024/aspect);const ctx=c.getContext('2d');if(readable){paintDistanceBoard(ctx,text,c.width,c.height);}else{ctx.fillStyle=color;ctx.fillRect(0,0,c.width,c.height);ctx.strokeStyle='#c9d9d4';ctx.lineWidth=5;ctx.strokeRect(5,5,c.width-10,c.height-10);ctx.fillStyle=ink;ctx.font='bold '+Math.floor(c.height*.55)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,c.width/2,c.height/2,c.width-40);}tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;if(readable)tex.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());signCache.set(key,tex);}
+  const m=new T.Mesh(new T.PlaneGeometry(width,width/aspect),new T.MeshBasicMaterial({map:tex,side:T.DoubleSide,toneMapped:!readable}));m.position.set(x,terrainHeight(x,z)+height,z);m.rotation.y=heading;m.name='trackside '+text;scene.add(m);return m;
  }
  const shutter=mat(art?'#686761':'#506774'),glass=new T.MeshStandardMaterial({color:art?'#4c5558':'#233d4a',roughness:.25,metalness:.35}),roof=mat(art?'#9c9b96':'#c7cfca'),seat=mat(art?'#5b6266':'#d2c5ab');
 
@@ -116,8 +117,8 @@ export async function buildCampus(scene,track,{realism=true,renderer,layoutId='c
  if(spectatorId==='scaled')for(const [i,r] of PARKING.access.entries())access(r.points.map(worldPoint),4,road,'visitor access '+i);
  access(DATA.campus.service.map(worldPoint),3,mat('#8a8e7d'),'service road');
  for(let i=0;i<SITE.length;i++){const a=SITE[i],b=SITE[(i+1)%SITE.length],len=Math.hypot(b.x-a.x,b.z-a.z),count=Math.ceil(len/8);for(let j=0;j<count;j++)box(a.x+(b.x-a.x)*(j+.5)/count,.7,a.z+(b.z-a.z)*(j+.5)/count,.5,1.4,len/count+.1,white,Math.atan2(b.x-a.x,b.z-a.z));}
- const boards=approach==='distance'?approachBoards(track):[];
- for(const m of boards){label(String(m.distance),m.x,m.z,m.centreHeight,m.width,m.heading,m.width/m.height,'#e8e7df','#15191b');box(m.x,.35,m.z,.07,.7,.07,navy);}
+ const boards=['distance','readable'].includes(approach)?approachBoards(track,approach):[];
+ for(const m of boards){label(String(m.distance),m.x,m.z,m.centreHeight,m.width,m.heading,m.width/m.height,'#e8e7df','#15191b',approach==='readable');box(m.x,.35,m.z,.07,.7,.07,navy);}
  const markers=cornerMarkers(track);
  for(const m of markers){label(m.label,m.x,m.z,signs.corner.height,signs.corner.width,m.heading,signs.corner.aspect);box(m.x,.65,m.z,.12,1.3,.12,navy);}
  label('PIT 50',pitX+8,160-START_X,signs.entry.height,signs.entry.width,Math.PI,signs.entry.aspect);label('PIT EXIT',pitX,HOLD_Z+2.26,signs.exit.height,signs.exit.width,Math.PI,signs.exit.aspect);

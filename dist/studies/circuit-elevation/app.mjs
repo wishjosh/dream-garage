@@ -14,7 +14,7 @@ let frame=null,ready=false,token=0,scenario='start',loadedArt=null;
 function choose(){token++;if(!ready){frame?.remove();frame=null;}$('drive').hidden=true;$('picker').hidden=false;document.body.style.overflow='';document.querySelector('[data-scenario="'+scenario+'"]')?.focus({preventScroll:true});}
 async function launch(value){
  scenario=value;if(loadedArt!==$('art').value+':'+$('layout').value+':'+$('approach').value){frame?.remove();frame=null;ready=false;loadedArt=$('art').value+':'+$('layout').value+':'+$('approach').value;}$('performance-results').hidden=true;$('performance-text').value='';const current=++token;$('picker').hidden=true;$('drive').hidden=false;$('loading').hidden=false;document.body.style.overflow='hidden';
- const params=new URLSearchParams({scenario,approach:$('approach').value,layout:$('layout').value,art:$('art').value,car:$('car').value,view:$('view').value,traffic:$('traffic').value,qa:'1',review:'1',v:'t1-distance-1'});
+ const params=new URLSearchParams({scenario,approach:$('approach').value,layout:$('layout').value,art:$('art').value,car:$('car').value,view:$('view').value,traffic:$('traffic').value,qa:'1',review:'1',v:'t1-readable-1'});
  if(ready&&frame){frame.contentWindow.postMessage({type:'circuit-elevation:configure',options:{scenario,car:$('car').value,view:$('view').value,traffic:$('traffic').value}},location.origin);return;}
  frame=document.createElement('iframe');frame.id='game';frame.title='스피드 링 독립 지형 주행';frame.allow='fullscreen';$('drive').prepend(frame);frame.src='./run.html?'+params;
  frame.addEventListener('load',async()=>{const win=frame.contentWindow,doc=frame.contentDocument,start=performance.now();while(token===current&&performance.now()-start<120000){

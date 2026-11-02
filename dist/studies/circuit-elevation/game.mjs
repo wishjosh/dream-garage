@@ -3,7 +3,7 @@ import {signageReviewPose} from './signage.mjs';
 import {spectatorReviewPose} from './spectators.mjs';
 import {pitLayout,campusFacilities} from './layout.mjs';
 import {START_X} from './terrain.mjs';
-import {buildCampus} from './scene.mjs?v=t1-distance-1';
+import {buildCampus} from './scene.mjs?v=t1-readable-1';
 import {terrainHeight} from './terrain.mjs';
 import {createFrameMeasure} from './performance.mjs?v=circuit-elevation-2';
 // Isolated terrain study. Original vehicle, cabin and input assets reused.
