@@ -144,3 +144,17 @@ test('scaled stand stops a vehicle at the new front edge',()=>{
  for(let i=0;i<180;i++){p.step(1/60,{throttle:1},false);hit ||= p.hits.some(h=>h.kind==='barrier');}
  assert.ok(hit);assert.ok(e.s.x<80);p.dispose();
 });
+
+test('corner comparison restarts both cars at the identical stationary approach',()=>{
+ const states=[];
+ for(const car of ['tavaculo','porsche']){
+  const p=make(car,4,'compact','split','scaled'),r=p.entries[0].r;
+  p.setupScenario('corner','clear');
+  const initial=[r.x,r.z,r.heading,r.s,r.distance];
+  assert.ok(Math.abs(r.s-(DATA.corners[0].s-240))<1e-6);assert.equal(r.pit.active,false);assert.equal(r.grounded,4);
+  run(p,1,{throttle:true});assert.ok(r.speed>0);
+  p.setupScenario('corner','clear');assert.deepEqual([r.x,r.z,r.heading,r.s,r.distance],initial);assert.equal(r.speed,0);
+  states.push(initial);p.dispose();
+ }
+ assert.deepEqual(states[0],states[1]);
+});

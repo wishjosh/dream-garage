@@ -3,7 +3,7 @@ import {signageReviewPose} from './signage.mjs';
 import {spectatorReviewPose} from './spectators.mjs';
 import {pitLayout,campusFacilities} from './layout.mjs';
 import {START_X} from './terrain.mjs';
-import {buildCampus} from './scene.mjs';
+import {buildCampus} from './scene.mjs?v=t1-distance-1';
 import {terrainHeight} from './terrain.mjs';
 import {createFrameMeasure} from './performance.mjs?v=circuit-elevation-2';
 // Isolated terrain study. Original vehicle, cabin and input assets reused.
@@ -26,7 +26,7 @@ import * as T from '../../vendor/three.module.js';
 import {GLTFLoader} from '../../vendor/GLTFLoader.js';
 import {CAR_NAMES,presentItem} from '../../vehicle-presentation.mjs?v=porsche-main-1';
 import {clamp,mod,trackFrame,nearestTrack,makeRacer,rankOf,finishRacer,PRIZES} from '../../race-core.mjs?v=city-tour-1';
-import {RacePhysics,FIXED_DT} from './physics.mjs?v=circuit-elevation-1';
+import {RacePhysics,FIXED_DT} from './physics.mjs?v=t1-distance-1';
 import {createPreviewSession} from '../../garage-preview-core.mjs?v=porsche-main-1';
 import {bindDragRotation} from '../../studies/garage-preview/drag-rotation.mjs?v=garage-preview-2';
 import {CATALOG,CATEGORIES,normalizeSave,tuning,itemById} from '../../garage-core.mjs?v=porsche-main-1';
@@ -64,7 +64,7 @@ async function boot(){
  function box(w,h,d,x,y,z,mat=mats.navy,parent=scene){const m=new T.Mesh(unit,mat);m.scale.set(w,h,d);m.position.set(x,y,z);parent.add(m);return m;}
  const track=createCityCourse(),{length,frames}=track,N=frames.length;
  const layoutId=sessionParams.get('layout')||'compact',facilityId=sessionParams.get('facilities')||'split',spectatorId=sessionParams.get('spectators')||'scaled';
- const campus=await buildCampus(scene,track,{layoutId,facilities:facilityId,spectators:spectatorId,signage:sessionParams.get('signage')||'scaled',realism:sessionParams.get('art')!=='baseline',renderer});
+ const campus=await buildCampus(scene,track,{layoutId,facilities:facilityId,spectators:spectatorId,signage:sessionParams.get('signage')||'scaled',approach:sessionParams.get('approach')||'before',realism:sessionParams.get('art')!=='baseline',renderer});
  const gltf=new GLTFLoader(),models={};let loaded=0;
  const originalCockpitPromise=createOriginalCockpit({scene,camera,loader:gltf});
  const items=['tavaculo','f2002','porsche'];
@@ -199,7 +199,7 @@ async function boot(){
   elapsed=0;awarded=false;count=3.3;clearInput();mode='countdown';$('welcome').hidden=true;$('menu').hidden=$('pause-menu').hidden=$('result').hidden=true;$('hud').hidden=false;$('countdown').hidden=false;syncVisuals();updateCamera(true);persist();
  }
  function configureSession({car='tavaculo',view:nextView='cockpit',scenario='start',traffic='pack'}={}){
-  if(!['tavaculo','porsche'].includes(car)||!['cockpit','chase'].includes(nextView)||!['start','slope','runoff','pit','pitlane'].includes(scenario)||!['pack','clear'].includes(traffic))throw Error('Unknown study configuration');
+  if(!['tavaculo','porsche'].includes(car)||!['cockpit','chase'].includes(nextView)||!['start','slope','runoff','pit','pitlane','corner'].includes(scenario)||!['pack','clear'].includes(traffic))throw Error('Unknown study configuration');
   driveMeasure=createFrameMeasure();sessionParams.set('scenario',scenario);sessionParams.set('traffic',traffic);selected=car;view=nextView;save.car=car;save.view=view;refreshPreview();resetRace();
  }
  addEventListener('message',event=>{if(event.source!==parent||event.origin!==location.origin||event.data?.type!=='circuit-elevation:configure')return;configureSession(event.data.options);parent.postMessage({type:'circuit-elevation:configured'},location.origin);});
