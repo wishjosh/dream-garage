@@ -1,3 +1,4 @@
+import {FACILITY_BUILDINGS,facilityColliders} from '../dist/studies/circuit-elevation/facilities.mjs';
 import {pitLayout,campusFacilities,layoutMeasurements} from '../dist/studies/circuit-elevation/layout.mjs';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,7 +10,7 @@ import {predictMerge,nearestPit,HOLD_Z,HOLD_S,PIT_SPEED} from '../dist/studies/c
 import {DATA} from '../dist/studies/circuit-elevation/data.mjs';
 import {makeRacer,nearestTrack,trackFrame} from '../dist/race-core.mjs';
 const rigs=JSON.parse(readFileSync(new URL('../dist/assets/vehicle-rigs.json',import.meta.url)));rigs.porsche=rigs.tavaculo;
-function make(car='tavaculo',count=1,layout='spacious'){const t=createCityCourse(),r=Array.from({length:count},(_,i)=>makeRacer(t,{car:i%2?'porsche':car,id:i?'bot'+i:'player',s:i*50,lane:i%2?2.3:-2.3}));return new RacePhysics(t,r,rigs,{autoRecovery:true,layout});}
+function make(car='tavaculo',count=1,layout='spacious',facilities='before'){const t=createCityCourse(),r=Array.from({length:count},(_,i)=>makeRacer(t,{car:i%2?'porsche':car,id:i?'bot'+i:'player',s:i*50,lane:i%2?2.3:-2.3}));return new RacePhysics(t,r,rigs,{autoRecovery:true,layout,facilities});}
 function run(p,seconds,input){for(let i=0;i<seconds*60;i++)p.step(1/60,typeof input==='function'?input():input,false);}
 test('height field reproduces reviewed profile and analytic gradient',()=>{
  const t=createCityCourse();let max=0,maxGrade=0,error=0;
@@ -98,4 +99,24 @@ test('compact geometry and collision footprints agree without changing course or
  const barrier=p.world.bodies.find(b=>b.position.x===11&&b.shapes[0]?.halfExtents?.z===90);assert.ok(barrier);
  assert.equal(p.track.length,createCityCourse().length);assert.deepEqual(p.entries[0].rig,rigs.tavaculo);
  const old=make();assert.equal(old.layout.centerX,38);assert.equal(layoutMeasurements(old.layout).apron,14);p.dispose();old.dispose();
+});
+
+
+test('split facilities replace the old full-zone collision blocks and preserve other facilities',()=>{
+ const old=make('tavaculo',1,'compact','before'),p=make('tavaculo',1,'compact','split');
+ const ids=p.world.bodies.filter(b=>b.facilityId).map(b=>b.facilityId);
+ assert.ok(!ids.includes('paddock')&&!ids.includes('medical'));assert.ok(ids.includes('pit')&&ids.includes('stand'));
+ for(const f of FACILITY_BUILDINGS){const b=p.world.bodies.find(b=>b.facilityId===f.id),[a,y0,c,y1]=f.box;assert.ok(b);assert.equal(b.shapes[0].halfExtents.x,(y1-y0)/2);assert.equal(b.shapes[0].halfExtents.z,(c-a)/2);assert.equal(b.shapes[0].halfExtents.y,f.height/2);assert.ok(f.box[0]>=250);}
+ assert.equal(old.world.bodies.filter(b=>['paddock','medical'].includes(b.facilityId)).length,2);
+ assert.deepEqual(p.entries[0].rig,old.entries[0].rig);assert.equal(p.track.length,old.track.length);old.dispose();p.dispose();
+});
+for(const zone of [{name:'paddock',x:158,along:350},{name:'medical',x:130,along:745},{name:'medical access',x:180,along:660}])test('split '+zone.name+' open yard permits a car to wait without hidden collisions or recovery',()=>{
+ const p=make('tavaculo',1,'compact','split'),e=p.entries[0];Object.assign(e.s,{x:zone.x,z:zone.along-DATA.campus.start[0],heading:0,u:0,v:0});p.placeBody(e);p.sync(e,false);let hits=0;
+ for(let i=0;i<8*60;i++){p.step(1/60,{brake:1},false);hits+=p.hits.length;}
+ assert.equal(p.recoveryStats().count,0);assert.equal(hits,0);assert.equal(e.r.surface,'apron');assert.equal(e.r.grounded,4);assert.ok(Math.abs(e.s.x-zone.x)<.1);p.dispose();
+});
+test('split workshop has a physical front wall at the rendered footprint',()=>{
+ const p=make('tavaculo',1,'compact','split'),e=p.entries[0];Object.assign(e.s,{x:118,z:310-DATA.campus.start[0],heading:Math.PI/2,u:7,v:0});p.placeBody(e);p.sync(e,false);let hit=false;
+ for(let i=0;i<180;i++){p.step(1/60,{throttle:1},false);hit ||= p.hits.some(h=>h.kind==='barrier');}
+ assert.ok(hit);assert.ok(e.s.x<126);assert.equal(p.recoveryStats().count,0);p.dispose();
 });

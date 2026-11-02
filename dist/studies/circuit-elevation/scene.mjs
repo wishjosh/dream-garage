@@ -1,3 +1,4 @@
+import {FACILITY_BUILDINGS,FACILITY_YARDS,FACILITY_ACCESS,facilityStats,facilityVariant} from './facilities.mjs';
 import {pitLayout,campusFacilities,layoutMeasurements} from './layout.mjs';
 import {prepareCircuitArt,installCircuitProps} from './art.mjs';
 import * as T from '../../vendor/three.module.js';
@@ -6,7 +7,8 @@ import {DATA} from './data.mjs';
 import {terrainHeight,worldPoint,SITE,START_X} from './terrain.mjs';
 import {createPit,HOLD_Z} from './pit.mjs';
 import {SURFACE,cornerMarkers,pitSignal} from './trackside.mjs';
-export async function buildCampus(scene,track,{realism=true,renderer,layoutId='compact'}={}){
+export async function buildCampus(scene,track,{realism=true,renderer,layoutId='compact',facilities='split'}={}){
+ const facilityId=facilityVariant(facilities);
  const layout=pitLayout(layoutId),{PIT}=createPit(layout),pitX=layout.centerX,laneEdge=pitX+layout.halfWidth;
  const art=realism?await prepareCircuitArt():null;
  scene.background=new T.Color(realism?'#c6d0d4':'#adc6d5');scene.fog=new T.Fog(realism?'#c6d0d4':'#adc6d5',470,1500);
@@ -39,8 +41,42 @@ export async function buildCampus(scene,track,{realism=true,renderer,layoutId='c
   const m=new T.Mesh(new T.PlaneGeometry(width,width/aspect),new T.MeshBasicMaterial({map:tex,side:T.DoubleSide}));m.position.set(x,terrainHeight(x,z)+height,z);m.rotation.y=heading;m.name='trackside '+text;scene.add(m);return m;
  }
  const shutter=mat(art?'#686761':'#506774'),glass=new T.MeshStandardMaterial({color:art?'#4c5558':'#233d4a',roughness:.25,metalness:.35}),roof=mat(art?'#9c9b96':'#c7cfca'),seat=mat(art?'#5b6266':'#d2c5ab');
+
+ function localBuilding(f){
+  const [a,b,c,d]=f.box,front=-d,x=-(b+d)/2,z=(a+c)/2-START_X,depth=d-b,length=c-a,h=f.height;
+  box(x,h/2,z,depth,h,length,navy);box(x,h+.12,z,depth+1,.24,length+1,roof);
+  // Signs occupy the strip above doors, with no overlap or below-ground panels.
+  label(f.name,front-.14,z,h-.45,f.kind==='office'?5.6:6,-Math.PI/2,10);
+  if(f.kind==='workshop'){
+   for(let i=0;i<f.bays;i++){const bz=a-START_X+(i+.5)*length/f.bays;
+    box(front-.065,.1+f.doorHeight/2,bz,.1,f.doorHeight,f.doorWidth,shutter);
+    for(let j=1;j<6;j++)box(front-.125,.1+j*f.doorHeight/6,bz,.035,.025,f.doorWidth,white);
+    label(String(i+1).padStart(2,'0'),front-.15,bz,f.doorHeight+.27,.6,-Math.PI/2,2);
+    // Short apron alignment marks, leaving the circulation strip clear.
+    for(const side of [-1,1])box(front-4,SURFACE.marking,bz+side*f.doorWidth/2,7,.02,.10,white);
+   }
+   box(front-1,h-.05,z,2,.15,length,roof);
+  }else{
+   box(front-.07,1.18,z,.10,2.16,1.2,shutter);
+   for(const dz of [-8,-4,4,8]){box(front-.08,2,z+dz,.12,1.2,2.2,glass);box(front-.16,1.36,z+dz,.25,.10,2.35,roof);}
+   box(front-1,2.7,z,2.2,.12,2.4,roof);
+  }
+ }
+ function facilityZone(id){
+  const yard=FACILITY_YARDS.find(f=>f.id===id),[a,b,c,d]=yard.box,x=-(b+d)/2,z=(a+c)/2-START_X;
+  polygon([[a,b],[c,b],[c,d],[a,d]].map(worldPoint),art?road:runoff,SURFACE.apron);
+  // A continuous open circulation strip reaches the existing operations entrance.
+  for(const f of FACILITY_BUILDINGS.filter(f=>f.zone===id))localBuilding(f);
+  if(id==='paddock'){
+   // Preparation bays: 4 m by 7 m, outside the door aprons and through lane.
+   for(let i=0;i<8;i++){const bz=282+i*9-START_X;for(const side of [-1,1])box(169,SURFACE.marking,bz+side*2,7,.02,.10,white);box(172.5,SURFACE.marking,bz,.10,.02,4,white);}
+  }else{
+   for(let i=0;i<3;i++){const bz=718+i*7-START_X;for(const side of [-1,1])box(169,SURFACE.marking,bz+side*1.5,6,.02,.10,white);box(172,SURFACE.marking,bz,.10,.02,3,white);}
+  }
+ }
  let pitBays=0,standRows=0;
  for(const f of campusFacilities(layout)){const [x0,y0,x1,y1]=f.box,x=-(y0+y1)/2,z=(x0+x1)/2-START_X,w=y1-y0,d=x1-x0;
+  if(facilityId==='split'&&['paddock','medical'].includes(f.id)){facilityZone(f.id);continue;}
   if(f.id==='basin'){box(x,SURFACE.apron,z,w,.025,d,mat('#73959c'));continue;}
   if(f.id==='parking'){box(x,SURFACE.apron,z,w,.025,d,mat('#526b6c'));for(let i=0;i<12;i++)box(x,SURFACE.marking,z-d/2+10+i*18,w*.7,.02,.15,white);continue;}
   if(f.id==='stand'){
@@ -69,6 +105,7 @@ export async function buildCampus(scene,track,{realism=true,renderer,layoutId='c
  }
  function access(path,width,material,name){const m=ribbon(path,width,material,SURFACE.access);m.name=name;const a=m.geometry.attributes.position.array;let min=Infinity;for(let i=0;i<a.length;i+=3)min=Math.min(min,a[i+1]-terrainHeight(a[i],a[i+2]));surfaceChecks.push({name,minHeightAboveTerrain:min});}
  for(const row of DATA.campus.roads)access(row.points.map(worldPoint),row.kind==='pedestrian'?2:4,mat(row.kind==='pedestrian'?'#bcbaa5':'#747e7e'),'access '+row.id);
+ if(facilityId==='split')for(const r of FACILITY_ACCESS)access(r.points.map(worldPoint),r.halfWidth,road,r.id);
  access(DATA.campus.service.map(worldPoint),3,mat('#8a8e7d'),'service road');
  for(let i=0;i<SITE.length;i++){const a=SITE[i],b=SITE[(i+1)%SITE.length],len=Math.hypot(b.x-a.x,b.z-a.z),count=Math.ceil(len/8);for(let j=0;j<count;j++)box(a.x+(b.x-a.x)*(j+.5)/count,.7,a.z+(b.z-a.z)*(j+.5)/count,.5,1.4,len/count+.1,white,Math.atan2(b.x-a.x,b.z-a.z));}
  const markers=cornerMarkers(track);
@@ -83,5 +120,5 @@ export async function buildCampus(scene,track,{realism=true,renderer,layoutId='c
  const lamp=new T.Mesh(new T.SphereGeometry(.28,10,8),new T.MeshBasicMaterial({color:'#a7b7bd'}));lamp.position.set(pitX+4,3.5,HOLD_Z+2.25);scene.add(lamp);let signal=pitSignal(null,null);
  for(const [material,matrices] of batches){const inst=new T.InstancedMesh(unit,material,matrices.length);matrices.forEach((matrix,i)=>inst.setMatrixAt(i,matrix));inst.instanceMatrix.needsUpdate=true;inst.castShadow=realism&&material!==runoff&&material!==white;inst.receiveShadow=realism;scene.add(inst);}
  const artStats=art?installCircuitProps(scene,art,layout):{source:'baseline'};if(realism)renderer.shadowMap.needsUpdate=true;
- return{update:(merge,player)=>{signal=pitSignal(player,merge);lamp.material.color.set(signal.color);for(const [key,m] of Object.entries(signalMeshes))m.visible=key===signal.state;},stats:()=>({layout:layoutMeasurements(layout),art:artStats,markers,pitBays,standRows,surfaceChecks,signal})};
+ return{update:(merge,player)=>{signal=pitSignal(player,merge);lamp.material.color.set(signal.color);for(const [key,m] of Object.entries(signalMeshes))m.visible=key===signal.state;},stats:()=>({layout:layoutMeasurements(layout),facilities:facilityStats(facilityId),art:artStats,markers,pitBays,standRows,surfaceChecks,signal})};
 }

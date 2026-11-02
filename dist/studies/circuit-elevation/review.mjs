@@ -5,7 +5,7 @@ async function load(car,view,scenario,width=874,height=402,layout='spacious'){
  if(frame&&loadedLayout!==layout){frame.remove();frame=null;}loadedLayout=layout;
  if(frame?.contentWindow?.__raceQA){const w=frame.contentWindow;frame.width=width;frame.height=height;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));w.__raceQA.configureReview({car,view,scenario,traffic:'pack'});w.__raceQA.advance(4,{});return w;}
  frame=document.createElement('iframe');frame.width=width;frame.height=height;$('stage').append(frame);
- const params=new URLSearchParams({car,view,scenario,layout,traffic:'pack',qa:'1',review:'1'});
+ const params=new URLSearchParams({car,view,scenario,layout,traffic:'pack',facilities:'before',qa:'1',review:'1'});
  frame.src='./run.html?'+params;
  await Promise.race([new Promise(resolve=>frame.onload=resolve),new Promise((_,reject)=>setTimeout(()=>reject(Error('Frame navigation timeout')),15000))]);
  const w=frame.contentWindow,d=frame.contentDocument,start=performance.now();

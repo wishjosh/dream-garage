@@ -57,8 +57,8 @@ async function boot(){
  const mats={road:material('#707c87',.86),walk:material('#64778a'),navy:material('#142b43'),white:material('#c1d3de'),cyan:basic('#66f4f1'),pink:basic('#ff7197'),gold:basic('#ffdc9d'),dark:material('#143b53',.3,.5)};
  function box(w,h,d,x,y,z,mat=mats.navy,parent=scene){const m=new T.Mesh(unit,mat);m.scale.set(w,h,d);m.position.set(x,y,z);parent.add(m);return m;}
  const track=createCityCourse(),{length,frames}=track,N=frames.length;
- const layoutId=sessionParams.get('layout')||'compact';
- const campus=await buildCampus(scene,track,{layoutId,realism:sessionParams.get('art')!=='baseline',renderer});
+ const layoutId=sessionParams.get('layout')||'compact',facilityId=sessionParams.get('facilities')||'split';
+ const campus=await buildCampus(scene,track,{layoutId,facilities:facilityId,realism:sessionParams.get('art')!=='baseline',renderer});
  const gltf=new GLTFLoader(),models={};let loaded=0;
  const originalCockpitPromise=createOriginalCockpit({scene,camera,loader:gltf});
  const items=['tavaculo','f2002','porsche'];
@@ -189,7 +189,7 @@ async function boot(){
   visuals.forEach(v=>{scene.remove(v.root);disposeDress(v.body);});visuals=[];if(preview)preview.visible=false;
   player=makeRacer(track,{car:selected,lane:-2.3});racers=[player,...opponentCars(selected).map((car,i)=>makeRacer(track,{id:'bot'+i,car,s:7+i*7,lane:i%2?-2.3:2.3}))];
   for(const r of racers){const root=new T.Group(),body=models[r.car].clone(true);if(r===player||r.car==='porsche')dressCar(body,r.car,r===player?save.garage[selected]:{paint:'paint-stock',wheels:'wheels-stock'},rigs[r.car]);root.add(body);const {wheels,calipers}=splitWheelVisuals(body,rigs[r.car]);wheels.forEach(w=>root.add(w));calipers.forEach(c=>root.add(c));const shadow=new T.Mesh(new T.PlaneGeometry(3.6,6.0),shadowMat);shadow.rotation.x=-Math.PI/2;shadow.position.y=.06;root.add(shadow);scene.add(root);visuals.push({root,body,wheels,calipers,shadow});}
-  physics=new RacePhysics(track,racers,rigs,{autoRecovery:true,layout:layoutId,playerTuning:tuning(save,selected)});physics.presentationEnabled=bodyMotion;physics.setupScenario(sessionParams.get('scenario')||'start',sessionParams.get('traffic')||'pack');
+  physics=new RacePhysics(track,racers,rigs,{autoRecovery:true,layout:layoutId,facilities:facilityId,playerTuning:tuning(save,selected)});physics.presentationEnabled=bodyMotion;physics.setupScenario(sessionParams.get('scenario')||'start',sessionParams.get('traffic')||'pack');
   elapsed=0;awarded=false;count=3.3;clearInput();mode='countdown';$('welcome').hidden=true;$('menu').hidden=$('pause-menu').hidden=$('result').hidden=true;$('hud').hidden=false;$('countdown').hidden=false;syncVisuals();updateCamera(true);persist();
  }
  function configureSession({car='tavaculo',view:nextView='cockpit',scenario='start',traffic='pack'}={}){
@@ -292,13 +292,13 @@ mirrorPixels:()=>rearView.pixels(),inspectSideMirror:id=>{const side=sideViews.f
    const forward=new T.Vector3(Math.sin(player.heading),0,Math.cos(player.heading)),right=new T.Vector3(-forward.z,0,forward.x);
    mirrorProbeObject.position.set(player.x,(player.y||0)+1.05,player.z).addScaledVector(forward,(options.behind===false?1:-1)*(options.distance||12)).addScaledVector(right,options.x||0);mirrorProbeObject.rotation.y=player.heading;
    renderScene(true);return{position:mirrorProbeObject.position.toArray(),xMeaning:'driver right positive',behind:options.behind!==false};
-  },placeOffCourse:({s=length*.04,lateral=20}={})=>{if(!window.__cockpitReviewStorageIsolated)throw Error('Local isolated review only');clearInput();const e=physics.entries[0],f=trackFrame(track,s);e.recovery.anchorS=f.s;Object.assign(e.s,{x:f.x+f.rx*lateral,z:f.z+f.rz*lateral,heading:Math.atan2(f.tx,f.tz),u:0,v:0,yawRate:0});physics.placeBody(e);physics.sync(e,false);syncVisuals();updateCamera(true);renderScene(true);},reviewFacility:(id)=>{
+  },placeOffCourse:({s=length*.04,lateral=20}={})=>{if(!window.__cockpitReviewStorageIsolated)throw Error('Local isolated review only');clearInput();const e=physics.entries[0],f=trackFrame(track,s);e.recovery.anchorS=f.s;Object.assign(e.s,{x:f.x+f.rx*lateral,z:f.z+f.rz*lateral,heading:Math.atan2(f.tx,f.tz),u:0,v:0,yawRate:0});physics.placeBody(e);physics.sync(e,false);syncVisuals();updateCamera(true);renderScene(true);},reviewFacility:(id,{wide=false}={})=>{
    if(!window.__cockpitReviewStorageIsolated)throw Error('Local isolated review only');
    const f=campusFacilities(pitLayout(layoutId)).find(f=>f.id===id);if(!f)throw Error('Unknown facility');
-   const [a,b,c,d]=f.box,side=id==='parking'?1:-1,x=side===1?-b:-d,z=(a+c)/2-START_X,e=physics.entries[0];
+   const [a,b,c,d]=f.box,side=id==='parking'?1:-1,x=side===1?-b:-d,z=(wide&&id==='paddock'?350:(a+c)/2)-START_X,e=physics.entries[0];
    clearInput();Object.assign(e.s,{x:x+side*7,z,heading:0,u:0,v:0,yawRate:0});physics.placeBody(e);physics.sync(e,false);syncVisuals();updateCamera(true);
-   camera.position.set(x+side*30,terrainHeight(x,z)+12,z-30);camera.lookAt(x,terrainHeight(x,z)+2,z+12);camera.fov=62;camera.updateProjectionMatrix();renderScene(true);
-   return {id,name:f.name,footprint:[c-a,d-b],car:window.__raceQA.snapshot().appearance.dimensions,view:'facility review only; car parked outside front; same camera offset',errors:[...window.__cockpitReviewErrors]};
+   camera.position.set(x+side*(wide?55:30),terrainHeight(x,z)+(wide?24:12),z-(wide?55:30));camera.lookAt(x+(wide?12:0),terrainHeight(x,z)+2,z+12);camera.fov=62;camera.updateProjectionMatrix();renderScene(true);
+   return {id,name:f.name,footprint:[c-a,d-b],facilities:campus.stats().facilities,camera:camera.position.toArray(),cameraFov:camera.fov,car:window.__raceQA.snapshot().appearance.dimensions,view:'facility review only; car parked outside front; same camera offset',errors:[...window.__cockpitReviewErrors]};
   },setWheelInspection:value=>{wheelInspection=!!value;updateCamera(true);},setAssist:value=>{save.assist=value;},track:()=>track,reviewScene:({progress=.34,closing=null,side=false}={})=>{
    if(!window.__cockpitReviewStorageIsolated)throw Error('Local isolated review only');
    recentImpact=null;clearInput();
