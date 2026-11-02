@@ -45,3 +45,5 @@ CC0. Existing color, OpenGL normal and roughness now all connected in this study
 Per-asset provenance.json records exact source URLs, authors, download dates,
 byte sizes and verified MD5 hashes. Runtime paths and placement are in art.mjs.
 Original driving UI, vehicle art, save isolation and course layout are retained.
+
+2026-11-02 layout comparison: the compact variant repositions the same barrier/fence instances to separator x=11m and tyres beside the smaller pit building. Asset geometry and source files are unchanged; the spacious variant retains the earlier placement.

@@ -1,11 +1,13 @@
+import {pitLayout,campusFacilities,layoutMeasurements} from './layout.mjs';
 import {prepareCircuitArt,installCircuitProps} from './art.mjs';
 import * as T from '../../vendor/three.module.js';
 import {trackFrame} from '../../race-core.mjs';
 import {DATA} from './data.mjs';
 import {terrainHeight,worldPoint,SITE,START_X} from './terrain.mjs';
-import {PIT,HOLD_Z} from './pit.mjs';
+import {createPit,HOLD_Z} from './pit.mjs';
 import {SURFACE,cornerMarkers,pitSignal} from './trackside.mjs';
-export async function buildCampus(scene,track,{realism=true,renderer}={}){
+export async function buildCampus(scene,track,{realism=true,renderer,layoutId='spacious'}={}){
+ const layout=pitLayout(layoutId),{PIT}=createPit(layout),pitX=layout.centerX,laneEdge=pitX+layout.halfWidth;
  const art=realism?await prepareCircuitArt():null;
  scene.background=new T.Color(realism?'#c6d0d4':'#adc6d5');scene.fog=new T.Fog(realism?'#c6d0d4':'#adc6d5',470,1500);
  scene.add(new T.HemisphereLight(realism?'#e8edf1':'#e4f3ff',realism?'#797363':'#445443',realism?1.25:2));const sun=new T.DirectionalLight('#fff1d8',2.2);sun.position.set(...(realism?[-120,150,-180]:[-300,600,-180]));scene.add(sun);if(realism){sun.target.position.set(35,0,-70);scene.add(sun.target);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-160,right:160,top:160,bottom:-160,near:1,far:600});sun.shadow.bias=-.001;sun.shadow.normalBias=.15;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;scene.environmentIntensity=.45;}
@@ -28,7 +30,7 @@ export async function buildCampus(scene,track,{realism=true,renderer}={}){
  for(const side of [-1,1])ribbon(roadPath.map(p=>({x:p.x+p.rx*side*8,z:p.z+p.rz*side*8})),.09,white,.058);
  const curbs=new T.InstancedMesh(unit,white,Math.ceil(track.length/5)*2),o=new T.Object3D();let ci=0;
  for(let s=0;s<track.length;s+=5){const f=trackFrame(track,s),heading=Math.atan2(f.tx,f.tz);for(const side of [-1,1]){const x=f.x+f.rx*7.65*side,z=f.z+f.rz*7.65*side;o.position.set(x,terrainHeight(x,z)+.07,z);o.rotation.set(0,heading,0);o.scale.set(.55,.045,4.85);o.updateMatrix();curbs.setMatrixAt(ci,o.matrix);curbs.setColorAt(ci++,new T.Color(Math.round(s/5)%2?'#e9eee8':'#b44c46'));}}curbs.count=ci;scene.add(curbs);
- box(38,.065,430-START_X,12,.025,.4,white);if(!art)box(16,.5,340-START_X,.6,1,180,white);
+ box(pitX,.065,430-START_X,12,.025,.4,white);if(!art)box(layout.separatorX,.5,340-START_X,.6,1,180,white);
  for(let i=2;i<PIT.length-2;i+=3){const p=PIT[i];box(p.x,.06,p.z,.16,.025,2.2,white,Math.atan2(PIT[i+1].x-p.x,PIT[i+1].z-p.z));}
  const signCache=new Map();
  function label(text,x,z,height=3,width=20,heading=Math.PI,aspect=8,color='#173344'){
@@ -38,7 +40,7 @@ export async function buildCampus(scene,track,{realism=true,renderer}={}){
  }
  const shutter=mat(art?'#686761':'#506774'),glass=new T.MeshStandardMaterial({color:art?'#4c5558':'#233d4a',roughness:.25,metalness:.35}),roof=mat(art?'#9c9b96':'#c7cfca'),seat=mat(art?'#5b6266':'#d2c5ab');
  let pitBays=0,standRows=0;
- for(const f of DATA.campus.facilities){const [x0,y0,x1,y1]=f.box,x=-(y0+y1)/2,z=(x0+x1)/2-START_X,w=y1-y0,d=x1-x0;
+ for(const f of campusFacilities(layout)){const [x0,y0,x1,y1]=f.box,x=-(y0+y1)/2,z=(x0+x1)/2-START_X,w=y1-y0,d=x1-x0;
   if(f.id==='basin'){box(x,SURFACE.apron,z,w,.025,d,mat('#73959c'));continue;}
   if(f.id==='parking'){box(x,SURFACE.apron,z,w,.025,d,mat('#526b6c'));for(let i=0;i<12;i++)box(x,SURFACE.marking,z-d/2+10+i*18,w*.7,.02,.15,white);continue;}
   if(f.id==='stand'){
@@ -47,14 +49,19 @@ export async function buildCampus(scene,track,{realism=true,renderer}={}){
    for(let iz=-d/2+7;iz<d/2;iz+=24)box(x+w/2-2,5.3,z+iz,.45,10.6,.45,navy);
    box(x,10.6,z,w,.35,d,roof);label('SPEED RING / GRANDSTAND',x-w/2-.05,z,8,Math.min(d-4,70),-Math.PI/2,12);continue;
   }
-  const h=f.id==='pit'?6:f.id==='medical'?4:3;box(x,h/2,z,w,h,d,navy);box(x,h+.25,z,w+2,.5,d+2,roof);
+  const h=f.id==='pit'?layout.height:f.id==='medical'?4:3;box(x,h/2,z,w,h,d,navy);box(x,h+.25,z,w+2,.5,d+2,roof);
   if(f.id==='pit'){
-   // The apron connects the lane edge x=44 to the existing building front.
-   const front=x-w/2;box((44+front)/2,SURFACE.apron,z,front-44,.025,d,runoff);
-   for(let i=0;i<10;i++){const bz=z-d/2+8+i*16;box(front-.06,2.15,bz,.1,4.1,12,shutter);for(let j=1;j<5;j++)box(front-.13,j*.78,bz,.05,.045,12,white);label(String(i+1).padStart(2,'0'),front-.16,bz,5.1,2.4,-Math.PI/2,2);pitBays++;box(49,SURFACE.marking,bz,8,.02,.15,white);}
-   box(front-2.5,4.65,z,5,.22,d,roof);
-   box(x,8.25,z+d/2-16,w-6,4,24,navy);box(front+2.9,8.6,z+d/2-16,.2,2.2,22,glass);box(x,10.4,z+d/2-16,w-4,.3,26,roof);
-   label('PIT / CONTROL',front-2.6,z,6,38,-Math.PI/2,10);
+   const small=layout.id==='compact',front=x-w/2,doorH=layout.doorHeight,doorW=layout.doorWidth;
+   box((laneEdge+front)/2,SURFACE.apron,z,front-laneEdge,.025,d,runoff);
+   for(let i=0;i<10;i++){const bz=z-d/2+layout.bayPitch/2+i*layout.bayPitch;
+    box(front-.06,doorH/2+.1,bz,.1,doorH,doorW,shutter);for(let j=1;j<5;j++)box(front-.13,j*(small?doorH/5:.78),bz,.05,.045,doorW,white);
+    label(String(i+1).padStart(2,'0'),front-.16,bz,small?3.85:5.1,small?1.3:2.4,-Math.PI/2,2);pitBays++;
+    box(laneEdge+(front-laneEdge)*.36,SURFACE.marking,bz,small?4:8,.02,.15,white);
+   }
+   box(front-(small?1.25:2.5),small?3.6:4.65,z,small?2.5:5,.22,d,roof);
+   const controlD=small?14:24,controlH=small?2.8:4,controlZ=z+d/2-(small?9:16),controlY=h+.25+controlH/2;
+   box(x,controlY,controlZ,w-6,controlH,controlD,navy);box(front+2.9,controlY+.35,controlZ,.2,small?1.6:2.2,controlD-2,glass);box(x,h+.4+controlH,controlZ,w-4,.3,controlD+2,roof);
+   label('PIT / CONTROL',front-(small?1.35:2.6),z,small?4.5:6,small?16:38,-Math.PI/2,10);
   }else{
    label(f.id==='medical'?'RECOVERY / OPERATIONS':'PADDOCK',x-w/2-.06,z,h*.65,Math.min(d-4,40),-Math.PI/2,10);
    for(let i=0;i<5;i++)box(x-w/2-.05,h*.48,z-d*.36+i*d*.18,.1,h*.55,d*.10,shutter);
@@ -66,15 +73,15 @@ export async function buildCampus(scene,track,{realism=true,renderer}={}){
  for(let i=0;i<SITE.length;i++){const a=SITE[i],b=SITE[(i+1)%SITE.length],len=Math.hypot(b.x-a.x,b.z-a.z),count=Math.ceil(len/8);for(let j=0;j<count;j++)box(a.x+(b.x-a.x)*(j+.5)/count,.7,a.z+(b.z-a.z)*(j+.5)/count,.5,1.4,len/count+.1,white,Math.atan2(b.x-a.x,b.z-a.z));}
  const markers=cornerMarkers(track);
  for(const m of markers){label(m.label,m.x,m.z,1.65,3.8,m.heading,2.5);box(m.x,.65,m.z,.12,1.3,.12,navy);}
- label('PIT 50',46,160-START_X,2.5,6,Math.PI,2.5);label('PIT EXIT',38,HOLD_Z+2.26,5.65,8,Math.PI,6);
- for(const sx of [31,45])box(sx,2.5,HOLD_Z+2.4,.16,5,.16,navy);
- box(38,5,HOLD_Z+2.4,14,.16,.16,navy);
- const signalMeshes={};for(const [key,text,color] of [['idle','PIT 50','#344c59'],['approach','STOP 50','#71501c'],['wait','WAIT','#71501c'],['go','GO →','#1c5947']]){signalMeshes[key]=label(text,38,HOLD_Z+2.35,3.5,7,Math.PI,4,color);signalMeshes[key].visible=key==='idle';}
- label('MERGE →',24,500-START_X,1.8,5,Math.PI,3);
+ label('PIT 50',pitX+8,160-START_X,2.5,6,Math.PI,2.5);label('PIT EXIT',pitX,HOLD_Z+2.26,5.65,8,Math.PI,6);
+ for(const sx of [pitX-7,pitX+7])box(sx,2.5,HOLD_Z+2.4,.16,5,.16,navy);
+ box(pitX,5,HOLD_Z+2.4,14,.16,.16,navy);
+ const signalMeshes={};for(const [key,text,color] of [['idle','PIT 50','#344c59'],['approach','STOP 50','#71501c'],['wait','WAIT','#71501c'],['go','GO →','#1c5947']]){signalMeshes[key]=label(text,pitX,HOLD_Z+2.35,3.5,7,Math.PI,4,color);signalMeshes[key].visible=key==='idle';}
+ label('MERGE →',24*pitX/38,500-START_X,1.8,5,Math.PI,3);
  label('SPEED RING',0,15,7,18);for(const side of [-1,1])box(9*side,3.5,15,.35,7,.35,navy);
  for(let row=0;row<2;row++)for(let i=0;i<16;i++)box(-7.5+i,.065,row*.7,.9,.02,.65,(row+i)%2?white:navy);
- const lamp=new T.Mesh(new T.SphereGeometry(.28,10,8),new T.MeshBasicMaterial({color:'#a7b7bd'}));lamp.position.set(42,3.5,HOLD_Z+2.25);scene.add(lamp);let signal=pitSignal(null,null);
+ const lamp=new T.Mesh(new T.SphereGeometry(.28,10,8),new T.MeshBasicMaterial({color:'#a7b7bd'}));lamp.position.set(pitX+4,3.5,HOLD_Z+2.25);scene.add(lamp);let signal=pitSignal(null,null);
  for(const [material,matrices] of batches){const inst=new T.InstancedMesh(unit,material,matrices.length);matrices.forEach((matrix,i)=>inst.setMatrixAt(i,matrix));inst.instanceMatrix.needsUpdate=true;inst.castShadow=realism&&material!==runoff&&material!==white;inst.receiveShadow=realism;scene.add(inst);}
- const artStats=art?installCircuitProps(scene,art):{source:'baseline'};if(realism)renderer.shadowMap.needsUpdate=true;
- return{update:(merge,player)=>{signal=pitSignal(player,merge);lamp.material.color.set(signal.color);for(const [key,m] of Object.entries(signalMeshes))m.visible=key===signal.state;},stats:()=>({art:artStats,markers,pitBays,standRows,surfaceChecks,signal})};
+ const artStats=art?installCircuitProps(scene,art,layout):{source:'baseline'};if(realism)renderer.shadowMap.needsUpdate=true;
+ return{update:(merge,player)=>{signal=pitSignal(player,merge);lamp.material.color.set(signal.color);for(const [key,m] of Object.entries(signalMeshes))m.visible=key===signal.state;},stats:()=>({layout:layoutMeasurements(layout),art:artStats,markers,pitBays,standRows,surfaceChecks,signal})};
 }

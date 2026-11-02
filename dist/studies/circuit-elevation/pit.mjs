@@ -1,17 +1,19 @@
+import {pitLayout} from './layout.mjs';
 import {DATA} from './data.mjs';
 import {worldPoint,START_X} from './terrain.mjs';
 import {clamp,nearestTrack,trackFrame,angleDelta} from '../../race-core.mjs';
 export const PIT_SPEED=50/3.6,HORIZON=15,HOLD_Z=430-START_X-2.4,EXIT_Z=550-START_X;
-export const PIT=DATA.campus.pit.map(worldPoint);let length=0;
+export function createPit(layout=pitLayout()){
+const PIT=DATA.campus.pit.map(worldPoint).map(p=>({...p,x:p.x*layout.centerX/38}));let length=0;
 for(let i=0;i<PIT.length;i++){if(i)length+=Math.hypot(PIT[i].x-PIT[i-1].x,PIT[i].z-PIT[i-1].z);PIT[i].s=length;}
-export const PIT_LENGTH=length;
-export function pitFrame(s){s=clamp(s,0,PIT_LENGTH);let i=1;while(i<PIT.length-1&&PIT[i].s<s)i++;const a=PIT[i-1],b=PIT[i],t=(s-a.s)/(b.s-a.s),dx=b.x-a.x,dz=b.z-a.z,l=Math.hypot(dx,dz);return{x:a.x+dx*t,z:a.z+dz*t,tx:dx/l,tz:dz/l,s};}
-export function nearestPit(x,z){let best={distance:Infinity};for(let i=1;i<PIT.length;i++){const a=PIT[i-1],b=PIT[i],dx=b.x-a.x,dz=b.z-a.z,t=clamp(((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz),0,1),px=a.x+dx*t,pz=a.z+dz*t,distance=Math.hypot(px-x,pz-z);if(distance<best.distance)best={...pitFrame(a.s+(b.s-a.s)*t),distance};}return best;}
-export const HOLD_S=nearestPit(38,HOLD_Z).s;
+const PIT_LENGTH=length;
+function pitFrame(s){s=clamp(s,0,PIT_LENGTH);let i=1;while(i<PIT.length-1&&PIT[i].s<s)i++;const a=PIT[i-1],b=PIT[i],t=(s-a.s)/(b.s-a.s),dx=b.x-a.x,dz=b.z-a.z,l=Math.hypot(dx,dz);return{x:a.x+dx*t,z:a.z+dz*t,tx:dx/l,tz:dz/l,s};}
+function nearestPit(x,z){let best={distance:Infinity};for(let i=1;i<PIT.length;i++){const a=PIT[i-1],b=PIT[i],dx=b.x-a.x,dz=b.z-a.z,t=clamp(((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz),0,1),px=a.x+dx*t,pz=a.z+dz*t,distance=Math.hypot(px-x,pz-z);if(distance<best.distance)best={...pitFrame(a.s+(b.s-a.s)*t),distance};}return best;}
+const HOLD_S=nearestPit(layout.centerX,HOLD_Z).s;
 // Deterministic game predictor: route-following traffic, current speed, +/-0.8 m/s²
 // uncertainty, all lane positions, 0.25s steps plus car length/time-step margins.
 // Missing, off-route or reversing traffic never produces a release.
-export function predictMerge(track,traffic,{fromS=HOLD_S,speed=0}={}){
+function predictMerge(track,traffic,{fromS=HOLD_S,speed=0}={}){
  if(!Array.isArray(traffic))return{clear:false,reason:'교통 정보 없음',horizon:HORIZON};
  for(const r of traffic)if(![r.x,r.z,r.forwardSpeed].every(Number.isFinite)||r.forwardSpeed<-.1||nearestTrack(track,r.x,r.z).distance>9)return{clear:false,reason:'교통 예측 불가',horizon:HORIZON};
  for(let t=0;t<=HORIZON+.001;t+=.25){
@@ -28,4 +30,9 @@ export function predictMerge(track,traffic,{fromS=HOLD_S,speed=0}={}){
  }
  return{clear:true,reason:'합류 가능 · 15초 예측',horizon:HORIZON};
 }
-export function pitGuide(e){const n=nearestPit(e.s.x,e.s.z),look=8+Math.abs(e.s.u)*.65,p=pitFrame(n.s+look),desired=Math.atan2(p.x-e.s.x,p.z-e.s.z);return{steer:clamp(Math.atan(2*(e.config.a+e.config.b)*Math.sin(angleDelta(desired,e.s.heading))/look)/e.config.maxSteer,-1,1),throttle:clamp((PIT_SPEED-e.s.u)*.65,0,1),brake:clamp((e.s.u-PIT_SPEED)*.5,0,1)};}
+function pitGuide(e){const n=nearestPit(e.s.x,e.s.z),look=8+Math.abs(e.s.u)*.65,p=pitFrame(n.s+look),desired=Math.atan2(p.x-e.s.x,p.z-e.s.z);return{steer:clamp(Math.atan(2*(e.config.a+e.config.b)*Math.sin(angleDelta(desired,e.s.heading))/look)/e.config.maxSteer,-1,1),throttle:clamp((PIT_SPEED-e.s.u)*.65,0,1),brake:clamp((e.s.u-PIT_SPEED)*.5,0,1)};}
+
+return{PIT,PIT_LENGTH,HOLD_S,pitFrame,nearestPit,predictMerge,pitGuide};
+}
+export const DEFAULT_PIT=createPit();
+export const {PIT,PIT_LENGTH,HOLD_S,pitFrame,nearestPit,predictMerge,pitGuide}=DEFAULT_PIT;

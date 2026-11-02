@@ -10,3 +10,5 @@ body:is([data-car="tavaculo"],[data-car="porsche"])[data-view="cockpit"] #map-op
 
 #study-telemetry{position:fixed;top:54px;left:var(--ui-left,16px);color:#f0fff7;background:#19383ccf;border-radius:5px;padding:5px 8px;font:600 11px system-ui;pointer-events:none}
 @media(max-height:400px){#study-telemetry{top:47px;font-size:10px;padding:3px 6px}}
+
+body #hud .top-actions #compare-layout{padding:8px 10px;min-height:44px;font-size:12px}body #hud .race-stats{max-width:calc(100% - 270px)}

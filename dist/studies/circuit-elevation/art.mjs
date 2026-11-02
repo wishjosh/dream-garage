@@ -1,3 +1,4 @@
+import {pitLayout} from './layout.mjs';
 import * as T from '../../vendor/three.module.js';
 import {GLTFLoader} from '../../vendor/GLTFLoader.js';
 import {terrainHeight,START_X} from './terrain.mjs';
@@ -36,25 +37,25 @@ function parts(source,rotationX=0){
  node.traverse(o=>{if(o.isMesh){const geo=o.geometry.clone().applyMatrix4(o.matrixWorld);geo.translate(-center.x,-box.min.y,-center.z);result.push({geometry:geo,material:o.material});}});
  return{parts:result,size};
 }
-export function installCircuitProps(scene,art){
+export function installCircuitProps(scene,art,layout=pitLayout()){
  const counts={barriers:0,fencePanels:0,fencePosts:0,tyres:0},bounds=[];
  function instances(template,placements,name,scale=new T.Vector3(1,1,1)){
   for(const part of template.parts){const mesh=new T.InstancedMesh(part.geometry,part.material,placements.length);mesh.name=name;mesh.castShadow=true;mesh.receiveShadow=true;const obj=new T.Object3D();placements.forEach((p,i)=>{obj.position.set(p.x,terrainHeight(p.x,p.z)+(p.y||.045),p.z);obj.rotation.set(0,p.angle||0,0);obj.scale.copy(scale);obj.updateMatrix();mesh.setMatrixAt(i,obj.matrix);});mesh.computeBoundingSphere();scene.add(mesh);}
  }
  // Replace the same 180 m separator footprint; visual parts do not alter driving rules.
  const barrier=parts(art.barrier),barriers=[];const length=180,count=120;
- for(let i=0;i<count;i++)barriers.push({x:16,z:250-START_X+(i+.5)*length/count,angle:Math.PI/2});
+ for(let i=0;i<count;i++)barriers.push({x:layout.separatorX,z:250-START_X+(i+.5)*length/count,angle:Math.PI/2});
  instances(barrier,barriers,'Poly Haven concrete pit separator',new T.Vector3(1.5/barrier.size.x,.96/barrier.size.y,.6/barrier.size.z));counts.barriers=count;
- bounds.push({name:'separator',x:[15.7,16.3],z:[250-START_X,430-START_X],collider:'existing pit separator'});
+ bounds.push({name:'separator',x:[layout.separatorX-.3,layout.separatorX+.3],z:[250-START_X,430-START_X],collider:'existing pit separator'});
  // The fence runs atop the divider, stopping 12 m before the exit sight line.
  const panel=parts(art.fence.getObjectByName('modular_chainlink_fence_double')),
  post=parts(art.fence.getObjectByName('modular_chainlink_fence_post')),panels=[],posts=[];
- for(let i=0;i<84;i++)panels.push({x:16,z:251-START_X+i*2,y:1,angle:Math.PI/2});
- for(let i=0;i<=84;i++)posts.push({x:16,z:250-START_X+i*2,y:1,angle:Math.PI/2});
+ for(let i=0;i<84;i++)panels.push({x:layout.separatorX,z:251-START_X+i*2,y:1,angle:Math.PI/2});
+ for(let i=0;i<=84;i++)posts.push({x:layout.separatorX,z:250-START_X+i*2,y:1,angle:Math.PI/2});
  instances(panel,panels,'Poly Haven pit fence');instances(post,posts,'Poly Haven fence posts');counts.fencePanels=panels.length;counts.fencePosts=posts.length;
  // Spare tyre stacks sit on the apron beyond the lane, away from merge sight lines.
  const tyre=parts(art.tyre,Math.PI/2),tyres=[];
- for(const z of [310,342,374])for(let column=0;column<3;column++)for(let row=0;row<4;row++)tyres.push({x:55+column*.65,z:z-START_X,y:.11+row*tyre.size.y,angle:(row+column)*.6});
+ for(const z of (layout.id==='compact'?[316,340,364]:[310,342,374]))for(let column=0;column<3;column++)for(let row=0;row<4;row++)tyres.push({x:layout.front-3+column*.65,z:z-START_X,y:.11+row*tyre.size.y,angle:(row+column)*.6});
  instances(tyre,tyres,'Poly Haven spare tyres');counts.tyres=tyres.length;
  return{...counts,source:'Poly Haven CC0',bounds,barrierTriangles:7573,download:'local 1K textures',fenceAlphaTest:.5};
 }

@@ -1,10 +1,11 @@
-const $=id=>document.getElementById(id);let frame;
+const $=id=>document.getElementById(id);let frame,loadedLayout;
 const rows=[];
 function check(ok,message,data){rows.push({ok:!!ok,message,data});$('report').textContent=JSON.stringify(rows,null,2);if(!ok)throw Error(message);}
-async function load(car,view,scenario,width=874,height=402){
+async function load(car,view,scenario,width=874,height=402,layout='spacious'){
+ if(frame&&loadedLayout!==layout){frame.remove();frame=null;}loadedLayout=layout;
  if(frame?.contentWindow?.__raceQA){const w=frame.contentWindow;frame.width=width;frame.height=height;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));w.__raceQA.configureReview({car,view,scenario,traffic:'pack'});w.__raceQA.advance(4,{});return w;}
  frame=document.createElement('iframe');frame.width=width;frame.height=height;$('stage').append(frame);
- const params=new URLSearchParams({car,view,scenario,traffic:'pack',qa:'1',review:'1'});
+ const params=new URLSearchParams({car,view,scenario,layout,traffic:'pack',qa:'1',review:'1'});
  frame.src='./run.html?'+params;
  await Promise.race([new Promise(resolve=>frame.onload=resolve),new Promise((_,reject)=>setTimeout(()=>reject(Error('Frame navigation timeout')),15000))]);
  const w=frame.contentWindow,d=frame.contentDocument,start=performance.now();
@@ -47,3 +48,21 @@ $('run').onclick=async()=>{
 
 $('pit-view').onclick=async()=>{await load('tavaculo','chase','pitlane',1200,640);$('status').textContent='피트 비교 · 정지된 동일 시점';};
 $('cockpit-view').onclick=async()=>{await load('porsche','cockpit','start',1200,640);$('status').textContent='포르쉐 운전석 · 출발 직선';};
+
+$('compact-view').onclick=async()=>{await load('tavaculo','chase','pitlane',1200,640,'compact');$('status').textContent='조정안 · 정지된 동일 시점';};
+$('layout-run').onclick=async()=>{
+ $('layout-run').disabled=true;rows.length=0;
+ try{
+  for(const car of ['tavaculo','porsche']){
+   let w=await load(car,'chase','pitlane',874,402,'spacious'),before=w.__raceQA.snapshot();
+   w=await load(car,'chase','pitlane',874,402,'compact');const q=w.__raceQA,after=q.snapshot();
+   check(JSON.stringify(before.appearance.dimensions)===JSON.stringify(after.appearance.dimensions)&&before.cameraFov===after.cameraFov,car+' 배치 전환에도 차량 치수·화각 유지',{dimensions:after.appearance.dimensions,fov:after.cameraFov,before:before.campus.layout,after:after.campus.layout});
+   check(Math.abs(after.player.x-20)<.1&&after.campus.layout.apron===6&&after.campus.pitBays===before.campus.pitBays,car+' 조정된 피트·정비동 배치',after.campus);
+   let merged=false;for(let i=0;i<40;i++){q.advanceDriver(1);merged ||= q.snapshot().player.pit.merged;}const s=q.snapshot();
+   check(merged&&s.study.metrics.mergeReleases===1&&s.player.grounded===4&&s.recovery.count===0,car+' 조정안 실제 화면에서 정지·합류 완료',s.study);
+   check(w.__cockpitReviewErrors.length===0,car+' 조정안 실행 오류 없음',w.__cockpitReviewErrors);
+  }
+  $('status').textContent='배치 비교 검사 통과 · '+rows.length+'항목';
+ }catch(error){$('status').textContent='검사 실패: '+error.message;rows.push({ok:false,error:String(error.stack||error)});$('report').textContent=JSON.stringify(rows,null,2);}
+ finally{$('layout-run').disabled=false;}
+};

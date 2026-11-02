@@ -55,7 +55,8 @@ async function boot(){
  const mats={road:material('#707c87',.86),walk:material('#64778a'),navy:material('#142b43'),white:material('#c1d3de'),cyan:basic('#66f4f1'),pink:basic('#ff7197'),gold:basic('#ffdc9d'),dark:material('#143b53',.3,.5)};
  function box(w,h,d,x,y,z,mat=mats.navy,parent=scene){const m=new T.Mesh(unit,mat);m.scale.set(w,h,d);m.position.set(x,y,z);parent.add(m);return m;}
  const track=createCityCourse(),{length,frames}=track,N=frames.length;
- const campus=await buildCampus(scene,track,{realism:sessionParams.get('art')!=='baseline',renderer});
+ const layoutId=sessionParams.get('layout')||'spacious';
+ const campus=await buildCampus(scene,track,{layoutId,realism:sessionParams.get('art')!=='baseline',renderer});
  const gltf=new GLTFLoader(),models={};let loaded=0;
  const originalCockpitPromise=createOriginalCockpit({scene,camera,loader:gltf});
  const items=['tavaculo','f2002','porsche'];
@@ -186,7 +187,7 @@ async function boot(){
   visuals.forEach(v=>{scene.remove(v.root);disposeDress(v.body);});visuals=[];if(preview)preview.visible=false;
   player=makeRacer(track,{car:selected,lane:-2.3});racers=[player,...opponentCars(selected).map((car,i)=>makeRacer(track,{id:'bot'+i,car,s:7+i*7,lane:i%2?-2.3:2.3}))];
   for(const r of racers){const root=new T.Group(),body=models[r.car].clone(true);if(r===player||r.car==='porsche')dressCar(body,r.car,r===player?save.garage[selected]:{paint:'paint-stock',wheels:'wheels-stock'},rigs[r.car]);root.add(body);const {wheels,calipers}=splitWheelVisuals(body,rigs[r.car]);wheels.forEach(w=>root.add(w));calipers.forEach(c=>root.add(c));const shadow=new T.Mesh(new T.PlaneGeometry(3.6,6.0),shadowMat);shadow.rotation.x=-Math.PI/2;shadow.position.y=.06;root.add(shadow);scene.add(root);visuals.push({root,body,wheels,calipers,shadow});}
-  physics=new RacePhysics(track,racers,rigs,{autoRecovery:true,playerTuning:tuning(save,selected)});physics.presentationEnabled=bodyMotion;physics.setupScenario(sessionParams.get('scenario')||'start',sessionParams.get('traffic')||'pack');
+  physics=new RacePhysics(track,racers,rigs,{autoRecovery:true,layout:layoutId,playerTuning:tuning(save,selected)});physics.presentationEnabled=bodyMotion;physics.setupScenario(sessionParams.get('scenario')||'start',sessionParams.get('traffic')||'pack');
   elapsed=0;awarded=false;count=3.3;clearInput();mode='countdown';$('welcome').hidden=true;$('menu').hidden=$('pause-menu').hidden=$('result').hidden=true;$('hud').hidden=false;$('countdown').hidden=false;syncVisuals();updateCamera(true);persist();
  }
  function configureSession({car='tavaculo',view:nextView='cockpit',scenario='start',traffic='pack'}={}){
@@ -251,6 +252,9 @@ async function boot(){
  $('assist').onchange=e=>{save.assist=e.target.checked;persist();};$('auto-throttle').onchange=e=>{save.auto=e.target.checked;persist();};$('view-select').onchange=e=>{view=e.target.value;save.view=view;persist();};$('camera').onclick=switchView;$('pause').onclick=setPause;$('resume').onclick=resume;
  for(const id of ['restart','again'])$(id).onclick=resetRace;for(const id of ['back-menu','result-menu'])$(id).onclick=toMenu;
  const chooseCourse=()=>{clearInput();setPause();if(parent!==window)parent.postMessage({type:'circuit-elevation:choose'},location.origin);else location.href='./studies/circuit-elevation/';};
+ $('compare-layout').onclick=()=>parent.postMessage({type:'circuit-elevation:compare-layout',view},location.origin);
+ $('compare-layout').textContent=layoutId==='compact'?'이전 배치':'조정안';
+ $('compare-layout').title=layoutId==='compact'?'같은 시작 장면을 이전 배치로 보기':'같은 시작 장면을 조정안으로 보기';
  $('choose-course').onclick=chooseCourse;$('back-menu').onclick=chooseCourse;$('result-menu').onclick=chooseCourse;
  $('course-title').textContent=COURSE_NAME;$('pause-course').textContent=COURSE_NAME+' · 한 바퀴';
  $('rescue').onclick=()=>{if(mode==='race'){const recovered=physics.recover(player);clearInput();syncVisuals();updateCamera(true);showToast(recovered?'도로에서 다시 출발해요':'다른 차가 지나가면 다시 눌러요');}};

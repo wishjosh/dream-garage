@@ -1,3 +1,4 @@
+import {pitLayout,campusFacilities} from './layout.mjs';
 import {RacePhysics as FlatPhysics,FIXED_DT} from '../../course-race-physics.mjs';
 import * as C from '../../vendor/cannon-es.js';
 import {wheelVisualPose} from '../../vehicle-physics.mjs';
@@ -6,40 +7,41 @@ import {markRecovered} from '../../course-recovery.mjs';
 import {terrainHeight,terrainGradient,inRunoff,inside,SITE,ROAD_Y,campusPoint} from './terrain.mjs';
 import {DATA} from './data.mjs';
 import {pitSignal} from './trackside.mjs';
-import {nearestPit,pitFrame,pitGuide,predictMerge,PIT_SPEED,HOLD_Z,HOLD_S,EXIT_Z} from './pit.mjs';
+import {createPit,DEFAULT_PIT,PIT_SPEED,HOLD_Z,EXIT_Z} from './pit.mjs';
 export {FIXED_DT};
 const G=9.81,UP=new C.Vec3(0,1,0);
 export class RacePhysics extends FlatPhysics{
  constructor(track,racers,rigs,options={}){
   super(track,racers,rigs,{...options,barriers:false,autoRecovery:false});
+  this.layout=pitLayout(options.layout);this.pitRoute=createPit(this.layout);
   this.autoRecovery=options.autoRecovery??true;this.merge={clear:false,reason:'출구 접근 전',horizon:15};this.predictAt=0;
   this.metrics={minContacts:4,maxWheelError:0,maxGrade:0,gateWait:0,mergeReleases:0,minMergeGap:null};
   this.addCampusBarriers();this.entries.forEach(e=>this.sync(e,false));
  }
  addCampusBarriers(){
-  const separator=new C.Body({mass:0,shape:new C.Box(new C.Vec3(.3,.5,90))});separator.position.set(16,.5,340-DATA.campus.start[0]);separator.raceKind='barrier';this.world.addBody(separator);
+  const separator=new C.Body({mass:0,shape:new C.Box(new C.Vec3(.3,.5,90))});separator.position.set(this.layout.separatorX,.5,340-DATA.campus.start[0]);separator.raceKind='barrier';this.world.addBody(separator);
   for(let i=0;i<SITE.length;i++){const a=SITE[i],b=SITE[(i+1)%SITE.length],len=Math.hypot(b.x-a.x,b.z-a.z),count=Math.ceil(len/8);for(let j=0;j<count;j++){const x=a.x+(b.x-a.x)*(j+.5)/count,z=a.z+(b.z-a.z)*(j+.5)/count,bod=new C.Body({mass:0,shape:new C.Box(new C.Vec3(.25,.7,len/count/2+.05))});bod.position.set(x,terrainHeight(x,z)+.7,z);bod.quaternion.setFromEuler(0,Math.atan2(b.x-a.x,b.z-a.z),0);bod.raceKind='barrier';this.world.addBody(bod);}}
-  for(const f of DATA.campus.facilities.filter(f=>['pit','paddock','medical','stand'].includes(f.id))){const [x0,y0,x1,y1]=f.box,w=y1-y0,d=x1-x0,x=-(y0+y1)/2,z=(x0+x1)/2-DATA.campus.start[0],b=new C.Body({mass:0,shape:new C.Box(new C.Vec3(w/2,2,d/2))});b.position.set(x,terrainHeight(x,z)+2,z);b.raceKind='barrier';this.world.addBody(b);}
+  for(const f of campusFacilities(this.layout).filter(f=>['pit','paddock','medical','stand'].includes(f.id))){const [x0,y0,x1,y1]=f.box,w=y1-y0,d=x1-x0,x=-(y0+y1)/2,z=(x0+x1)/2-DATA.campus.start[0],b=new C.Body({mass:0,shape:new C.Box(new C.Vec3(w/2,2,d/2))});b.position.set(x,terrainHeight(x,z)+2,z);b.raceKind='barrier';this.world.addBody(b);}
  }
- surface(e){const n=nearestTrack(this.track,e.s.x,e.s.z),p=nearestPit(e.s.x,e.s.z);return n.distance<=8.2?'road':p.distance<=6?'pit':inRunoff(e.s.x,e.s.z)?'runoff':'grass';}
+ surface(e){const n=nearestTrack(this.track,e.s.x,e.s.z),p=(this.pitRoute||DEFAULT_PIT).nearestPit(e.s.x,e.s.z);return n.distance<=8.2?'road':p.distance<=(this.layout?.halfWidth||6)?'pit':inRunoff(e.s.x,e.s.z)?'runoff':'grass';}
  placeBody(e,rewind=0){super.placeBody(e,rewind);e.body.position.y=terrainHeight(e.s.x,e.s.z)+.6;e.body.aabbNeedsUpdate=true;}
- route(e){return e.pit?.active?pitGuide(e):super.route(e);}
+ route(e){return e.pit?.active?(this.pitRoute||DEFAULT_PIT).pitGuide(e):super.route(e);}
  drive(e,input,assist){
-  e.pit??={active:false,released:false,wait:0,merged:false};const cp=campusPoint(e.s.x,e.s.z),p=nearestPit(e.s.x,e.s.z);
+  e.pit??={active:false,released:false,wait:0,merged:false};const cp=campusPoint(e.s.x,e.s.z),p=(this.pitRoute||DEFAULT_PIT).nearestPit(e.s.x,e.s.z);
   if(e.pit.merged){const lapS=nearestTrack(this.track,e.s.x,e.s.z).s;if(lapS>350&&lapS<this.track.length-350)e.pit={active:false,released:false,wait:0,merged:false};}
-  if(!e.pit.merged&&cp[0]>180&&cp[0]<545&&-cp[1]>10&&p.distance<6)e.pit.active=true;
+  if(!e.pit.merged&&cp[0]>180&&cp[0]<545&&-cp[1]>10&&p.distance<(this.layout?.halfWidth||6))e.pit.active=true;
   if(e.pit.active){
    input={...input};
    if(e.s.u>=PIT_SPEED-.15)input.throttle=0;
    if(e.s.u>PIT_SPEED)input.brake=Math.max(Number(input.brake)||0,.65);
    if(!e.pit.released&&e.s.z>HOLD_Z-45){
-    if(!this.merge||this.time>=this.predictAt){this.merge=predictMerge(this.track,this.entries.filter(o=>o!==e&&!o.pit?.active).map(o=>o.r));this.predictAt=this.time+.2;}
+    if(!this.merge||this.time>=this.predictAt){this.merge=this.pitRoute.predictMerge(this.track,this.entries.filter(o=>o!==e&&!o.pit?.active).map(o=>o.r));this.predictAt=this.time+.2;}
     // Always stop once before a release: this predictor starts from rest at the line.
     const room=Math.max(0,HOLD_Z-e.s.z),vstop=Math.sqrt(2*4.5*room);
     if(e.s.u>vstop){input.throttle=0;input.brake=1;}
     if(room<.5&&Math.abs(e.s.u)<.8){
      e.s.z=HOLD_Z;e.s.u=0;e.s.v=0;e.pit.stopUntil??=this.time+.5;
-     this.merge=predictMerge(this.track,this.entries.filter(o=>o!==e&&!o.pit?.active).map(o=>o.r));
+     this.merge=this.pitRoute.predictMerge(this.track,this.entries.filter(o=>o!==e&&!o.pit?.active).map(o=>o.r));
      if(this.merge.clear&&this.time>=e.pit.stopUntil){e.pit.released=true;this.metrics.mergeReleases++;}
      else{input.throttle=0;input.brake=1;e.pit.wait+=FIXED_DT;this.metrics.gateWait+=FIXED_DT;}
     }
@@ -93,7 +95,7 @@ export class RacePhysics extends FlatPhysics{
   const e=this.entries[0];let s=scenario==='slope'?this.track.length*.28:scenario==='runoff'?DATA.corners[2].s:0,lateral=scenario==='runoff'?19:-2.3;
   const f=trackFrame(this.track,s);Object.assign(e.s,{x:f.x+f.rx*lateral,z:f.z+f.rz*lateral,heading:Math.atan2(f.tx,f.tz),u:0,v:0,yawRate:0});Object.assign(e.r,{s,distance:s,gate:Math.floor(s/this.track.length*4),finished:false});
   e.pit={active:scenario==='pit',released:false,wait:0,merged:false};
-  if(scenario==='pit')Object.assign(e.s,{x:38,z:HOLD_Z-(tour?110:24),heading:0});
+  if(scenario==='pit')Object.assign(e.s,{x:this.layout.centerX,z:HOLD_Z-(tour?110:24),heading:0});
   for(const [i,o] of this.entries.slice(1).entries()){const at=traffic==='clear'?this.track.length*.4+i*35:scenario==='pit'?this.track.length-400+i*45:s+60+i*45,ff=trackFrame(this.track,at);Object.assign(o.s,{x:ff.x+ff.rx*o.r.lane,z:ff.z+ff.rz*o.r.lane,heading:Math.atan2(ff.tx,ff.tz),u:scenario==='pit'?30:15,v:0,yawRate:0});Object.assign(o.r,{s:ff.s,distance:ff.s,gate:Math.floor(ff.s/this.track.length*4),finished:false});o.pit={active:false,released:false,wait:0,merged:false};}
   this.entries.forEach(o=>{o.ground=null;this.placeBody(o);this.sync(o,false);});this.predictAt=0;this.merge={clear:false,reason:'출구 접근 전',horizon:15};
  }
