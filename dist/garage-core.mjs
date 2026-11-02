@@ -1,4 +1,4 @@
-import {COURSE_IDS} from './race-course-ids.mjs?v=geometry-main-1';
+import {COURSE_IDS} from './race-course-ids.mjs?v=circuit-main-1';
 export const CARS=['tavaculo','f2002','porsche'];
 export const CATEGORIES={paint:'도색',wheels:'휠',engine:'엔진',tires:'타이어',brakes:'브레이크'};
 export const CATALOG=[

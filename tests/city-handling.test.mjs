@@ -60,9 +60,15 @@ test('assistance preserves straight input and never silently takes over steering
  advance(p,1,{throttle:true},true);assert.ok(r.forwardSpeed>2);assert.equal(r.braking,false);assert.ok(Math.abs(r.steeringAngle)<1e-9);
  advance(p,1.5,{left:true,throttle:true},true);assert.ok(r.steeringAngle>0&&r.commandedSteer>0);assert.equal(r.braking,false);p.dispose();
 });
-test('main entry uses the verified adapter and preserves the existing save modules',()=>{
+test('main entry uses the verified adapter and preserves the existing save modules',async()=>{
  const game=fs.readFileSync(new URL('../dist/game.mjs',import.meta.url),'utf8');
- assert.match(game,/import \{RacePhysics,FIXED_DT\} from '\.\/studies\/mixed-city\/physics\.mjs/);
+ assert.match(game,/loadCourseRuntime\(COURSE_META\)/);
+ const {loadCourseRuntime}=await import('../dist/course-runtime.mjs'),{RACE_COURSES}=await import('../dist/race-courses.mjs'),{RacePhysics:VerifiedBase}=await import('../dist/race-handling.mjs?v=race-safety-1');
+ for(const course of RACE_COURSES){
+  const runtime=await loadCourseRuntime(course),track=course.create(),player=makeRacer(track);
+  const physics=runtime.createPhysics(track,[player],rigs,{autoRecovery:true});
+  try{assert.ok(physics instanceof VerifiedBase,course.key+' retains the verified base');assert.equal(physics.entries[0].r,player);assert.ok(Number.isFinite(player.y));}finally{physics.dispose();}
+ }
  assert.match(fs.readFileSync(new URL('../dist/studies/mixed-city/physics.mjs',import.meta.url),'utf8'),/RacePhysics extends BaseRacePhysics/);
  assert.match(game,/const SAVE=SAVE_KEY/);assert.match(game,/installSaveTransfer/);
  assert.equal(fs.readFileSync(new URL('../dist/save-transfer.mjs',import.meta.url),'utf8').includes('hojin-city-gp:save:v1'),true);

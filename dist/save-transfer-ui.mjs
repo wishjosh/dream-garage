@@ -1,6 +1,6 @@
-import {RACE_COURSES} from './race-courses.mjs?v=geometry-main-1';
-import {CARS,CATEGORIES,itemById} from './garage-core.mjs?v=geometry-main-1';
-import {SAVE_KEY,BACKUP_KEY,MAX_TRANSFER_BYTES,createTransfer,readSnapshot,prepareImport,applyImport,prepareRestore,applyRestore} from './save-transfer.mjs?v=geometry-main-1';
+import {RACE_COURSES} from './race-courses.mjs?v=circuit-main-1';
+import {CARS,CATEGORIES,itemById} from './garage-core.mjs?v=circuit-main-1';
+import {SAVE_KEY,BACKUP_KEY,MAX_TRANSFER_BYTES,createTransfer,readSnapshot,prepareImport,applyImport,prepareRestore,applyRestore} from './save-transfer.mjs?v=circuit-main-1';
 
 import {CAR_NAMES as carNames,presentItem} from './vehicle-presentation.mjs?v=porsche-main-1';
 const amount=value=>value.toLocaleString('ko-KR')+' C';
