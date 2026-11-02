@@ -1,3 +1,4 @@
+import {STAND,PARKING,parkingBays,spectatorReviewPose} from '../dist/studies/circuit-elevation/spectators.mjs';
 import {FACILITY_BUILDINGS,facilityColliders} from '../dist/studies/circuit-elevation/facilities.mjs';
 import {pitLayout,campusFacilities,layoutMeasurements} from '../dist/studies/circuit-elevation/layout.mjs';
 import {test} from 'node:test';
@@ -10,7 +11,7 @@ import {predictMerge,nearestPit,HOLD_Z,HOLD_S,PIT_SPEED} from '../dist/studies/c
 import {DATA} from '../dist/studies/circuit-elevation/data.mjs';
 import {makeRacer,nearestTrack,trackFrame} from '../dist/race-core.mjs';
 const rigs=JSON.parse(readFileSync(new URL('../dist/assets/vehicle-rigs.json',import.meta.url)));rigs.porsche=rigs.tavaculo;
-function make(car='tavaculo',count=1,layout='spacious',facilities='before'){const t=createCityCourse(),r=Array.from({length:count},(_,i)=>makeRacer(t,{car:i%2?'porsche':car,id:i?'bot'+i:'player',s:i*50,lane:i%2?2.3:-2.3}));return new RacePhysics(t,r,rigs,{autoRecovery:true,layout,facilities});}
+function make(car='tavaculo',count=1,layout='spacious',facilities='before',spectators='before'){const t=createCityCourse(),r=Array.from({length:count},(_,i)=>makeRacer(t,{car:i%2?'porsche':car,id:i?'bot'+i:'player',s:i*50,lane:i%2?2.3:-2.3}));return new RacePhysics(t,r,rigs,{autoRecovery:true,layout,facilities,spectators});}
 function run(p,seconds,input){for(let i=0;i<seconds*60;i++)p.step(1/60,typeof input==='function'?input():input,false);}
 test('height field reproduces reviewed profile and analytic gradient',()=>{
  const t=createCityCourse();let max=0,maxGrade=0,error=0;
@@ -119,4 +120,27 @@ test('split workshop has a physical front wall at the rendered footprint',()=>{
  const p=make('tavaculo',1,'compact','split'),e=p.entries[0];Object.assign(e.s,{x:118,z:310-DATA.campus.start[0],heading:Math.PI/2,u:7,v:0});p.placeBody(e);p.sync(e,false);let hit=false;
  for(let i=0;i<180;i++){p.step(1/60,{throttle:1},false);hit ||= p.hits.some(h=>h.kind==='barrier');}
  assert.ok(hit);assert.ok(e.s.x<126);assert.equal(p.recoveryStats().count,0);p.dispose();
+});
+
+
+test('scaled spectator layout preserves adopted pit and work buildings while replacing the stand footprint',()=>{
+ const old=make('tavaculo',1,'compact','split','before'),p=make('tavaculo',1,'compact','split','scaled');
+ const oldBodies=old.world.bodies.filter(b=>b.facilityId&&b.facilityId!=='stand'),bodies=p.world.bodies.filter(b=>b.facilityId&&b.facilityId!=='stand');
+ assert.deepEqual(bodies.map(b=>[b.facilityId,b.position.toArray(),b.shapes[0].halfExtents.toArray()]),oldBodies.map(b=>[b.facilityId,b.position.toArray(),b.shapes[0].halfExtents.toArray()]));
+ const stand=p.world.bodies.find(b=>b.facilityId==='stand');assert.equal(stand.shapes[0].halfExtents.x,10);assert.equal(stand.shapes[0].halfExtents.z,42);assert.deepEqual(p.entries[0].rig,old.entries[0].rig);old.dispose();p.dispose();
+});
+test('scaled parking bays fit both measured models and leave three 7 metre aisles clear',()=>{
+ const bays=parkingBays();assert.equal(bays.length,144);
+ for(const bay of bays){assert.ok(bay.width>2.254&&bay.depth>4.535);for(const [lo,hi] of PARKING.aisles)assert.ok(bay.x+bay.depth/2<=lo+.001||bay.x-bay.depth/2>=hi-.001);assert.ok(bay.along-bay.width/2>=PARKING.box[0]&&bay.along+bay.width/2<=PARKING.box[2]);}
+ const pose=spectatorReviewPose('parking',true);assert.ok(bays.some(b=>Math.abs(b.x-pose.car.x)<.001&&Math.abs(b.along-pose.car.along)<.001));
+});
+for(const pos of [{name:'parking bay',x:150.25,along:21.75},{name:'parking aisle',x:163,along:24},{name:'visitor access',x:195,along:-32},{name:'visitor entry',x:212,along:-40}])test('scaled '+pos.name+' has no hidden wall or automatic return',()=>{
+ const p=make('tavaculo',1,'compact','split','scaled'),e=p.entries[0];Object.assign(e.s,{x:pos.x,z:pos.along-DATA.campus.start[0],heading:Math.PI/2,u:0,v:0});p.placeBody(e);p.sync(e,false);let hits=0;
+ for(let i=0;i<8*60;i++){p.step(1/60,{brake:1},false);hits+=p.hits.length;}
+ assert.equal(hits,0);assert.equal(p.recoveryStats().count,0);assert.equal(e.r.surface,'apron');assert.equal(e.r.grounded,4);p.dispose();
+});
+test('scaled stand stops a vehicle at the new front edge',()=>{
+ const p=make('tavaculo',1,'compact','split','scaled'),e=p.entries[0];Object.assign(e.s,{x:73,z:40-DATA.campus.start[0],heading:Math.PI/2,u:7,v:0});p.placeBody(e);p.sync(e,false);let hit=false;
+ for(let i=0;i<180;i++){p.step(1/60,{throttle:1},false);hit ||= p.hits.some(h=>h.kind==='barrier');}
+ assert.ok(hit);assert.ok(e.s.x<80);p.dispose();
 });
