@@ -280,3 +280,12 @@ npm run benchmark:handling으로 [결과 JSON](dist/handling-results.json)을 �
 제동은 5/40/60/100km/h에서 0.1m/s 아래를 정지로 정의합니다. 60km/h 정지 시간은 2.325→2.183초, 거리는 약 17.98→17.93m입니다. 더 짧을수록 무조건 좋다는 판정은 하지 않고, 접지·항력으로 가능한 최대 감속을 넘지 않는지 확인합니다. 구동 없는 1,200개 속도·옆 속도·회전·조향·제동 조합에서 운동 에너지 증가가 없어야 합니다. 합성 타이어 힘은 하중×마찰계수 이하, 좌우 주행은 대칭, 30/60/120 표시 속도의 결과는 같아야 합니다.
 
 자동 118개와 로컬 모바일 화면 56조합(6크기×2조향, 20회복, 24제동·조향)이 통과했습니다. 보고서 3개 화면 폭의 넘침·버튼 크기, 6개 그래프와 브라우저 재계산을 확인했습니다. 실제 모바일 하드웨어·발열·장시간 성능·호진이의 운전감은 아직 검증하지 않았습니다. 수치 통과를 실차 재현이나 재미의 검증으로 확대하지 않습니다.
+
+
+### Garage flow comparison · 2026-11-03
+
+Open `studies/garage-flow/` (or `?study=garage-flow&garage=1&course=circuit`). The header switches between the existing garage and a proposed car-first layout without changing the selected car, equipped items or balance. Preview candidates are cancelled when switching layouts. The proposed home separates customization, performance and race preparation. Color swatches and thumbnails rendered from the actual dressed wheel meshes replace descriptive product cards; a fixed confirmation area handles purchase/equip/cancel. Vehicle dimensions, driving and prices remain unchanged.
+
+This comparison starts with 1,000 demo credits and uses the tab's separate sessionStorage key `dream-garage:garage-flow-study:v1`. It does not read or write the main save or install save-transfer controls. Refreshes and course changes retain the demo state where session storage is available; closing the tab may discard it. The reset control affects only the demo. Both layouts can enter a race and return to the garage. Main entry behavior remains the existing layout.
+
+Validation: targeted purchase/preview/save-isolation checks; full suite 297 passing; syntax 174 files. Browser inspection includes 402×874 and 375×667 portrait, 874×402 landscape, paint and wheel purchase, insufficient balance, car changes, classic/new comparison, reload, race entry/pause/garage return. These viewport checks are not physical-phone touch/performance validation.

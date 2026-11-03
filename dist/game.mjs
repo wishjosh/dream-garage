@@ -1,3 +1,5 @@
+import {createStudyStore,freshStudySave,installGarageFlow,itemMarkup} from './garage-flow-study.mjs?v=garage-flow-1';
+import {wheelThumbnails} from './garage-wheel-thumbnails.mjs?v=garage-flow-1';
 import {loadCourseRuntime} from './course-runtime.mjs?v=circuit-main-1';
 import {createRaceSettlement} from './race-settlement.mjs?v=circuit-main-1';
 import {createDrivingSound} from './driving-sound.mjs?v=circuit-main-1';
@@ -32,13 +34,15 @@ import {installPageActivity} from './studies/mixed-city/activity.mjs?v=mixed-cit
 
 const $=id=>document.getElementById(id),canvas=$('world');
 const SAVE=SAVE_KEY;
+const garageStudy=new URLSearchParams(location.search).get('study')==='garage-flow';
+let studyStore=null;if(garageStudy){document.querySelectorAll('[data-save-transfer-open]').forEach(b=>b.hidden=true);let storage;try{storage=sessionStorage;}catch{}studyStore=createStudyStore(storage);}
 let save=normalizeSave(null),storageOK=true,saveWriteBlocked=false;
-try{const current=readSnapshot(localStorage);if(current.invalid){storageOK=false;saveWriteBlocked=true;}else {save=resetRetiredRecords(current.save);}}catch{storageOK=false;saveWriteBlocked=true;}
-function persist(){if(saveWriteBlocked)return;try{localStorage.setItem(SAVE,JSON.stringify(save));}catch{storageOK=false;}}
+if(garageStudy)save=studyStore.read();else try{const current=readSnapshot(localStorage);if(current.invalid){storageOK=false;saveWriteBlocked=true;}else {save=resetRetiredRecords(current.save);}}catch{storageOK=false;saveWriteBlocked=true;}
+function persist(){if(garageStudy){studyStore.write(save);return;}if(saveWriteBlocked)return;try{localStorage.setItem(SAVE,JSON.stringify(save));}catch{storageOK=false;}}
 if(!saveWriteBlocked)persist();
 // The transfer tools work before the 3D assets finish loading.
 let refreshTransferredSave=null;
-installSaveTransfer({getSave:()=>save,onSaveChanged:next=>{save=resetRetiredRecords(next);storageOK=true;saveWriteBlocked=false;persist();refreshTransferredSave?.();}});
+if(!garageStudy)installSaveTransfer({getSave:()=>save,onSaveChanged:next=>{save=resetRetiredRecords(next);storageOK=true;saveWriteBlocked=false;persist();refreshTransferredSave?.();}});
 function fail(message){$('fatal-message').textContent=message;$('fatal').hidden=false;}
 let renderer;
 try{renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});}catch{fail('Safari 또는 Chrome 최신 버전에서 다시 열어 주세요.');}
@@ -83,6 +87,7 @@ async function boot(){
  for(const id of ['impact-audio','pause-impact-audio'])$(id).onchange=e=>{impactSound.enabled=e.target.checked;drivingSound.enabled=e.target.checked;if(e.target.checked)drivingSound.unlock();for(const name of ['impact-audio','pause-impact-audio'])$(name).checked=e.target.checked;};
  let steeringControl=null,pedalConsole=null,recentImpact=null;
  const input={left:false,right:false,throttle:false,brake:false,reverse:false,drift:false};const held=new Map(),pointerZones=new Map(),keys=new Set();
+ let flowUI=null;const wheelImages={};
  const garage=buildGarage(garageScene);garage.traverse(o=>{if(o.isLight)o.intensity=0;});let preview,previewAngle=0,category='paint',atWelcome=true;const shopPreview=createPreviewSession({categories:Object.keys(CATEGORIES)});let garageDrag={cancel(){}};
  function refreshPreview(){garageDrag.cancel();if(preview){garageScene.remove(preview);disposeDress(preview);}preview=dressCar(models[selected].clone(true),selected,shopPreview.loadout(save,selected),rigs[selected]);preview.position.set(0,.24,-110);preview.rotation.y=previewAngle;garageScene.add(preview);}
  refreshPreview();
@@ -119,28 +124,31 @@ async function boot(){
  function syncGarageView(){
   const draft=shopPreview.loadout(save,selected),pending=shopPreview.pending;
   $('preview-name').textContent=CAR_NAMES[selected];$('preview-style').textContent=itemById(draft.paint).name+' · '+presentItem(itemById(draft.wheels),selected).name;
-  $('garage-preview-badge').textContent=pending?'미리보기 중 · 아직 확정 전':'장착된 모습';
+  $('garage-preview-badge').textContent=pending?(flowUI?.modern?'미리보기':'미리보기 중 · 아직 확정 전'):'장착된 모습';
   const performance=pending&&!['paint','wheels'].includes(itemById(pending.id).category);
   $('tuning-label').textContent=performance?'적용할 성능 · 확정 전':'장착한 성능';
   const t=tuning({...save,garage:{...save.garage,[selected]:draft}},selected);
   $('tuning-stats').innerHTML=[['엔진 힘',t.force],['최고속도',t.maxSpeed],['접지',t.grip],['제동',t.brake]].map(([name,value])=>'<span>'+name+' '+(value>1?'+'+Math.round((value-1)*100)+'%':'기본')+'</span>').join('');
   $('garage-preview-state').textContent=JSON.stringify({pending,rotation:previewAngle,displayLoadout:draft,...vehicleAppearance(preview)});
  }
- function cancelShop(message='미리보기를 취소했어요. 잔액과 장착은 그대로예요.'){
+ function cancelShop(message){
+  message??=flowUI?.modern?'미리보기 취소':'미리보기를 취소했어요. 잔액과 장착은 그대로예요.';
   shopPreview.cancel();garageDrag.cancel();refreshPreview();renderShop();$('shop-status').textContent=message;
  }
  function renderShop(){
+  if(flowUI?.modern&&category==='wheels'&&!wheelImages[selected])wheelImages[selected]=wheelThumbnails({items:CATALOG.filter(i=>i.category==='wheels'),makeModel:item=>dressCar(models[selected].clone(true),selected,{...save.garage[selected],wheels:item.id},rigs[selected]),rig:rigs[selected],environment:fleet.assets.environment,disposeModel:disposeDress});
   const pending=shopPreview.pending,quote=shopPreview.quote(save);$('shop-items').dataset.category=category;$('shop-offer').dataset.performance=String(!['paint','wheels'].includes(category));
-  $('shop-tabs').innerHTML=Object.entries(CATEGORIES).map(([key,name])=>'<button data-category="'+key+'" class="'+(key===category?'selected':'')+'" aria-pressed="'+(key===category)+'">'+name+'</button>').join('');
-  $('shop-tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(category===b.dataset.category)return;category=b.dataset.category;cancelShop('분류를 바꾸어 장착된 모습을 보여줘요.');document.querySelector('.garage-scroll').scrollTop=0;});
+  $('shop-tabs').innerHTML=Object.entries(CATEGORIES).filter(([key])=>!flowUI?.modern||flowUI.categories().includes(key)).map(([key,name])=>'<button data-category="'+key+'" class="'+(key===category?'selected':'')+'" aria-pressed="'+(key===category)+'">'+name+'</button>').join('');
+  $('shop-tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(category===b.dataset.category)return;category=b.dataset.category;if(flowUI?.modern){previewAngle=category==='wheels'?Math.PI/2:0;}cancelShop(flowUI?.modern?'':'분류를 바꾸어 장착된 모습을 보여줘요.');document.querySelector('.garage-scroll').scrollTop=0;});
   $('shop-items').innerHTML=CATALOG.filter(i=>i.category===category).map(source=>{
    const item=presentItem(source,selected),owned=save.owned.includes(item.id),equipped=save.garage[selected][category]===item.id,active=pending?.id===item.id;
+   if(flowUI?.modern)return itemMarkup({item,owned,equipped,active,pending:!!pending,stockColor:selected==='porsche'?'#d9dde0':'#e92b27',thumbnail:wheelImages[selected]?.[item.id]});
    return '<button class="shop-item '+(equipped?'equipped ':'')+(active?'previewing':'')+'" data-item="'+item.id+'" aria-pressed="'+active+'" '+(equipped&&!pending?'disabled':'')+'><span class="item-title"><span class="swatch '+(category==='wheels'?'wheel-swatch':'')+'" style="--swatch:'+(item.color||(category==='paint'?'#ff0000':'#c9d0d2'))+'"></span><strong>'+item.name+'</strong></span><small>'+item.description+'</small><span class="item-price">'+(equipped?'현재 장착':owned?'보유 중 · 무료 장착':item.price.toLocaleString()+' C')+'</span><em>'+(active?'미리보기 중':equipped?'장착된 모습 보기':['paint','wheels'].includes(category)?'차에 미리 보기':'효과와 가격 확인')+'</em></button>';
   }).join('');
-  $('shop-items').querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{shopPreview.begin(save,selected,b.dataset.item);refreshPreview();renderShop();if(shopPreview.pending)$('shop-cancel').focus({preventScroll:true});});
+  $('shop-items').querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{shopPreview.begin(save,selected,b.dataset.item);if(flowUI?.modern)$('shop-status').textContent='';refreshPreview();renderShop();if(shopPreview.pending&&!flowUI?.modern)$('shop-cancel').focus({preventScroll:true});});
   $('shop-offer').hidden=!quote;$('start').hidden=!!quote;$('launch-actions').hidden=!!quote;$('race-brief').hidden=!!quote;
-  if(quote){const item=presentItem(quote.item,selected);$('shop-offer-name').textContent=item.name;$('shop-offer-cost').textContent=quote.owned?'보유품 · 무료':quote.cost.toLocaleString()+' C';$('shop-offer-description').textContent=['paint','wheels'].includes(category)?'확정하면 이 모습으로 장착해요.':item.description;$('shop-offer-balance').textContent=quote.affordable?'잔액 '+quote.balance.toLocaleString()+' → '+quote.after.toLocaleString()+' C':(quote.cost-quote.balance).toLocaleString()+' C 부족 · 미리보기는 가능해요';$('shop-confirm').disabled=!quote.affordable;$('shop-confirm').textContent=quote.owned?'장착 확정':quote.affordable?'구매하고 장착':'잔액 부족';}
-  syncGarageView();
+  if(quote){const item=presentItem(quote.item,selected);$('shop-offer-name').textContent=item.name;$('shop-offer-cost').textContent=quote.owned?'보유품 · 무료':quote.cost.toLocaleString()+' C';$('shop-offer-description').textContent=['paint','wheels'].includes(category)?'확정하면 이 모습으로 장착해요.':item.description;$('shop-offer-balance').textContent=quote.affordable?'잔액 '+quote.balance.toLocaleString()+' → '+quote.after.toLocaleString()+' C':(quote.cost-quote.balance).toLocaleString()+(flowUI?.modern?' C 부족':' C 부족 · 미리보기는 가능해요');$('shop-confirm').disabled=!quote.affordable;$('shop-confirm').textContent=quote.owned?'장착 확정':quote.affordable?'구매하고 장착':'잔액 부족';}
+  syncGarageView();flowUI?.sync();
  }
  function syncOptions(){document.querySelectorAll('[data-car]').forEach(b=>{const on=b.dataset.car===selected;b.classList.toggle('selected',on);b.setAttribute('aria-pressed',String(on));});$('view-select').value=view;$('assist').checked=!!save.assist;$('auto-throttle').checked=!!save.auto;$('wallet').textContent=save.coins.toLocaleString()+' C';const best=save.courseBest?.[COURSE_ID]?.[selected];$('best').textContent=(Number.isFinite(best)?COURSE_NAME+' 최고 '+formatTime(best):COURSE_NAME+' 첫 기록에 도전해요');
   $('preview-name').textContent=CAR_NAMES[selected];$('preview-style').textContent=itemById(save.garage[selected].paint).name+' · '+presentItem(itemById(save.garage[selected].wheels),selected).name;
@@ -150,7 +158,7 @@ async function boot(){
  function updateCamera(snap=false){
   selectCabin();camera.near=.12;originalCockpit.group.visible=false;
   if(mode==='menu'){
-   cockpit.visible=false;garage.visible=true;camera.up.set(0,1,0);const portrait=innerWidth<=700&&innerHeight>innerWidth;garage.userData.sign.visible=!portrait;camera.position.set(6.1,2.6,-118.1);camera.lookAt(0,.95,-110);camera.fov=portrait?56:45;const panelWidth=$('menu').hidden?0:$('menu').querySelector('.garage-panel').getBoundingClientRect().width;camera.setViewOffset(innerWidth,innerHeight,portrait?0:atWelcome?-innerWidth*.22:panelWidth*.5+18,portrait?innerHeight*.30:0,innerWidth,innerHeight);if(!atWelcome){const r=document.querySelector('.garage-stage').getBoundingClientRect();const tall=innerHeight>innerWidth;camera.fov=tall?T.MathUtils.radToDeg(2*Math.atan(Math.tan(T.MathUtils.degToRad(28))*innerHeight/874*402/innerWidth)):45;camera.setViewOffset(innerWidth,innerHeight,innerWidth/2-(r.x+r.width/2),innerHeight/2-(r.y+r.height*.55),innerWidth,innerHeight);garage.userData.sign.visible=false;}camera.updateProjectionMatrix();return;
+   cockpit.visible=false;garage.visible=true;camera.up.set(0,1,0);const portrait=innerWidth<=700&&innerHeight>innerWidth;garage.userData.sign.visible=!portrait;camera.position.set(6.1,2.6,-118.1);camera.lookAt(0,.95,-110);camera.fov=portrait?56:45;const panelWidth=$('menu').hidden?0:$('menu').querySelector('.garage-panel').getBoundingClientRect().width;camera.setViewOffset(innerWidth,innerHeight,portrait?0:atWelcome?-innerWidth*.22:panelWidth*.5+18,portrait?innerHeight*.30:0,innerWidth,innerHeight);if(!atWelcome){const r=document.querySelector('.garage-stage').getBoundingClientRect();const tall=innerHeight>innerWidth;camera.fov=tall?T.MathUtils.radToDeg(2*Math.atan(Math.tan(T.MathUtils.degToRad(28))*innerHeight/874*402/innerWidth)):45;camera.setViewOffset(innerWidth,innerHeight,innerWidth/2-(r.x+r.width/2),innerHeight/2-(r.y+r.height*.55),innerWidth,innerHeight);garage.userData.sign.visible=false;if(flowUI?.modern&&!tall)camera.fov=32;}camera.updateProjectionMatrix();return;
   }
   garage.visible=false;camera.clearViewOffset();
   const direction=new T.Vector3(Math.sin(player.heading),0,Math.cos(player.heading));
@@ -197,7 +205,7 @@ async function boot(){
   elapsed=0;awarded=false;settlement=createRaceSettlement(COURSE_ID);drivingSound.stop();if(COURSE_META.key==='circuit')renderer.shadowMap.needsUpdate=true;count=3.3;clearInput();mode='countdown';$('welcome').hidden=true;$('menu').hidden=$('pause-menu').hidden=$('result').hidden=true;$('hud').hidden=false;$('countdown').hidden=false;syncVisuals();updateCamera(true);persist();
  }
  function syncVisuals(){racers.forEach((r,i)=>{const v=visuals[i];v.body.position.set(r.x,r.y??.045,r.z);v.body.quaternion.fromArray(r.quaternion||[0,0,0,1]);steerExterior(v.body,r.car,clamp(-(r.steeringAngle||0)/.46,-1,1),fleet.porsche.template.axis);v.shadow.position.set(r.x,groundHeight(r.x,r.z)+.062,r.z);v.shadow.rotation.z=-r.heading;syncWheelVisuals(v.wheels,v.calipers,r.wheels);});}
- function toMenu(){shopPreview.cancel();garageDrag.cancel();mapOpen=false;$('course-map').hidden=true;clearInput();mode='menu';drivingSound.stop();physics?.dispose();physics=null;$('hud').hidden=$('result').hidden=$('pause-menu').hidden=$('countdown').hidden=true;$('welcome').hidden=true;$('menu').hidden=false;atWelcome=false;visuals.forEach(v=>{scene.remove(v.root);disposeDress(v.body);});visuals=[];refreshPreview();preview.visible=true;syncOptions();if(lastRace){$('shop-status').textContent=COURSE_NAME+'에서 '+lastRace.prize.toLocaleString()+' C를 받았어요. 미리 본 뒤 확정하면 다음 경주에 적용돼요.';}updateCamera(true);}
+ function toMenu(){flowUI?.home();shopPreview.cancel();garageDrag.cancel();mapOpen=false;$('course-map').hidden=true;clearInput();mode='menu';drivingSound.stop();physics?.dispose();physics=null;$('hud').hidden=$('result').hidden=$('pause-menu').hidden=$('countdown').hidden=true;$('welcome').hidden=true;$('menu').hidden=false;atWelcome=false;visuals.forEach(v=>{scene.remove(v.root);disposeDress(v.body);});visuals=[];refreshPreview();preview.visible=true;syncOptions();if(lastRace){$('shop-status').textContent=COURSE_NAME+'에서 '+lastRace.prize.toLocaleString()+' C를 받았어요. 미리 본 뒤 확정하면 다음 경주에 적용돼요.';}updateCamera(true);}
  function setPause(){if(!['race','countdown'].includes(mode))return;pausedFrom=mode;mode='paused';drivingSound.stop();clearInput();updateCamera(true);$('pause-menu').hidden=false;$('pause-menu').querySelector('.compact').scrollTop=0;$('countdown').hidden=true;}
  function resume(){mapOpen=false;$('course-map').hidden=true;mode=pausedFrom;$('pause-menu').hidden=true;$('countdown').hidden=mode!=='countdown';last=performance.now();}
  function switchView(){resetGaze();view=view==='chase'?'cockpit':'chase';save.view=view;persist();updateCamera(true);}
@@ -275,8 +283,10 @@ async function boot(){
  $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{$('load-status').textContent='이 브라우저에서는 가로로 돌려서 플레이해 주세요.';}};
  addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;clearInput();updateCamera(true);camera.updateProjectionMatrix();});
  refreshTransferredSave=()=>{selected=save.car;view=save.view;toMenu();$('shop-status').textContent='저장 기록을 반영했어요. 옮겨 온 차로 달려 보세요.';};
+ if(garageStudy)flowUI=installGarageFlow({getState:()=>({carName:CAR_NAMES[selected],pending:shopPreview.pending}),cancel:cancelShop,selectCategory:value=>{category=value;},refresh:renderShop,reset:()=>{save=freshStudySave();selected=save.car;previewAngle=0;shopPreview.cancel();persist();refreshPreview();syncOptions();},onScreen:screen=>{previewAngle=0;preview.rotation.y=0;}});
  syncOptions();$('enter-garage').disabled=false;$('enter-garage').textContent='차고 문 열기 →';$('welcome-status').textContent='준비 완료 · 너만의 레이스를 시작해 봐!';$('start').disabled=false;$('start').textContent='레이스 출발  →';$('load-status').textContent='준비 완료 · 스마트폰은 가로 화면을 추천해요';
- installRaceCourses({course:COURSE_META,track,getSave:()=>save,getCar:()=>selected,canChoose:()=>mode==='menu'||mode==='result',onOpen:()=>{if(shopPreview.pending)cancelShop();},onChoose:()=>{shopPreview.cancel();save.car=selected;save.view=view;persist();},navigate:url=>{clearInput();location.assign(url);}});
+ installRaceCourses({course:COURSE_META,track,getSave:()=>save,getCar:()=>selected,canChoose:()=>mode==='menu'||mode==='result',onOpen:()=>{if(shopPreview.pending)cancelShop();},onChoose:()=>{shopPreview.cancel();save.car=selected;save.view=view;persist();},navigate:url=>{clearInput();if(garageStudy){const next=new URL(url,location.href);next.searchParams.set('study','garage-flow');next.searchParams.set('layout',flowUI.modern?'new':'classic');location.assign(next.href);}else location.assign(url);}});
+ if(garageStudy&&atWelcome)$('enter-garage').click();
  let last=performance.now(),lastDt=1/60,frameCount=0,avgFrame=16,poorFrames=0;
  function frame(now){lastDt=clamp((now-last)/1000,0,.05);last=now;step(lastDt);if(mode!=='menu'){syncVisuals();if(frameCount%3===0)updateHUD();}updateCamera();courseScene.tick(lastDt);courseScene.update(physics?.merge,player);if(toastTime>0){toastTime-=lastDt;if(toastTime<=0)$('toast').classList.remove('visible');}renderScene(false,now);frameCount++;drivingSound.update({player,active:(mode==='race'||mode==='countdown')&&!document.hidden,throttle:mode==='race'&&(input.throttle||(save.auto&&!input.brake&&!input.reverse)),view});driveMeasure.tick(now,{active:mode==='race',visible:!document.hidden,focused:document.hasFocus(),car:selected,view,width:innerWidth,height:innerHeight,ratio:renderer.getPixelRatio(),speed:player?.speed||0});
   avgFrame=avgFrame*.98+lastDt*1000*.02;if(mode==='race' && avgFrame>34)poorFrames++;else poorFrames=Math.max(0,poorFrames-1);if(poorFrames>200 && renderer.getPixelRatio()>1){renderer.setPixelRatio(1);renderer.setSize(innerWidth,innerHeight);poorFrames=0;}requestAnimationFrame(frame);
