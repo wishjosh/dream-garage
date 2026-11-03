@@ -306,3 +306,12 @@ Open `studies/garage-flow/` (or `?study=garage-flow&garage=1&course=circuit`). T
 This comparison starts with 1,000 demo credits and uses the tab's separate sessionStorage key `dream-garage:garage-flow-study:v1`. It does not read or write the main save or install save-transfer controls. Refreshes and course changes retain the demo state where session storage is available; closing the tab may discard it. The reset control affects only the demo. Both layouts can enter a race and return to the garage. Main entry behavior remains the existing layout.
 
 Validation: targeted purchase/preview/save-isolation checks; full suite 297 passing; syntax 174 files. Browser inspection includes 402×874 and 375×667 portrait, 874×402 landscape, paint and wheel purchase, insufficient balance, car changes, classic/new comparison, reload, race entry/pause/garage return. These viewport checks are not physical-phone touch/performance validation.
+
+
+### Garage and circuit art flow · 2026-11-03
+
+Open `studies/garage-circuit/` or `?study=garage-art&garage=1&course=circuit&look=daylight`. The adopted car-first UI now has a separate art comparison: daylight pit workshop and daylight circuit versus the previous garage and circuit. Purchases, selected vehicle and rewards use `dream-garage:garage-art-study:v1` in sessionStorage; main saves and the earlier UI comparison stay separate. The header switches the art while retaining committed equipment and credits. Unconfirmed previews are cancelled. Ordinary main entry keeps its existing art.
+
+The workshop and circuit reuse one Kloofendal sky/reflection texture and the existing CC0 concrete, asphalt, ground, tyre and barrier assets (credits in `dist/studies/circuit-elevation/assets/NOTICE.txt`). No additional asset downloads, vehicle resizing, physics or prices were introduced. The bay uses a concrete floor, scale markings, workbench, open pit door, daylight and contact shadows. The earlier `studies/garage-art/` paint study is preserved.
+
+Validation: 301 tests passing; syntax 179 files. Browser review covered paint and wheel purchases (1,000 → 350 C), manual acceleration, portrait/landscape and cockpit, a deterministic guided lap (113.12 s; fourth place; 150 C), return with 500 C and the same equipment, and another race. The local-only `/__qa__/garage-art-review.html` exposes review snapshots and guided-lap controls; it is not deployed. Its memory-backed main store received no writes and the review reported no errors. These checks do not establish physical-phone performance or final art adoption.

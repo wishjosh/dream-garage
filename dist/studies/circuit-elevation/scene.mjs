@@ -1,11 +1,11 @@
-import {applyDaylight,groundTint,installBackdrop} from './daylight.mjs?v=art-daylight-1';
+import {applyDaylight,groundTint,installBackdrop} from './daylight.mjs?v=garage-art-1';
 import {paintDistanceBoard} from './distance-board.mjs?v=distance-extension-1';
 import {signageLayout} from './signage.mjs';
 import {STAND,PARKING,spectatorVariant,spectatorStats} from './spectators.mjs';
 import {drawSpectators} from './spectator-scene.mjs';
 import {FACILITY_BUILDINGS,FACILITY_YARDS,FACILITY_ACCESS,facilityStats,facilityVariant} from './facilities.mjs';
 import {pitLayout,campusFacilities,layoutMeasurements} from './layout.mjs';
-import {prepareCircuitArt,installCircuitProps} from './art.mjs';
+import {prepareCircuitArt,installCircuitProps} from './art.mjs?v=garage-art-1';
 import * as T from '../../vendor/three.module.js';
 import {trackFrame} from '../../race-core.mjs';
 import {DATA} from './data.mjs';

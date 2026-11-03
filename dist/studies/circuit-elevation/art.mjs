@@ -3,7 +3,9 @@ import * as T from '../../vendor/three.module.js';
 import {GLTFLoader} from '../../vendor/GLTFLoader.js';
 import {terrainHeight,START_X} from './terrain.mjs';
 const base=new URL('./assets/',import.meta.url).href;
-export async function prepareCircuitArt(){
+let pendingArt;
+export function prepareCircuitArt(){return pendingArt??=loadArt();}
+async function loadArt(){
  const loader=new T.TextureLoader();
  // Explicit load promises prevent entering a scene with missing art.
  async function maps(folder,scale){const urls=['Diffuse','nor_gl','Rough'];const values=await Promise.all(urls.map(n=>loader.loadAsync(base+folder+'/'+n+'.jpg')));values.forEach((t,i)=>{t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(scale,scale);t.anisotropy=4;if(i===0)t.colorSpace=T.SRGBColorSpace;});return{map:values[0],normalMap:values[1],roughnessMap:values[2]};}

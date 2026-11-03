@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createStudyStore,freshStudySave,STUDY_KEY,categoriesFor,itemMarkup} from '../dist/garage-flow-study.mjs';
+import {createStudyStore,freshStudySave,STUDY_KEY,ART_STUDY_KEY,categoriesFor,itemMarkup} from '../dist/garage-flow-study.mjs';
 import {createPreviewSession} from '../dist/garage-preview-core.mjs';
 import {itemById} from '../dist/garage-core.mjs';
 
@@ -22,4 +22,12 @@ test('blocked or malformed study storage still permits the temporary flow',()=>{
 test('external appearance and performance have separate choices',()=>{assert.deepEqual(categoriesFor('customize'),['paint','wheels']);assert.deepEqual(categoriesFor('performance'),['engine','tires','brakes']);});
 test('equipped item can restore the current appearance while another item is previewed',()=>{
  const args={item:itemById('paint-stock'),owned:true,equipped:true,active:false};assert.match(itemMarkup({...args,pending:false}),/disabled/);assert.doesNotMatch(itemMarkup({...args,pending:true}),/disabled/);
+});
+
+test('art comparison switches keep their wallet while leaving both existing stores unchanged',()=>{
+ const data=new Map([['hojin-city-gp:save:v1','real save']]);const storage={getItem:k=>data.get(k),setItem:(k,v)=>data.set(k,v)};
+ const ui=createStudyStore(storage),art=createStudyStore(storage,ART_STUDY_KEY),old=ui.read();old.coins=777;ui.write(old);
+ const save=art.read(),preview=createPreviewSession();preview.begin(save,'tavaculo','paint-blue');assert.equal(preview.confirm(save,'tavaculo').ok,true);art.write(save);
+ const before=createStudyStore(storage,ART_STUDY_KEY).read();assert.equal(before.coins,750);assert.equal(before.garage.tavaculo.paint,'paint-blue');
+ art.write(freshStudySave());assert.equal(ui.read().coins,777);assert.equal(data.get('hojin-city-gp:save:v1'),'real save');assert.equal(data.size,3);
 });

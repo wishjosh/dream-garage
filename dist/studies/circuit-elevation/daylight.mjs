@@ -14,13 +14,19 @@ export function artReviewPose(track,id='start'){
 }
 // Same photographic sky provides visible background and all material reflections.
 // Derive the directional shadow light from its brightest sky pixel, not an unrelated angle.
-export async function applyDaylight(scene,sun,hemisphere){
+let pendingEnvironment;
+export function daylightEnvironment(){return pendingEnvironment??=loadEnvironment();}
+async function loadEnvironment(){
  const environment=await new HDRLoader().setDataType(T.FloatType).loadAsync(new URL('./assets/kloofendal_48d_partly_cloudy_1k.hdr',import.meta.url).href);
  environment.mapping=T.EquirectangularReflectionMapping;
  const {data,width,height}=environment.image;let peak=-1,px=0,py=0;
  for(let y=0;y<height/2;y++)for(let x=0;x<width;x++){const i=(y*width+x)*4,l=data[i]*.2126+data[i+1]*.7152+data[i+2]*.0722;if(l>peak){peak=l;px=x;py=y;}}
  const longitude=((px+.5)/width-.5)*Math.PI*2,latitude=(.5-(py+.5)/height)*Math.PI;
  const direction=new T.Vector3(Math.cos(latitude)*Math.cos(longitude),Math.sin(latitude),Math.cos(latitude)*Math.sin(longitude));
+ return {environment,direction};
+}
+export async function applyDaylight(scene,sun,hemisphere){
+ const {environment,direction}=await daylightEnvironment();
  scene.environment=environment;scene.background=environment;scene.environmentIntensity=.65;scene.backgroundIntensity=.8;
  scene.fog=new T.Fog('#bcc9cf',500,2100);hemisphere.intensity=.55;hemisphere.color.set('#dce7ef');hemisphere.groundColor.set('#706a55');
  sun.color.set('#fff4e5');sun.intensity=2;sun.target.position.set(0,0,80);sun.position.copy(sun.target.position).addScaledVector(direction,310);
