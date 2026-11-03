@@ -47,3 +47,17 @@ byte sizes and verified MD5 hashes. Runtime paths and placement are in art.mjs.
 Original driving UI, vehicle art, save isolation and course layout are retained.
 
 2026-11-02 layout comparison: the compact variant repositions the same barrier/fence instances to separator x=11m and tyres beside the smaller pit building. Asset geometry and source files are unchanged; the spacious variant retains the earlier placement.
+
+
+Daylight scene comparison - added 2026-11-03
+Kloofendal 48d Partly Cloudy - Greg Zaal / Poly Haven, CC0-1.0
+https://polyhaven.com/a/kloofendal_48d_partly_cloudy
+https://polyhaven.com/license
+Original 1K HDR retained unchanged, 1,637,206 bytes.
+https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/kloofendal_48d_partly_cloudy_1k.hdr
+SHA-256: 5477b7dbb2aea4a6947cb36b96339c119f90bf36a03b039af3254b5e6a22896d
+MD5 matches official files API: ee096fe9e26ce29d8f110b5ba0579011
+Runtime: same HDR used for sky and reflections; directional sun sampled from brightest sky pixel.
+Existing Asphalt012 and Grass Ground textures reused with color variation and metric-scale verges.
+Pit frames/canopy/roof details and starting gantry are project-authored geometry, not downloaded models.
+Only look=daylight comparison uses this environment. Main game remains unchanged.

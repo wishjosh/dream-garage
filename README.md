@@ -1,5 +1,14 @@
 # 드림 개러지: 스피드 그랑프리
 
+## 출발선~첫 코너 미술 비교 · 2026-11-03
+
+[현장감 이전/수정안 비교](https://wishjosh.github.io/dream-garage/studies/circuit-elevation/art-compare.html). 출발선·피트 앞·첫 코너에서 Ferrari/Porsche를 같은 크기·위치·카메라로 비교하고 직접 달린다. 정지 비교는 같은 추적 구도이며 주행 중 이전/수정안 전환은 선택한 차량·운전석/추적 시점을 유지해 출발 조건으로 돌아간다. 비교용 메모리만 사용하고 본게임의 저장·상금·기본 미술은 바꾸지 않는다.
+
+수정안은 Poly Haven의 Kloofendal 48d Partly Cloudy 1K HDR(원본 1,637,206바이트)을 하늘과 반사에 함께 사용한다. 사진의 가장 밝은 하늘 위치에서 직사광 방향을 잡는다. 기존 Asphalt012·잔디·콘크리트·방호벽·철망을 재사용하고 노면/회복 공간 재질·갓길·감속 흔적, 피트 문틀·차양·지붕과 출발 구조물을 보완했다. 부지 밖 원경 지형을 추가하며 주행 높이장·충돌·시설 외곽·차량 크기·주행 수치는 유지한다. 빛·하늘·원경은 장면 공통이고 가까운 마감은 출발선~첫 코너 구간이다. 새 건물 원본이나 식생 모델을 추가한 것은 아니다. [원본·제작자·라이선스·변경 내역](dist/studies/circuit-elevation/assets/NOTICE.txt).
+
+검증: 선별 18검사 및 전체 300검사 통과, 구문 178파일. 브라우저에서 두 차량×세 장면×이전/수정안 12조합의 크기·위치·카메라 일치와 오류 없음을 확인했다. 402×874 세로·874×402 가로, 직접 가속(41km/h 표시), 일시정지·회전·운전석 전환·비교 복귀를 확인했다. 주행 전환 시 시점 유지와 운전석의 원경 잘림도 보완했다. 실제 스마트폰 지속 성능·최종 미술 채택·차고와 코스 전체로의 확장은 후속이다. 아래 꾸미기 적용 당시의 미술 논의 상태는 이전 단계 기록이다.
+
+
 ## Adopted garage flow · 2026-11-03
 
 The main game now uses the accepted car-first garage: car selection, appearance, performance and race preparation. Settings/records and save transfer remain available from the main header. The existing save key, balance, ownership, car loadouts and pricing are unchanged; no demo credits or reset controls are exposed in the main game. The isolated comparison at `studies/garage-flow/` retains its own demo save and classic/new switch.
