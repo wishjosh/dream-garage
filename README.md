@@ -1,5 +1,13 @@
 # 드림 개러지: 스피드 그랑프리
 
+## Adopted garage flow · 2026-11-03
+
+The main game now uses the accepted car-first garage: car selection, appearance, performance and race preparation. Settings/records and save transfer remain available from the main header. The existing save key, balance, ownership, car loadouts and pricing are unchanged; no demo credits or reset controls are exposed in the main game. The isolated comparison at `studies/garage-flow/` retains its own demo save and classic/new switch.
+
+The UI is shared through `garage-flow.mjs`; demo storage remains in `garage-flow-study.mjs`. Race return shows the earned prize on the garage home; starting a new race clears the previous result notice. Local review `/__qa__/garage-main-review.html` uses the existing memory-storage fixture to check purchase and reload without touching a player's save. Tested 4,321→4,071 credits with purchased paint, original wheel/upgrade loadout and 12 completed races retained after reload, plus settings/save-transfer access. Full suite: 297 passed; syntax: 175 JavaScript files. Phone-sized layout checks and physical-phone validation are distinct.
+
+Art direction is under discussion; this release does not change vehicle or environment art. Earlier comparison notes below describe the prototype before adoption.
+
 
 ## 대표 서킷의 본게임 연결 · 2026-11-03
 

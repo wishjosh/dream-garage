@@ -1,5 +1,5 @@
-/* Comparison prototype. All rules are scoped; the main garage is unchanged. */
-.flow-study #menu.garage-overlay{padding-top:calc(54px + env(safe-area-inset-top))}
+/* Adopted garage layout; the isolated study adds its comparison controls. */
+.flow-study #menu.garage-overlay,.flow-main #menu.garage-overlay{padding-top:calc(54px + env(safe-area-inset-top))}
 .flow-compare{position:absolute;left:0;top:0;right:0;height:calc(50px + env(safe-area-inset-top));padding:env(safe-area-inset-top) max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));display:flex;align-items:center;justify-content:space-between;gap:8px;background:#17191d;color:#f5f4f0;z-index:5;font-size:13px;border-bottom:1px solid #41444a}
 .flow-compare small{color:#b9babd;margin-left:8px;font-size:11px}.flow-compare div{display:flex;gap:4px}.flow-compare button{background:#292c31;border:1px solid #484c52;border-radius:7px;color:#eee;min-height:44px;padding:7px 14px;font-size:13px}.flow-compare button[aria-pressed=true]{background:#f0eee7;color:#191a1d;border-color:#fff}.flow-compare #flow-reset{font-size:11px;padding:6px 9px}
 .flow-heading,.flow-home,.flow-empty,.flow-done{display:none}
@@ -46,3 +46,13 @@
 @media(max-width:360px){.flow-compare{font-size:11px;padding-left:8px;padding-right:8px;gap:4px}.flow-compare button{padding:6px 10px}.flow-modern #menu .flow-heading h2{font-size:18px}}
 
 @media(orientation:portrait) and (max-height:740px){.flow-modern #menu .shop-item{min-height:94px;padding:5px 2px;gap:3px}.flow-modern #menu .flow-wheel{width:40px;height:40px}.flow-modern #menu .flow-color{width:34px;height:34px;margin:2px 0}.flow-modern #menu .shop-item strong{font-size:11px}.flow-modern #menu .shop-item .item-price{font-size:10px}.flow-modern #menu .garage-panel{gap:5px;padding:10px}.flow-modern #menu .launch-bar{padding-top:6px}.flow-modern #menu .garage-top{top:10px;right:10px}}
+
+/* Main game utilities keep save transfer and settings reachable without demo controls. */
+.flow-main #menu[data-flow-screen=settings] .garage-scroll{display:block;flex:1;min-height:0;overflow:auto}
+.flow-main #menu[data-flow-screen=settings] .garage-settings{display:block;margin:0;border:0}
+.flow-main #menu[data-flow-screen=settings] .garage-settings summary,.flow-main #menu[data-flow-screen=settings] #shop-items,.flow-main #menu[data-flow-screen=settings] #shop-status{display:none}
+.flow-main #menu[data-flow-screen=settings] .launch-bar{display:block;margin-top:auto;border-color:#4a4e55}
+.flow-main #menu[data-flow-screen=settings] .flow-empty{display:none}
+.flow-main .flow-compare>span{font-size:12px;letter-spacing:.12em;color:#bfc2c8}
+.flow-main #flow-home-status{font-size:12px;line-height:1.5;color:#dbc399}
+.flow-main #menu .save-transfer-entry{color:#e4b56e;border-color:#65615b;min-height:44px}

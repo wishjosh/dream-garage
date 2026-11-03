@@ -1,4 +1,5 @@
-import {createStudyStore,freshStudySave,installGarageFlow,itemMarkup} from './garage-flow-study.mjs?v=garage-flow-1';
+import {createStudyStore,freshStudySave} from './garage-flow-study.mjs?v=garage-main-1';
+import {installGarageFlow,itemMarkup} from './garage-flow.mjs?v=garage-main-1';
 import {wheelThumbnails} from './garage-wheel-thumbnails.mjs?v=garage-flow-1';
 import {loadCourseRuntime} from './course-runtime.mjs?v=circuit-main-1';
 import {createRaceSettlement} from './race-settlement.mjs?v=circuit-main-1';
@@ -195,7 +196,7 @@ async function boot(){
  function readInput(){for(const k of Object.keys(input))input[k]=[...held.values()].includes(k);input.left ||= keys.has('ArrowLeft')||keys.has('KeyA');input.right ||=keys.has('ArrowRight')||keys.has('KeyD');input.throttle ||=keys.has('ArrowUp')||keys.has('KeyW');input.brake ||=keys.has('ArrowDown')||keys.has('KeyS')||keys.has('Space');input.reverse ||=keys.has('KeyX');input.drift ||=keys.has('ShiftLeft')||keys.has('ShiftRight');pedalConsole?.paint(input);}
  function showToast(message){$('toast').textContent=message;$('toast').classList.add('visible');toastTime=2.5;}
  let mapOpen=false;
- function resetRace(){shopPreview.cancel();garageDrag.cancel();renderShop();
+ function resetRace(){lastRace=null;shopPreview.cancel();garageDrag.cancel();renderShop();
   mapOpen=false;$('course-map').hidden=true;
   physics?.dispose();resetSkids();
   visuals.forEach(v=>{scene.remove(v.root);disposeDress(v.body);});visuals=[];if(preview)preview.visible=false;
@@ -283,7 +284,7 @@ async function boot(){
  $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{$('load-status').textContent='이 브라우저에서는 가로로 돌려서 플레이해 주세요.';}};
  addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;clearInput();updateCamera(true);camera.updateProjectionMatrix();});
  refreshTransferredSave=()=>{selected=save.car;view=save.view;toMenu();$('shop-status').textContent='저장 기록을 반영했어요. 옮겨 온 차로 달려 보세요.';};
- if(garageStudy)flowUI=installGarageFlow({getState:()=>({carName:CAR_NAMES[selected],pending:shopPreview.pending}),cancel:cancelShop,selectCategory:value=>{category=value;},refresh:renderShop,reset:()=>{save=freshStudySave();selected=save.car;previewAngle=0;shopPreview.cancel();persist();refreshPreview();syncOptions();},onScreen:screen=>{previewAngle=0;preview.rotation.y=0;}});
+ flowUI=installGarageFlow({study:garageStudy,getState:()=>({carName:CAR_NAMES[selected],pending:shopPreview.pending,storageOK,notice:lastRace?lastRace.prize.toLocaleString()+' C 획득 · 내 차를 꾸미고 다시 도전해요.':''}),cancel:cancelShop,selectCategory:value=>{category=value;},refresh:renderShop,reset:()=>{save=freshStudySave();selected=save.car;previewAngle=0;shopPreview.cancel();persist();refreshPreview();syncOptions();},onScreen:screen=>{previewAngle=0;preview.rotation.y=0;}});
  syncOptions();$('enter-garage').disabled=false;$('enter-garage').textContent='차고 문 열기 →';$('welcome-status').textContent='준비 완료 · 너만의 레이스를 시작해 봐!';$('start').disabled=false;$('start').textContent='레이스 출발  →';$('load-status').textContent='준비 완료 · 스마트폰은 가로 화면을 추천해요';
  installRaceCourses({course:COURSE_META,track,getSave:()=>save,getCar:()=>selected,canChoose:()=>mode==='menu'||mode==='result',onOpen:()=>{if(shopPreview.pending)cancelShop();},onChoose:()=>{shopPreview.cancel();save.car=selected;save.view=view;persist();},navigate:url=>{clearInput();if(garageStudy){const next=new URL(url,location.href);next.searchParams.set('study','garage-flow');next.searchParams.set('layout',flowUI.modern?'new':'classic');location.assign(next.href);}else location.assign(url);}});
  if(garageStudy&&atWelcome)$('enter-garage').click();
