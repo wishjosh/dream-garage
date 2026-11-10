@@ -1,5 +1,5 @@
 import * as T from '../../vendor/three.module.js';
-import {loadFerrari} from './asset.mjs?v=ferrari-city-2';
+import {loadFerrari} from './asset.mjs?v=marina-city-1';
 import {drivingReadout} from '../../race-hud.mjs';
 import {setCabinUp} from '../../cockpit-attitude.mjs';
 const yAxis=new T.Vector3(0,1,0),flip=new T.Quaternion().setFromAxisAngle(yAxis,Math.PI);

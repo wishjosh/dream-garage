@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {itemById} from './garage-core.mjs';
+import {itemById} from './garage-core.mjs?v=marina-city-1';
 
 // Only cloned materials are changed; the stock model and opponent cars stay intact.
 export function dressCar(model,car,loadout,rig){

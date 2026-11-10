@@ -1,3 +1,4 @@
+import {surfaceHeight,surfaceTriangles} from './surface-mesh.mjs';
 import {applyDaylight,groundTint,installBackdrop} from './daylight.mjs?v=garage-art-1';
 import {paintDistanceBoard} from './distance-board.mjs?v=distance-extension-1';
 import {signageLayout} from './signage.mjs';
@@ -25,10 +26,9 @@ export async function buildCampus(scene,track,{realism=true,renderer,layoutId='c
  if(daylight)lookStats.backdrop=installBackdrop(scene,grass);
  const batches=new Map(),surfaceChecks=[];function box(x,y,z,w,h,d,m=navy,heading=0){const object=new T.Object3D();object.position.set(x,terrainHeight(x,z)+y,z);object.scale.set(w,h,d);object.rotation.y=heading;object.updateMatrix();if(!batches.has(m))batches.set(m,[]);batches.get(m).push(object.matrix.clone());}
  function mesh(points,index,material,offset=0){
- const vertices=[],indices=[];function tri(a,b,c,depth=0){const ab=Math.hypot(a.x-b.x,a.z-b.z),bc=Math.hypot(b.x-c.x,b.z-c.z),ca=Math.hypot(c.x-a.x,c.z-a.z),max=Math.max(ab,bc,ca);if(max>12&&depth<12){if(max===ab){const m={x:(a.x+b.x)/2,z:(a.z+b.z)/2};tri(a,m,c,depth+1);tri(m,b,c,depth+1);}else if(max===bc){const m={x:(b.x+c.x)/2,z:(b.z+c.z)/2};tri(a,b,m,depth+1);tri(a,m,c,depth+1);}else{const m={x:(c.x+a.x)/2,z:(c.z+a.z)/2};tri(a,b,m,depth+1);tri(m,b,c,depth+1);}}else{const i=vertices.length;vertices.push(a,b,c);indices.push(i,i+1,i+2);}}
- for(let i=0;i<index.length;i+=3)tri(points[index[i]],points[index[i+1]],points[index[i+2]]);points=vertices;index=indices;
+ points=surfaceTriangles(points,index);index=points.map((_,i)=>i);
  if(realism)for(let i=0;i<index.length;i+=3){const a=points[index[i]],b=points[index[i+1]],c=points[index[i+2]];if((b.z-a.z)*(c.x-a.x)-(b.x-a.x)*(c.z-a.z)<0)[index[i+1],index[i+2]]=[index[i+2],index[i+1]];}
- const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(points.flatMap(p=>[p.x,terrainHeight(p.x,p.z)+offset,p.z]),3));geo.setAttribute('uv',new T.Float32BufferAttribute(points.flatMap(p=>[p.x/7,p.z/7]),2));geo.setIndex(index);geo.computeVertexNormals();if(daylight&&(material===grass||material===runoff)){geo.setAttribute('color',new T.Float32BufferAttribute(points.flatMap(p=>groundTint(p.x,p.z,material===grass)),3));material.vertexColors=true;}const m=new T.Mesh(geo,material);m.receiveShadow=realism;scene.add(m);return m;}
+ const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(points.flatMap(p=>[p.x,surfaceHeight(p.x)+offset,p.z]),3));geo.setAttribute('uv',new T.Float32BufferAttribute(points.flatMap(p=>[p.x/7,p.z/7]),2));geo.setIndex(index);geo.computeVertexNormals();if(daylight&&(material===grass||material===runoff)){geo.setAttribute('color',new T.Float32BufferAttribute(points.flatMap(p=>groundTint(p.x,p.z,material===grass)),3));material.vertexColors=true;}const m=new T.Mesh(geo,material);m.receiveShadow=realism;scene.add(m);return m;}
  function polygon(poly,material,offset){return mesh(poly,T.ShapeUtils.triangulateShape(poly.map(p=>new T.Vector2(p.x,p.z)),[]).flat(),material,offset);}
  const b={xmin:Math.min(...SITE.map(p=>p.x))-100,xmax:Math.max(...SITE.map(p=>p.x))+100,zmin:Math.min(...SITE.map(p=>p.z))-100,zmax:Math.max(...SITE.map(p=>p.z))+100},points=[],index=[],nx=110,nz=100;
  for(let j=0;j<=nz;j++)for(let i=0;i<=nx;i++){points.push({x:b.xmin+(b.xmax-b.xmin)*i/nx,z:b.zmin+(b.zmax-b.zmin)*j/nz});if(i<nx&&j<nz){const a=j*(nx+1)+i;index.push(a,a+1,a+nx+1,a+1,a+nx+2,a+nx+1);}}mesh(points,index,grass,SURFACE.grass);

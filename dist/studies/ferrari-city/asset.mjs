@@ -2,8 +2,8 @@ import * as T from '../../vendor/three.module.js';
 import {GLTFLoader} from '../../vendor/GLTFLoader.js';
 import {DRACOLoader} from '../vehicle-compare/DRACOLoader.js';
 import {loadReferenceAssets,prepareFerrari} from '../vehicle-compare/ferrari-reference.mjs';
-import {dressCar as originalDress,disposeDress,buildGarage} from '../../garage-visual.mjs';
-import {itemById} from '../../garage-core.mjs';
+import {dressCar as originalDress,disposeDress,buildGarage} from '../../garage-visual.mjs?v=marina-city-1';
+import {itemById} from '../../garage-core.mjs?v=marina-city-1';
 export {disposeDress,buildGarage};
 let pending;
 export function loadFerrari(){

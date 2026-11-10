@@ -1,6 +1,6 @@
 import * as T from '../../vendor/three.module.js';
 import {GLTFLoader} from '../../vendor/GLTFLoader.js';
-import {loadFerrari} from '../ferrari-city/asset.mjs?v=ferrari-city-2';
+import {loadFerrari} from '../ferrari-city/asset.mjs?v=marina-city-1';
 import {createReferencePaint} from '../vehicle-compare/ferrari-reference.mjs';
 
 const base=new URL('../../assets/vehicle-compare/porsche-911/',import.meta.url);

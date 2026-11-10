@@ -24,5 +24,5 @@ export function installGarageFlow({getState,cancel,selectCategory,refresh,reset,
  for(const b of bar.querySelectorAll('[data-layout]'))b.onclick=()=>{cancel('');modern=b.dataset.layout==='new';screen=modern?'home':'customize';selectCategory('paint');const url=new URL(location.href);url.searchParams.set('layout',modern?'new':'classic');history.replaceState(null,'',url);onScreen(screen);sync();refresh();};
  if(artStudy)for(const b of bar.querySelectorAll('[data-look]')){b.setAttribute('aria-pressed',String(b.dataset.look===look));b.onclick=()=>{if(b.dataset.look!==look)onLook(b.dataset.look);};}
  if(study)$('flow-reset').onclick=()=>{reset();go('home');};else{$('flow-welcome').onclick=()=>$('title-back').click();$('flow-settings').onclick=()=>go('settings');}
- sync();return {sync,home:()=>go('home'),get modern(){return modern;},get screen(){return screen;},categories:()=>modern?categoriesFor(screen):null};
+ sync();return {sync,race:()=>go('race'),home:()=>go('home'),get modern(){return modern;},get screen(){return screen;},categories:()=>modern?categoriesFor(screen):null};
 }

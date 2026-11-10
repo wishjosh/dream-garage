@@ -1,4 +1,4 @@
-import {RacePhysics as CityPhysics,FIXED_DT} from './studies/mixed-city/physics.mjs?v=mixed-city-3';
+import {RacePhysics as CityPhysics,FIXED_DT} from './studies/mixed-city/physics.mjs?v=marina-city-1';
 import {trackFrame,nearestTrack,angleDelta,clamp} from './race-core.mjs';
 export {FIXED_DT};
 // Reviewed beginner-course pace: same engine/tyres/brakes for every car. Pace follows the road,

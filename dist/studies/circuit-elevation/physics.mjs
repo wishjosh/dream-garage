@@ -1,7 +1,7 @@
 import {spectatorVariant,withinSpectatorPaving} from './spectators.mjs';
 import {facilityVariant,facilityColliders,withinYard} from './facilities.mjs';
 import {pitLayout} from './layout.mjs';
-import {RacePhysics as FlatPhysics,FIXED_DT} from '../../course-race-physics.mjs';
+import {RacePhysics as FlatPhysics,FIXED_DT} from '../../course-race-physics.mjs?v=marina-city-1';
 import * as C from '../../vendor/cannon-es.js';
 import {wheelVisualPose} from '../../vehicle-physics.mjs';
 import {trackFrame,nearestTrack,clamp} from '../../race-core.mjs';

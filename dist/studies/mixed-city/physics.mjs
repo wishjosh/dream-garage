@@ -1,4 +1,4 @@
-import {RacePhysics as BaseRacePhysics,FIXED_DT} from '../../race-handling.mjs?v=race-safety-1';
+import {RacePhysics as BaseRacePhysics,FIXED_DT} from '../../race-handling.mjs?v=marina-city-1';
 export {FIXED_DT};
 // Reuse the existing recovery, at the current course position, only for a bot
 // which wants to accelerate but has been stationary for four simulated seconds.

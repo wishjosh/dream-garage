@@ -1,0 +1,31 @@
+Marina City environment — 2026-11-10
+Fictional city/course inspired by Marina Bay spatial relationships; not an official Singapore GP/F1 product or measured replica.
+
+NEW SOURCE — Modular Urban Apartments Facade
+James Ray Cock / Poly Haven, CC0-1.0.
+https://polyhaven.com/a/modular_urban_apartments_facade
+https://polyhaven.com/license
+Runtime source selection: five wall/window/door/cornice nodes extracted without mesh simplification. Only used buffer views and materials/images are retained; original 1K textures unchanged. The current scene uses wall, window and cornice modules. Door modules are retained for matching entrances.
+Exact original URLs, authors, hashes, selected modules and sizes: facade/provenance.json.
+Reproducible extraction: scripts/prepare-marina-assets.mjs.
+
+NEW FOLIAGE SOURCE
+Tree Small 02 leaves diffuse + opacity / Rico Cilliers, Poly Haven, CC0.
+https://polyhaven.com/a/tree_small_02
+The original full tree mesh is not used (2,062,487 triangles in its glTF). Original 1K textures are mapped onto project-authored lightweight canopy cards. Original maps are unchanged; UVs select a branch cluster. Exact hashes: foliage/provenance.json.
+
+REUSED LOCAL SOURCES
+Asphalt012 / ambientCG, CC0: ../materials/LICENSE.txt.
+Concrete Wall 001 / Dimitrios Savva and Rico Cilliers, Poly Haven, CC0.
+Grass Ground / Charlotte Baglioni, Poly Haven, CC0.
+Modular Chainlink Fence wire textures / Amal Kumar, Poly Haven, CC0.
+Exact provenance and originals: ../../studies/circuit-elevation/assets/NOTICE.txt.
+Kenney tree_palmDetailedTall, CC0, existing local asset: https://kenney.nl/assets/nature-kit
+The tree source is not a newly downloaded commercial-building kit.
+
+PROJECT-AUTHORED GEOMETRY
+Street network, bridge, promenade, pit building, civic hall, tower masses, window atlas, observation wheel, road markings, floodlights, water shader and signs are authored for this game. Poly Haven source facade models and textures are distinct from these simplified distant structures.
+
+REFERENCE ONLY (not copied into game textures)
+https://storage.singaporegp.sg/web/2025/circuit-park-map/circuit-park-map.pdf?v=4
+https://singaporegp.sg/en/fanzone/sgp-fast-facts/

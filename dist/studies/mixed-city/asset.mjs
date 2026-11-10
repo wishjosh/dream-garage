@@ -1,6 +1,6 @@
 import * as T from '../../vendor/three.module.js';
-import {loadFerrari,dressCar as dressFerrari,disposeDress,buildGarage} from '../ferrari-city/asset.mjs?v=ferrari-city-2';
-import {loadTemplate} from '../porsche-garage/assets.mjs?v=porsche-1';
+import {loadFerrari,dressCar as dressFerrari,disposeDress,buildGarage} from '../ferrari-city/asset.mjs?v=marina-city-1';
+import {loadTemplate} from '../porsche-garage/assets.mjs?v=marina-city-1';
 import {itemById} from './core.mjs?v=mixed-city-3';
 import {preparePorscheExterior,setPorscheSteering} from './rig.mjs?v=mixed-city-3';
 export {disposeDress,buildGarage};

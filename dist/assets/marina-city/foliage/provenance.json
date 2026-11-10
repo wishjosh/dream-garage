@@ -1,0 +1,21 @@
+{
+  "asset": "tree_small_02",
+  "author": "Rico Cilliers",
+  "license": "CC0-1.0",
+  "page": "https://polyhaven.com/a/tree_small_02",
+  "purpose": "Original foliage textures on project-authored lightweight canopy cards; not original full tree mesh",
+  "files": [
+    {
+      "name": "leaves.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_small_02/tree_small_02_leaves_diff_1k.jpg",
+      "bytes": 340003,
+      "md5": "315cbc2cebfb399e649ccd39112c109a"
+    },
+    {
+      "name": "alpha.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/tree_small_02/tree_small_02_leaves_alpha_1k.png",
+      "bytes": 264711,
+      "md5": "63199ba87a9e8928424bd8c3b8017bd0"
+    }
+  ]
+}
