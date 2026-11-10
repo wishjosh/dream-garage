@@ -63,7 +63,14 @@ test('assistance preserves straight input and never silently takes over steering
 test('main entry uses the verified adapter and preserves the existing save modules',async()=>{
  const game=fs.readFileSync(new URL('../dist/game.mjs',import.meta.url),'utf8');
  assert.match(game,/loadCourseRuntime\(COURSE_META\)/);
- const {loadCourseRuntime}=await import('../dist/course-runtime.mjs'),{RACE_COURSES}=await import('../dist/race-courses.mjs'),{RacePhysics:VerifiedBase}=await import('../dist/race-handling.mjs?v=race-safety-1');
+ const {loadCourseRuntime}=await import('../dist/course-runtime.mjs'),{RACE_COURSES}=await import('../dist/race-courses.mjs');
+ // Query strings identify distinct module instances. Check the verified file path,
+ // then load the same version as the live adapter instead of pinning an old release.
+ const adapterURL=new URL('../dist/studies/mixed-city/physics.mjs',import.meta.url),adapter=fs.readFileSync(adapterURL,'utf8');
+ const baseSpecifier=adapter.match(/import \{RacePhysics as BaseRacePhysics,FIXED_DT\} from ['"]([^'"]+)['"]/)[1];
+ const baseURL=new URL(baseSpecifier,adapterURL);
+ assert.equal(baseURL.pathname,new URL('../dist/race-handling.mjs',import.meta.url).pathname);
+ const {RacePhysics:VerifiedBase}=await import(baseURL.href);
  for(const course of RACE_COURSES){
   const runtime=await loadCourseRuntime(course),track=course.create(),player=makeRacer(track);
   const physics=runtime.createPhysics(track,[player],rigs,{autoRecovery:true});
