@@ -108,3 +108,12 @@ test('mirrors outside the camera view spend no rear render and resume on re-entr
  f.surface.position.set(0,0,-1);f.mirror.update(args);assert.equal(f.state.renderCount,2);assert.equal(f.mirror.stats().active,true);
  f.surface.position.set(0,0,1);f.mirror.update(args);assert.equal(f.state.renderCount,2,'behind-eye mirror must be culled');f.mirror.dispose();
 });
+
+test('a deferred mirror stays active and claims a budget only when its cadence is due',()=>{
+ const f=fixture();let allowed=false,claims=0;const args={player:{heading:0},enabled:true,canRender:()=>{claims++;return allowed;}};
+ f.mirror.update({...args,now:0});assert.equal(f.mirror.stats().active,true);assert.equal(f.mirror.stats().frames,0);
+ allowed=true;f.mirror.update({...args,now:16});assert.equal(f.mirror.stats().frames,1);assert.equal(claims,2);
+ f.mirror.update({...args,now:32});assert.equal(claims,2);assert.equal(f.mirror.stats().frames,1);
+ allowed=false;f.mirror.update({...args,now:80});assert.equal(f.mirror.stats().frames,1);
+ f.mirror.update({...args,now:81,force:true});assert.equal(f.mirror.stats().frames,2);f.mirror.dispose();
+});

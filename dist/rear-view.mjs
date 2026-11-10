@@ -32,7 +32,7 @@ export function createRearView({renderer,scene,camera,cockpit,surface,options={}
  const savedViewport=new T.Vector4(),savedScissor=new T.Vector4();
  let frames=0,lastRender=-Infinity,wasActive=false,active=false,low=false,slowFrames=0,disposed=false,lastMs=0,totalMs=0,drawCalls=0,triangles=0;
  surface.material.map=target.texture;surface.material.toneMapped=false;surface.material.needsUpdate=true;
- function update({player,enabled=false,paused=false,now=performance.now(),force=false,frameMs=16,hide=[],portrait=false,viewportWidth=0,viewportHeight=0,overlayY=88,inspect=false}={}) {
+ function update({player,enabled=false,paused=false,now=performance.now(),force=false,frameMs=16,hide=[],portrait=false,viewportWidth=0,viewportHeight=0,overlayY=88,inspect=false,canRender}={}) {
   if(disposed)return;
   active=!!(enabled&&player&&(!options.cullOffscreen||inspect||surfaceInView(surface,camera)));
   overlay.visible=active&&portrait&&options.allowOverlay!==false;presentation=overlay.visible?'portrait-overlay':'physical';
@@ -41,6 +41,7 @@ export function createRearView({renderer,scene,camera,cockpit,surface,options={}
   if(!paused){slowFrames=frameMs>40?slowFrames+1:Math.max(0,slowFrames-1);if(slowFrames>=90&&!low){low=true;target.setSize(economyWidth,economyHeight);}}
   const hz=low?economyHz:standardHz;
   if(!force&&wasActive&&(paused||now-lastRender<1000/hz))return;
+  if(!force&&canRender&&!canRender())return;
   const yaw=player.heading+(options.yaw||0);direction.set(Math.sin(yaw),0,Math.cos(yaw));
   // Position at the interior mirror, above the driver's eye and toward the
   // windscreen. The player's shell is excluded, just as in the cockpit view.
