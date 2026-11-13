@@ -14,5 +14,7 @@ export function installRaceCourses({course,track,getSave,getCar,onOpen,onChoose,
  $('race-course-info').textContent=course.name+' · '+course.focus;
  $('course-title').textContent=course.name;$('pause-course-name').textContent=course.name+' · 한 바퀴';
  const params=new URLSearchParams(location.search);if(params.get('garage')==='1'){const ready=params.get('screen')==='race';params.delete('garage');params.delete('screen');const url=new URL(location.href);url.search=params.toString();history.replaceState(null,'',url);$('enter-garage').click();if(ready)onReady();}
+ // Keep the home-screen launch URL so adding it after loading still opens the garage.
+ else if(params.get('launch')==='garage')$('enter-garage').click();
  return{open,render};
 }

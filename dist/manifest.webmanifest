@@ -1,0 +1,25 @@
+{
+  "id": "./",
+  "name": "드림 개러지: 스피드 그랑프리",
+  "short_name": "드림 개러지",
+  "lang": "ko",
+  "start_url": "./?launch=garage",
+  "scope": "./",
+  "display": "browser",
+  "background_color": "#08192c",
+  "theme_color": "#08192c",
+  "icons": [
+    {
+      "src": "./assets/app-icon/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/app-icon/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
