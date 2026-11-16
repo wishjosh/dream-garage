@@ -149,7 +149,7 @@ export class RacePhysics{
  }
  checkRecovery(){
   const e=this.entries[0];if(!this.autoRecovery||!e||e.r.finished||!e.nearCourse)return;
-  const n=e.nearCourse,reason=sampleRecovery(e.recovery,{distance:n.distance,s:n.s,inWater:isCityWater(e.s.x,e.s.z),dt:DT,time:this.time});
+  const n=e.nearCourse,reason=sampleRecovery(e.recovery,{distance:n.distance,s:n.s,inWater:(this.track.waterAt ?? isCityWater)(e.s.x,e.s.z),dt:DT,time:this.time});
   if(reason&&!this.recover(e.r,{atS:e.recovery.anchorS,reason}))e.recovery.nextCheck=this.time+RECOVERY.retry;
  }
  recoveryStats(){const e=this.entries[0];return e?{...e.recovery,remaining:Math.max(0,e.recovery.flashUntil-this.time)}:{count:0,remaining:0};}

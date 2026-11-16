@@ -7,7 +7,7 @@ import {makeRacer,trackFrame,nearestTrack,finishRacer} from '../dist/race-core.m
 import {surfaceHeight,surfaceTriangles} from '../dist/studies/circuit-elevation/surface-mesh.mjs';
 import {terrainHeight} from '../dist/studies/circuit-elevation/terrain.mjs';
 const rigs=JSON.parse(readFileSync(new URL('../dist/assets/vehicle-rigs.json',import.meta.url)));
-for(const key of ['circuit','speed'])test(key+' recovery preserves the last raced point and the physical finish line',async()=>{
+for(const key of ['circuit','tour'])test(key+' recovery preserves the last raced point and the physical finish line',async()=>{
  const course=raceCourse(key),track=course.create(),runtime=await loadCourseRuntime(course),r=makeRacer(track),p=runtime.createPhysics(track,[r],rigs,{}),e=p.entries[0];
  const at=(s,lateral=0)=>{const f=trackFrame(track,s);Object.assign(e.s,{x:f.x+f.rx*lateral,z:f.z+f.rz*lateral});p.sync(e,true);};
  try{
@@ -25,7 +25,7 @@ for(const key of ['circuit','speed'])test(key+' recovery preserves the last race
   assert.ok(nearestTrack(track,r.x,r.z).s<.2);
  }finally{p.dispose();}
 });
-for(const key of ['circuit','speed'])test(key+' finished opponents keep clearing the finish line',async()=>{
+for(const key of ['circuit','tour'])test(key+' finished opponents keep clearing the finish line',async()=>{
  const course=raceCourse(key),track=course.create(),runtime=await loadCourseRuntime(course);
  const player=makeRacer(track,{s:track.length*.5}),bot=makeRacer(track,{id:'bot',s:10,lane:2.3});bot.finished=true;
  const p=runtime.createPhysics(track,[player,bot],rigs,{}),start={x:bot.x,z:bot.z};

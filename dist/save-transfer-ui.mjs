@@ -1,4 +1,4 @@
-import {RACE_COURSES} from './race-courses.mjs?v=marina-city-1';
+import {RACE_COURSES} from './race-courses.mjs?v=circuit-lineup-1';
 import {CARS,CATEGORIES,itemById} from './garage-core.mjs?v=marina-city-1';
 import {SAVE_KEY,BACKUP_KEY,MAX_TRANSFER_BYTES,createTransfer,readSnapshot,prepareImport,applyImport,prepareRestore,applyRestore} from './save-transfer.mjs?v=marina-city-1';
 

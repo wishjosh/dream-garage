@@ -38,8 +38,8 @@ for(const car of ['tavaculo','porsche','f2002'])test(car+' circuit race → rewa
   try{assert.ok(Math.abs(next.entries[0].config.engine/baseEngine-1.18)<1e-9);}finally{next.dispose();}
  }finally{physics.dispose();}
 });
-test('circuit records are separate from the original flat speed course and study',()=>{
- assert.equal(raceCourse('speed').id,'geometry-speed-1');assert.equal(raceCourse(null).key,'tour');assert.equal(raceCourse(CIRCUIT_ID).key,'circuit');
+test('both Speed Ring links use the graded circuit and keep its distinct record identity',()=>{
+ for(const key of ['speed','geometry-speed-1','beginner-speed-1','circuit'])assert.equal(raceCourse(key).id,CIRCUIT_ID);assert.equal(raceCourse(null).key,'tour');assert.equal(raceCourse(CIRCUIT_ID).key,'circuit');
  assert.notEqual(CIRCUIT_ID,'circuit-elevation-study-1');const url=new URL(courseURL('https://example.test/dream-garage/?view=cockpit','circuit'));assert.equal(url.searchParams.get('course'),'circuit');assert.equal(url.searchParams.get('view'),'cockpit');
 });
 test('slower second race retains the best and a fresh race can earn another prize',()=>{

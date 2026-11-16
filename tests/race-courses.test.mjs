@@ -13,7 +13,7 @@ test('known links keep the old tour; choices use stable, distinct record identit
  assert.equal(raceCourse(null).id,'city-geometry-1');assert.equal(raceCourse('unknown').id,'city-geometry-1');
  assert.deepEqual(RACE_COURSES.map(c=>c.id),ACTIVE_COURSE_IDS);for(const c of RACE_COURSES)assert.equal(c.create().id,c.id);
  const url=new URL(courseURL('https://example.test/dream-garage/?v=old&view=cockpit#garage','speed'));
- assert.equal(url.pathname,'/dream-garage/');assert.equal(url.searchParams.get('course'),'speed');assert.equal(url.searchParams.get('view'),'cockpit');assert.equal(url.searchParams.get('garage'),'1');assert.equal(url.hash,'#garage');
+ assert.equal(url.pathname,'/dream-garage/');assert.equal(url.searchParams.get('course'),'circuit');assert.equal(url.searchParams.get('view'),'cockpit');assert.equal(url.searchParams.get('garage'),'1');assert.equal(url.hash,'#garage');
 });
 test('normalizing and transferring all four course records preserves the old economy and cars',()=>{
  const base=old(),value=structuredClone(base);for(const id of COURSE_IDS.slice(1))value.courseBest[id]={tavaculo:65.123,porsche:62.1,f2002:58.25};
@@ -40,7 +40,7 @@ test('pre-Porsche two-slot exports still import after adding new course support'
  const restored=parseTransfer(JSON.stringify(envelope)).save;assert.equal(restored.coins,4321);assert.equal(restored.garage.tavaculo.paint,'paint-mint');assert.equal(restored.best.tavaculo,29.5);assert.equal(restored.garage.porsche.engine,'engine-stock');
 });
 
-for(const key of ['speed','rhythm','braking'])test('formula field can complete '+key+' without mixing road cars',()=>{
+for(const key of ['tour','rhythm','braking'])test('formula field can complete '+key+' without mixing road cars',()=>{
  const track=raceCourse(key).create(),rigs=JSON.parse(readFileSync(new URL('../dist/assets/vehicle-rigs.json',import.meta.url))),racers=Array.from({length:4},(_,i)=>makeRacer(track,{id:i?'bot'+i:'player',car:'f2002',s:i?7+(i-1)*7:0,lane:i%2?2.3:-2.3}));
  const physics=new RacePhysics(track,racers,rigs);for(let ticks=0;ticks<180*60&&!racers.every(r=>r.finished);ticks++){const e=physics.entries[0];physics.step(1/60,e.r.finished?{brake:1}:{...physics.route(e),wheelCommand:true},false);racers.forEach(r=>finishRacer(r,track,ticks/60));}
  assert.ok(racers.every(r=>r.finished));assert.equal(physics.aiRecoveryCount,0);physics.dispose();

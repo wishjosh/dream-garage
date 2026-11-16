@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="./race-hud.css?v=race-hud-1">
   <link rel="stylesheet" href="./drive-console.css?v=graphite-1">
   <link rel="stylesheet" href="./race-safety.css?v=race-safety-1">
-  <script type="module" src="./game.mjs?v=home-icon-1"></script>
+  <script type="module" src="./game.mjs?v=circuit-lineup-1"></script>
   <link rel="stylesheet" href="./ferrari-main.css?v=porsche-main-1">
   <link rel="stylesheet" href="./garage-preview.css?v=porsche-main-1">
   <link rel="stylesheet" href="./game-controls.css?v=game-controls-3">
@@ -48,10 +48,10 @@
       <div class="eyebrow">YOUR GARAGE. YOUR GRAND PRIX.</div>
       <h1>드림 개러지<span>스피드 그랑프리</span></h1>
       <p class="tagline">꿈꾸던 차를 만들고,<br>도시를 달려라!</p>
-      <p class="invitation">수변 도시에서 초대장이 도착했어요.<br>너만의 차로 첫 번째 그랑프리에 도전해 봐!</p>
+      <p class="invitation">경주장과 마리나 시티에서 달려 보세요.<br>너만의 차로 첫 번째 그랑프리에 도전해 봐!</p>
       <button id="enter-garage" class="primary" disabled>차고를 준비하고 있어요…</button>
       <button class="save-transfer-entry" data-save-transfer-open>저장 기록 옮기기</button>
-      <p class="ferrari-update">전용 서킷에서도 상금을 모으고 내 차를 꾸밀 수 있어요. 차고의 코스 변경에서 스피드 링 서킷을 골라 보세요.</p><p class="welcome-loop">나만의 차고 <span>→</span> 경주 <span>→</span> 상금으로 꾸미기</p>
+      <p class="ferrari-update">상금으로 내 차를 꾸며 보세요. 경주 준비 화면에서 달릴 코스를 고를 수 있어요.</p><p class="welcome-loop">나만의 차고 <span>→</span> 경주 <span>→</span> 상금으로 꾸미기</p>
       <p class="save-note">로그인 없이 바로 플레이 · 진행은 이 브라우저에 저장돼요</p>
       <div id="welcome-status" role="status">코스와 자동차를 불러오는 중</div>
     </section>
@@ -83,7 +83,7 @@
       </div>
       <div class="launch-bar">
         <div id="shop-offer" aria-live="polite" hidden><div class="offer-line"><strong id="shop-offer-name"></strong><span id="shop-offer-cost"></span></div><p id="shop-offer-description"></p><div id="shop-offer-balance"></div><div class="shop-actions"><button id="shop-cancel">취소</button><button id="shop-confirm" class="primary">구매하고 장착</button></div></div>
-        <p id="race-brief"></p><div id="launch-actions" class="launch-actions"><button id="course-open" type="button" aria-haspopup="dialog"><small>코스 변경</small><strong id="selected-course-name">시티 투어</strong><span id="selected-course-details">한 바퀴</span></button><button id="start" class="primary" disabled>차량을 준비하고 있어요…</button></div>
+        <p id="race-brief"></p><div id="launch-actions" class="launch-actions"><button id="course-open" type="button" aria-haspopup="dialog"><small>코스 변경</small><strong id="selected-course-name">클럽 서킷</strong><span id="selected-course-details">한 바퀴</span></button><button id="start" class="primary" disabled>차량을 준비하고 있어요…</button></div>
       </div>
     </section>
     <script id="garage-preview-state" type="application/json">{}</script>
@@ -92,7 +92,7 @@
     <section class="panel compact"><div class="eyebrow">PIT STOP</div><h2>잠깐 쉬어요</h2><p id="pause-course-name"></p><p>달리던 자리에서 이어갈 수 있어요.</p><label class="gaze-option"><input type="checkbox" id="pause-gaze-follow" checked> 조향 따라 시선 이동</label><label class="gaze-option"><input type="checkbox" id="pause-body-motion" checked> 차체 움직임</label><label class="gaze-option"><input type="checkbox" id="pause-impact-audio" checked> 주행·충돌 소리</label><label class="steering-choice">조향 방식<select id="pause-steering-mode"><option value="buttons">좌우 버튼</option><option value="slide">엄지 슬라이드</option></select></label><p class="steering-hint">방식을 바꾸고 처음부터 다시 달리면 같은 출발 조건으로 비교해요.</p><button id="resume" class="primary">계속 달리기</button><button id="restart" class="secondary">처음부터 다시</button><button id="back-menu" class="text-button">차고로 돌아가기</button></section>
   </div>
   <div id="course-map" class="overlay" role="dialog" aria-modal="true" aria-labelledby="course-title" hidden>
-    <section class="panel course-panel"><div class="course-heading"><h2 id="course-title">베이프런트 시티 투어</h2><span>일시정지 · 전체 코스</span></div><canvas id="full-map" width="720" height="520" aria-label="전체 서킷과 내 차·상대 차량 위치"></canvas><div class="course-legend"><b>▲ 내 차 · 진행 방향</b><i>● 상대 차량</i><small>▣ 출발·결승선</small></div><button id="map-resume" class="primary">계속 달리기</button></section>
+    <section class="panel course-panel"><div class="course-heading"><h2 id="course-title">클럽 서킷</h2><span>일시정지 · 전체 코스</span></div><canvas id="full-map" width="720" height="520" aria-label="전체 서킷과 내 차·상대 차량 위치"></canvas><div class="course-legend"><b>▲ 내 차 · 진행 방향</b><i>● 상대 차량</i><small>▣ 출발·결승선</small></div><button id="map-resume" class="primary">계속 달리기</button></section>
   </div>
   <div id="result" class="overlay" hidden>
     <section class="panel compact"><div class="eyebrow">RACE COMPLETE</div><h2 id="result-title">완주했어요!</h2><div id="result-rank"></div><p id="result-course-name"></p><p id="result-time"></p><div class="prize"><small>이번 상금</small><strong id="prize"></strong></div><p id="total-prize"></p><p id="record-note"></p><p id="result-story">상금으로 우리 차를 더 멋지게 만들어 볼까?</p><button id="result-menu" class="primary">차고에서 꾸미기 →</button><button id="again" class="secondary">한 번 더 달리기</button><button id="result-course" class="text-button">다른 코스 고르기</button></section>
