@@ -1,9 +1,9 @@
-import {installGrandTouringHud} from './gt-hud.mjs';
+import {installGrandTouringHud} from './gt-hud.mjs?v=button-pedals-1';
 export function pedalAmount(clientY, top, height) {
   return Math.max(0, Math.min(1, (top + height - 12 - clientY) / Math.max(1, height - 24)));
 }
 
-const isProportional = variant => ['precision', 'sport', 'digital', 'gt'].includes(variant);
+const proportionalVariants = ['precision', 'sport', 'digital'];
 
 export function installControlsHud({canDrive}) {
   const sheet = document.createElement('link');
@@ -35,7 +35,7 @@ export function installControlsHud({canDrive}) {
   document.querySelector('#pause-menu .compact').append(timing);
 
   let variant = 'classic';
-  let previewInput = null;
+  let proportional = false;
   const pointers = new Map();
   const levels = {throttle: 0, brake: 0};
   const release = id => {
@@ -46,7 +46,6 @@ export function installControlsHud({canDrive}) {
     if (pointer.element.hasPointerCapture(id)) pointer.element.releasePointerCapture(id);
   };
   function clear() {
-    previewInput = null;
     for (const id of [...pointers.keys()]) release(id);
     levels.throttle = levels.brake = 0;
   }
@@ -59,11 +58,10 @@ export function installControlsHud({canDrive}) {
   }
   for (const element of pedals) {
     element.addEventListener('pointerdown', event => {
-      if (!isProportional(variant)) return;
+      if (!proportional) return;
       event.preventDefault();
       event.stopImmediatePropagation();
       if (!canDrive() || (event.pointerType === 'mouse' && event.button !== 0) || pointers.size) return;
-      previewInput = null;
       pointers.set(event.pointerId, {element});
       element.setPointerCapture(event.pointerId);
       route(event);
@@ -82,14 +80,15 @@ export function installControlsHud({canDrive}) {
       }, true);
     }
   }
-  function setVariant(value) {
+  function setVariant(value, buttonPedals = false) {
     if (!['classic', 'minimal', 'precision', 'sport', 'digital', 'gt'].includes(value)) throw new Error('Unknown control design');
     clear();
     variant = value;
+    proportional = !buttonPedals && proportionalVariants.includes(value);
+    document.body.toggleAttribute('data-study-button-pedals', value === 'gt' || buttonPedals);
     document.body.dataset.controlsDesign = value;
     for (const pedal of pedals) {
-      const precise = isProportional(value);
-      if (precise) {
+      if (proportional) {
         pedal.setAttribute('aria-label', pedal.dataset.driveTarget === 'throttle' ? '가속량 · 아래 0% 위 100%' : '제동량 · 아래 0% 위 100%');
       } else {
         pedal.setAttribute('aria-label', pedal.dataset.driveTarget === 'throttle' ? '가속' : '브레이크');
@@ -97,8 +96,7 @@ export function installControlsHud({canDrive}) {
     }
   }
   function applyInput(input, steer = 0) {
-    if (variant === 'gt' && previewInput && !pointers.size) Object.assign(input, previewInput);
-    if (isProportional(variant) && pointers.size) {
+    if (proportional && pointers.size) {
       input.throttle = levels.throttle;
       input.brake = levels.brake;
     }
@@ -120,7 +118,6 @@ export function installControlsHud({canDrive}) {
   return {
     frozen: true, setVariant, applyInput, clear,
     updateTelemetry: gt.update,
-    previewInput: values => { clear(); previewInput = {throttle: Math.max(0, Math.min(1, values.throttle || 0)), brake: Math.max(0, Math.min(1, values.brake || 0))}; },
-    snapshot: () => ({variant, pointers: pointers.size, levels: {...levels}, preview: previewInput && {...previewInput}})
+    snapshot: () => ({variant, pointers: pointers.size, levels: {...levels}})
   };
 }

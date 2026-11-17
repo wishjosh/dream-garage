@@ -2,7 +2,7 @@ import {mapProjection} from '../../race-hud.mjs';
 
 // Original vector instruments; all values come from the running game.
 export function installGrandTouringHud() {
- const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href=new URL('./gt-hud.css',import.meta.url).href;document.head.append(sheet);
+ const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href=new URL('./gt-hud.css?v=button-pedals-1',import.meta.url).href;document.head.append(sheet);
  const hud=document.getElementById('hud'),root=document.createElement('div');root.id='gt-readout';
  const ticks=Array.from({length:41},(_,i)=>{const a=(200-i*5.5)*Math.PI/180,r=i%5?86:80;return `<line x1="${110+Math.cos(a)*r}" y1="${107-Math.sin(a)*r}" x2="${110+Math.cos(a)*92}" y2="${107-Math.sin(a)*92}" class="${i>=35?'red':''}"/>`;}).join('');
  const numbers=[0,2,4,6,8].map((n,i)=>{const a=(200-i*55)*Math.PI/180;return `<text x="${110+Math.cos(a)*68}" y="${110-Math.sin(a)*68}">${n}</text>`;}).join('');

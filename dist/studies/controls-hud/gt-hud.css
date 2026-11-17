@@ -80,12 +80,6 @@ body[data-controls-design=gt] #hud .pedal-faces{width:calc(100% - 53px)}
 body[data-controls-design=gt] #hud #drive-console .brake,body[data-controls-design=gt] #hud #drive-console .brake-face{height:100%!important}
 body[data-controls-design=gt] #hud #drive-console .gas-face,body[data-controls-design=gt] #hud #drive-console .brake-face{height:100%;width:45%;right:2%;border:0;border-radius:0;background:linear-gradient(0deg,#0b14225c,transparent);box-shadow:none;filter:none;overflow:visible}
 body[data-controls-design=gt] #hud #drive-console .brake-face{left:0;width:48%}
-body[data-controls-design=gt] #hud #drive-console .gas-face:after,body[data-controls-design=gt] #hud #drive-console .brake-face:after{content:'';position:absolute;left:11px;top:12px;bottom:12px;width:11px;height:auto;transform:none;opacity:1;border:0;border-radius:0;background:repeating-linear-gradient(to top,#ffffff9c 0 1px,transparent 1px 25%);border-left:1px solid #fff7}
-body[data-controls-design=gt] #hud #drive-console .gas-face:before,body[data-controls-design=gt] #hud #drive-console .brake-face:before{content:'';position:absolute;left:11px;bottom:12px;width:3px;height:calc((100% - 24px) * var(--throttle-amount,0));background:white;box-shadow:0 0 5px #fff4;z-index:1}
-body[data-controls-design=gt] #hud #drive-console .brake-face:before{height:calc((100% - 24px) * var(--brake-amount,0));background:#ff7d70}
-body[data-controls-design=gt] #hud .pedal-meter{display:block;position:absolute;left:30px;right:0;top:43%;transform:translateY(-50%);text-align:center;color:#fff;line-height:1;font-size:22px;font-weight:400;white-space:nowrap;font-variant-numeric:tabular-nums;text-shadow:0 1px 3px #000a;pointer-events:none}
-body[data-controls-design=gt] #hud .pedal-meter b{font-weight:400}
-body[data-controls-design=gt] #hud .pedal-meter small{font-size:8px;margin-left:2px;color:#c1ccda}
 body[data-controls-design=gt] #hud #drive-console .gas-text,body[data-controls-design=gt] #hud #drive-console .brake-text{bottom:-15px;font-size:9px;font-weight:400;letter-spacing:.04em;color:#e5ecf5}
 body[data-controls-design=gt] #hud #drive-console .gas-text{left:75%}
 body[data-controls-design=gt] #hud #drive-console .brake-text{left:24%}
@@ -105,7 +99,6 @@ body[data-controls-design=gt] #hud .lever-down{top:calc(100% + 4px)}
  body[data-controls-design=gt] .gt-instrument{transform:translateX(-50%) scale(.75);transform-origin:bottom center}
  body[data-controls-design=gt] #hud #thumb-steering{width:23vw;height:55px!important}
  body[data-controls-design=gt] #hud #controls .drive-console{width:174px;height:116px}
- body[data-controls-design=gt] #hud .pedal-meter{font-size:17px;left:23px}
  body[data-controls-design=gt] #hud #drive-state{bottom:158px}
  body[data-controls-design=gt] #hud #toast{bottom:185px}
 }
@@ -123,7 +116,6 @@ body[data-controls-design=gt] #hud .lever-down{top:calc(100% + 4px)}
  body[data-controls-design=gt] #hud #controls{display:flex;align-items:end;height:auto}
  body[data-controls-design=gt] #hud #thumb-steering{width:32vw;position:relative;bottom:0;height:64px!important}
  body[data-controls-design=gt] #hud #controls .drive-console{width:51vw;height:155px;position:relative;right:auto}
- body[data-controls-design=gt] #hud .pedal-meter{font-size:19px;left:24px}
  body[data-controls-design=gt] #hud #drive-state{bottom:calc(var(--gt-bottom) + 355px);font-size:10px}
  body[data-controls-design=gt] #hud #toast{bottom:calc(var(--gt-bottom) + 390px)}
 }
@@ -151,3 +143,13 @@ body[data-controls-design=gt][data-view=cockpit] .gt-speed-group{top:24px}
 body[data-controls-design=gt][data-view=cockpit] .gt-gear-group{top:26px}
 body[data-controls-design=gt][data-view=cockpit] .gt-input-bars{top:86px}
 body[data-controls-design=gt][data-view=cockpit] .gt-steer-line{display:none}
+
+body[data-study-button-pedals] #hud #drive-console .pedal-meter,
+body[data-study-button-pedals] #hud #drive-console :is(.gas-face,.brake-face)::before,
+body[data-study-button-pedals] #hud #drive-console :is(.gas-face,.brake-face)::after {
+  display: none;
+}
+body[data-controls-design=gt] #hud #drive-console :is(.gas-face,.brake-face) {
+  border: 1px solid #ffffff30;
+  border-radius: 4px;
+}

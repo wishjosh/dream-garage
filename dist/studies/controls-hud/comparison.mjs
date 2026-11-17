@@ -6,7 +6,7 @@ const viewSelect = document.querySelector('#view');
 const designComparison = document.body.dataset.comparison === 'designs';
 const gtComparison = document.body.dataset.comparison === 'gt';
 const variants = gtComparison ? {
-  gt: {title:'도로에 집중하는 경주 화면',description:'순위와 진행은 왼쪽, 시간은 중앙, 코스는 오른쪽. 속도·기어·회전수와 입력량은 아래 계기에 모았습니다.',question:'페달을 누른 채 위아래로 움직여 보세요. 가속·제동량을 조절하면서 도로와 속도를 함께 읽을 수 있는지 확인합니다.'},
+  gt: {title:'도로에 집중하는 경주 화면',description:'순위와 진행은 왼쪽, 시간은 중앙, 코스는 오른쪽. 속도·기어·회전수와 페달 작동 상태는 아래 계기에 표시됩니다.',question:'코너에 들어가기 전에 브레이크를 누르고, 코너를 빠져나오며 가속해 보세요.'},
   digital: {title:'이전 디지털 레이싱형',description:'같은 코스와 입력 방식으로 이전 디자인을 비교합니다.',question:'새 화면과 번갈아 보며 코스 지도·계기·조작부의 가독성을 비교해 보세요.'}
 } : designComparison ? {
   sport: { title: '정제된 스포츠카 장치형', description: '무광 금속 페달, 깊이 있는 조향 손잡이, 따뜻한 계기 조명. 입력량은 페달 안에서 읽고 속도와 기어는 하나의 계기로 묶었습니다.', question: '페달을 누르고 위아래로 움직여 보세요. 금속 면의 눌림과 옆의 표시선이 조작량을 자연스럽게 전달하는지 확인합니다.' },
@@ -42,11 +42,7 @@ function describe() {
   document.querySelector('#question').textContent = text.question;
 }
 function showMode() {
-  const snapshot = controller?.snapshot(), mode = snapshot?.mode, preview = snapshot?.preview;
-  for(const button of document.querySelectorAll('[data-input-preview]')) {
-    button.disabled = !controller || variant !== 'gt' || playing || ['menu','result','paused'].includes(mode);
-    button.setAttribute('aria-pressed',String(!!preview && button.dataset.inputPreview === (preview.throttle ? 'gas' : preview.brake ? 'brake' : 'none')));
-  }
+  const mode = controller?.snapshot().mode;
   playButton.textContent = mode === 'paused' ? '계속 달리기' : playing ? '주행 멈추기' : '직접 달리기';
   if (mode === 'menu' || mode === 'result') {
     status.textContent = '차고 · 같은 장면으로 돌아가거나 직접 달리기를 눌러 비교를 이어가세요.';
@@ -56,14 +52,13 @@ function showMode() {
     status.textContent = '일시정지 · 계속 달리기를 누르면 이어집니다.';
     return;
   }
-  if(preview && variant === 'gt'){status.textContent='정지 장면 · '+(preview.throttle?'가속 '+Math.round(preview.throttle*100)+'%':preview.brake?'제동 '+Math.round(preview.brake*100)+'%':'입력 없음')+' 표시 미리보기';return;}
   status.textContent = playing ? '직접 주행 중 · 안을 바꾸면 같은 위치에서 비교합니다.' : '같은 장면 · 페달을 눌러 반응을 보거나, 직접 달리기로 주행하세요.';
 }
 for (const button of document.querySelectorAll('[data-variant]')) {
   button.addEventListener('click', () => {
     variant = button.dataset.variant;
     controller?.setPlaying(false);
-    controller?.setVariant(variant);
+    controller?.setVariant(variant, gtComparison);
     if (controller && ['menu', 'result'].includes(controller.snapshot().mode)) controller.setScene(viewSelect.value);
     playing = false;
     describe();
@@ -106,7 +101,7 @@ if (matchMedia('(max-width:600px) and (orientation:portrait)').matches) {
   document.querySelector('#size').value = 'portrait';
 }
 describe();
-frame.src = '../../?course=braking&study=controls-hud&qa=1&view=cockpit';
+frame.src = '../../?course=braking&study=controls-hud&qa=1&view=cockpit&v=button-pedals-1';
 let deadline = performance.now() + 60000;
 frame.addEventListener('load', () => { deadline = performance.now() + 60000; });
 let lastState = '';
@@ -115,13 +110,13 @@ const loading = setInterval(() => {
     const next = frame.contentWindow.__controlsHudStudy;
     if (next && next !== controller) {
       controller = next;
-      controller.setVariant(variant);
+      controller.setVariant(variant, gtComparison);
       controller.setScene(viewSelect.value);
       sceneButton.disabled = playButton.disabled = false;
       showMode();
     } else if (next) {
       const state = next.snapshot();
-      const key = [state.mode, state.frozen, state.view, state.carName, state.courseName, JSON.stringify(state.preview)].join('|');
+      const key = [state.mode, state.frozen, state.view, state.carName, state.courseName].join('|');
       if (key !== lastState) {
         lastState = key;
         playing = !state.frozen && ['race', 'countdown'].includes(state.mode);
@@ -138,12 +133,3 @@ const loading = setInterval(() => {
     status.textContent = '게임 화면에 연결하지 못했습니다. 같은 주소에서 다시 열어 주세요.';
   }
 }, 150);
-
-for (const button of document.querySelectorAll('[data-input-preview]')) {
- button.addEventListener('click', () => {
-  controller.setPlaying(false); playing = false;
-  controller.previewInput(button.dataset.inputPreview === 'gas' ? {throttle:.65} : button.dataset.inputPreview === 'brake' ? {brake:.7} : {});
-  showMode(); button.setAttribute('aria-pressed','true');
-  status.textContent = '정지 장면 · ' + (button.dataset.inputPreview === 'gas' ? '가속 65%' : button.dataset.inputPreview === 'brake' ? '제동 70%' : '입력 없음') + ' 표시 미리보기';
- });
-}

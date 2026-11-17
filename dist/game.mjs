@@ -323,13 +323,12 @@ async function boot(){
    syncVisuals();updateCamera(true);updateHUD();renderScene(true);return recentImpact;
   }};
  if(controlsStudy){
-  const {installControlsHud}=await import('./studies/controls-hud/controls.mjs');
+  const {installControlsHud}=await import('./studies/controls-hud/controls.mjs?v=button-pedals-1');
   controlsPreview=installControlsHud({canDrive:()=>['race','countdown'].includes(mode)});
   const setView=name=>{if(!['cockpit','chase'].includes(name))throw Error('Unknown view');if(view!==name)switchView();};
   window.__controlsHudStudy={
-   setVariant:name=>{clearInput();controlsPreview.setVariant(name);},
+   setVariant:(name,buttonPedals)=>{clearInput();controlsPreview.setVariant(name,buttonPedals);},
    setView,
-   previewInput:values=>{clearInput();controlsPreview.frozen=true;controlsPreview.previewInput(values);},
    setScene:name=>{
     clearInput();controlsPreview.frozen=true;setView(name);resetRace();
     mode='race';count=0;$('countdown').hidden=true;

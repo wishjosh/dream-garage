@@ -16,7 +16,7 @@ for(let i=0;i<900;i++){if(ctl())break;await sleep(50)}assert(ctl(),'준비 실�
 for(const [width,height]of [[844,390],[568,320],[402,874],[320,568]])for(const variant of visualVariants)for(const view of ['cockpit','chase']){frame.width=width;frame.height=height;await sleep(80);scene(variant,view);status.textContent=width+'×'+height+' '+variant+' '+view;record(status.textContent,layout)}
 frame.width=844;frame.height=390;await sleep(80);
 for(const variant of visualVariants){
-scene(variant);record(variant+' 가속·제동·조향',()=>{emit(gas(),'pointerdown',2,.5);const r=box(steer());emit(steer(),'pointerdown',1);emit(steer(),'pointermove',1,.5,r.x+r.width/2-18);tick(.5);const s=snap();assert(Math.abs(Number(s.input.throttle)-(['precision','sport','digital','gt'].includes(variant)?.5:1))<.01,'가속량');assert(s.steeringControl.value>0&&s.player.speed>0,'동시 조향 주행');if(variant==='precision'){const face=q('.gas-face'),fill=parseFloat(w().getComputedStyle(face,'::before').height),expected=(face.clientHeight-24)*.5;assert(Math.abs(fill-expected)<1,'입력량 막대 불일치')}emit(gas(),'pointermove',2,.5,box(brake()).x+box(brake()).width/2,box(brake()).y+box(brake()).height/2);tick(.1);assert(Number(snap().input.brake)>0&&!snap().input.throttle,'제동 전환');emit(gas(),'pointerup');emit(steer(),'pointerup',1);tick(1/60);neutral();return{input:s.input.throttle,speed:s.player.speed,steer:s.steeringControl.value}});
+scene(variant);record(variant+' 가속·제동·조향',()=>{emit(gas(),'pointerdown',2,.5);const r=box(steer());emit(steer(),'pointerdown',1);emit(steer(),'pointermove',1,.5,r.x+r.width/2-18);tick(.5);const s=snap();assert(Math.abs(Number(s.input.throttle)-(['precision','sport','digital'].includes(variant)?.5:1))<.01,'가속량');assert(s.steeringControl.value>0&&s.player.speed>0,'동시 조향 주행');if(variant==='precision'){const face=q('.gas-face'),fill=parseFloat(w().getComputedStyle(face,'::before').height),expected=(face.clientHeight-24)*.5;assert(Math.abs(fill-expected)<1,'입력량 막대 불일치')}emit(gas(),'pointermove',2,.5,box(brake()).x+box(brake()).width/2,box(brake()).y+box(brake()).height/2);tick(.1);assert(Number(snap().input.brake)>0&&!snap().input.throttle,'제동 전환');emit(gas(),'pointerup');emit(steer(),'pointerup',1);tick(1/60);neutral();return{input:s.input.throttle,speed:s.player.speed,steer:s.steeringControl.value}});
 scene(variant);record(variant+' 주행 후 차고 복귀',()=>{emit(gas(),'pointerdown',2,.8);tick(1);emit(gas(),'pointerup');q('#pause').click();assert(snap().mode==='paused','일시정지');q('#back-menu').click();assert(snap().mode==='menu'&&snap().screen==='garage','차고 복귀');neutral();assert(w().localStorage.length===0,'일반 저장 쓰기');return{screen:snap().screen,localStorageWrites:0}});
 }
 const acceleration=[];for(const amount of [.25,.75]){scene();emit(gas(),'pointerdown',2,amount);tick(.8);acceleration.push({amount,input:snap().input.throttle,speed:snap().player.speed});emit(gas(),'pointerup')}record('부분 가속이 실제 속도에 반영',()=>{assert(acceleration[1].speed>acceleration[0].speed+1,'가속 차이 없음');return acceleration});
@@ -25,7 +25,7 @@ for(const type of ['pointerup','pointercancel','lostpointercapture']){scene();re
 for(const action of ['pause','resize','blur','variant','scene']){scene();record(action+' 해제',()=>{emit(gas(),'pointerdown',2,.8);tick(1/60);if(action==='pause')q('#pause').click();if(action==='resize'||action==='blur')w().dispatchEvent(new (w().Event)(action));if(action==='variant')ctl().setVariant('classic');if(action==='scene')ctl().setScene('cockpit');tick(1/60);neutral()})}
 scene();record('화면 밖 드래그 해제 및 재진입',()=>{emit(gas(),'pointerdown',2,.8);emit(gas(),'pointermove',2,.8,-20);tick(1/60);assert(!snap().input.throttle,'화면 밖 가속');emit(gas(),'pointermove',2,.3);tick(1/60);assert(Math.abs(snap().input.throttle-.3)<.01,'재진입 입력량');emit(gas(),'pointerup');tick(1/60);neutral()});
 
-for(const variant of (gtOnly?['gt']:['sport','digital','gt'])){
+for(const variant of (gtOnly?[]:['sport','digital'])){
  const results=[];
  for(const amount of [.25,.75]){scene(variant);emit(gas(),'pointerdown',2,amount);tick(.8);results.push({amount,input:snap().input.throttle,speed:snap().player.speed});emit(gas(),'pointerup')}
  record(variant+' 부분 가속',()=>{assert(results[1].speed>results[0].speed+1,'가속 차이 없음');return results});
@@ -38,7 +38,20 @@ for(const variant of (gtOnly?['gt']:['sport','digital','gt'])){
 }
 
 scene('gt');record('GT 실제 주행 정보와 코스 지도',()=>{qa().advance(2,{throttle:.7});const s=snap();assert(q('#gt-speed').textContent===q('#speed').textContent,'속도 불일치');assert(q('#gt-gear').textContent===q('#gear').textContent,'기어 불일치');assert(q('#gt-time').textContent===q('#time').textContent,'시간 불일치');assert(q('#gt-course').textContent==='브레이크 루프','코스명');assert(q('#gt-map-cars').children.length===s.racers.length,'차량 수');assert(q('.gt-map-line').getAttribute('d').length>100,'실제 코스 경로');assert(Number(q('#gt-progress').textContent.replace('%',''))===Math.floor(s.player.distance/s.length*100),'진행률');return{speed:q('#gt-speed').textContent,elapsed:s.elapsed,mapCars:s.racers.length}});
-scene('gt');record('GT 입력 미리보기·주행 시작 시 해제',()=>{ctl().previewInput({throttle:.65});tick(0);assert(ctl().snapshot().frozen,'미리보기 정지');assert(ctl().snapshot().preview.throttle===.65,'미리보기량');ctl().setPlaying(true);tick(1/60);assert(ctl().snapshot().preview===null,'미리보기 잔류');neutral();ctl().setPlaying(false)});
+for(const variant of ['gt','digital']) {
+  scene(variant);
+  ctl().setVariant(variant,true);
+  record(variant+' 페달 위치 무관·입력 해제',()=>{
+    for(const [pedal,key] of [[gas(),'throttle'],[brake(),'brake']]) {
+      emit(pedal,'pointerdown',2,.1);tick(1/60);
+      assert(snap().input[key]===true,'페달 아래 입력');
+      emit(pedal,'pointermove',2,.9);tick(1/60);
+      assert(snap().input[key]===true,'페달 위 입력');
+      assert(w().getComputedStyle(q('.gas-face .pedal-meter')).display==='none','입력량 표시 잔류');
+      emit(pedal,'pointercancel');tick(1/60);neutral();
+    }
+  });
+}
 scene('gt');record('GT 지도 열기·주행 복귀',()=>{q('#gt-map').click();assert(snap().mode==='paused'&&!q('#course-map').hidden,'지도 열기');q('#map-resume').click();assert(snap().mode==='race'&&q('#course-map').hidden,'지도 복귀');neutral()});
 report.runtimeErrors=w().__cockpitReviewErrors;report.passed=report.checks.every(c=>c.passed)&&!report.runtimeErrors.length;status.textContent=(report.passed?'통과 ':'실패 ')+report.checks.filter(c=>c.passed).length+'/'+report.checks.length;
 }catch(e){report.error=e.stack;status.textContent='중단 '+e.message}finally{out.textContent=JSON.stringify(report,null,2);document.querySelector('#run').disabled=false}};
