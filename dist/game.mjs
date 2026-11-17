@@ -92,7 +92,7 @@ async function boot(){
  const driveMeasure=createFrameMeasure();
  for(const kind of ['pointerdown','keydown'])addEventListener(kind,()=>{impactSound.unlock();drivingSound.unlock();},{passive:true});
  for(const id of ['impact-audio','pause-impact-audio'])$(id).onchange=e=>{impactSound.enabled=e.target.checked;drivingSound.enabled=e.target.checked;if(e.target.checked)drivingSound.unlock();for(const name of ['impact-audio','pause-impact-audio'])$(name).checked=e.target.checked;};
- let steeringControl=null,pedalConsole=null,recentImpact=null,controlsPreview=null;
+ let steeringControl=null,pedalConsole=null,recentImpact=null,controlsPreview=null,raceHud=null;
  const input={left:false,right:false,throttle:false,brake:false,reverse:false,drift:false};const held=new Map(),pointerZones=new Map(),keys=new Set();
  let flowUI=null;const wheelImages={};
  const garage=daylight?await (await import('./garage-daylight.mjs?v=garage-art-1')).buildDaylightGarage(garageScene,renderer):buildGarage(garageScene);if(!daylight)garage.traverse(o=>{if(o.isLight)o.intensity=0;});let preview,previewAngle=0,category='paint',atWelcome=true;const shopPreview=createPreviewSession({categories:Object.keys(CATEGORIES)});let garageDrag={cancel(){}};
@@ -115,7 +115,7 @@ async function boot(){
  }]));let rearView=mirrors.tavaculo.rear,sideViews=mirrors.tavaculo.sides;
  function renderMirror(force=false,now=performance.now()){
   rearView=(mirrors[selected]||mirrors.tavaculo).rear;sideViews=(mirrors[selected]||mirrors.tavaculo).sides;
-  for(const [kind,m] of Object.entries(mirrors)){const args={player,enabled:kind===selected&&originalCockpit.group.visible&&mode!=='menu'&&!wheelInspection,paused:mode==='paused'||mode==='result',force,now,frameMs:avgFrame,portrait:innerHeight>innerWidth,overlayY:controlsPreview?.snapshot().variant==='gt'?142:88,viewportWidth:innerWidth,viewportHeight:innerHeight,hide:[visuals[0]?.root,cockpit,...Object.values(cabins).map(c=>c.group)]};mirrorSchedule.run([m.rear,...m.sides.map(s=>s.view)],args,{force,optimized:trafficOptimized});}
+  for(const [kind,m] of Object.entries(mirrors)){const args={player,enabled:kind===selected&&originalCockpit.group.visible&&mode!=='menu'&&!wheelInspection,paused:mode==='paused'||mode==='result',force,now,frameMs:avgFrame,portrait:innerHeight>innerWidth,overlayY:document.body.dataset.controlsDesign==='gt'?142:88,viewportWidth:innerWidth,viewportHeight:innerHeight,hide:[visuals[0]?.root,cockpit,...Object.values(cabins).map(c=>c.group)]};mirrorSchedule.run([m.rear,...m.sides.map(s=>s.view)],args,{force,optimized:trafficOptimized});}
  }
 
  function paintRecovery(){
@@ -179,7 +179,7 @@ async function boot(){
   visuals[0].wheels.forEach(w=>w.visible=view!=='cockpit');visuals[0].calipers.forEach(w=>w.visible=view!=='cockpit');
   if(view==='cockpit'&&selected!=='f2002'){
    originalCockpit.applyCamera();
-   if(controlsPreview?.snapshot().variant==='gt'&&selected==='tavaculo'){
+   if(document.body.dataset.controlsDesign==='gt'&&selected==='tavaculo'){
     camera.position.addScaledVector(direction,.16);
     camera.fov=innerWidth<innerHeight?66:52;
    }
@@ -195,7 +195,7 @@ async function boot(){
    else camera.lookAt(camera.position.x+direction.x*40,camera.position.y+bodyForward.y*10-.28,camera.position.z+direction.z*40);
   }else{
    camera.up.set(0,1,0);camera.fov=62+Math.min(player.speed/38*7,7);desired.set(player.x-direction.x*(6.5+player.speed*.018),2.9+(player.y||0),player.z-direction.z*(6.5+player.speed*.018));
-   camera.position.lerp(desired,snap?1:1-Math.exp(-lastDt*6));cameraTarget.set(player.x+direction.x*6,(player.y||0)+.85,player.z+direction.z*6);lookTarget.lerp(cameraTarget,snap?1:1-Math.exp(-lastDt*9));camera.lookAt(lookTarget);if(controlsPreview?.snapshot().variant==='gt')camera.lookAt(lookTarget.x,lookTarget.y-.9,lookTarget.z);
+   camera.position.lerp(desired,snap?1:1-Math.exp(-lastDt*6));cameraTarget.set(player.x+direction.x*6,(player.y||0)+.85,player.z+direction.z*6);lookTarget.lerp(cameraTarget,snap?1:1-Math.exp(-lastDt*9));camera.lookAt(lookTarget);if(document.body.dataset.controlsDesign==='gt')camera.lookAt(lookTarget.x,lookTarget.y-.9,lookTarget.z);
   }
   camera.updateProjectionMatrix();$('camera').textContent=view==='chase'?'운전석':'차 뒤';$('camera').setAttribute('aria-label',view==='chase'?'운전석 시점으로 전환':'차 뒤 시점으로 전환');
  }
@@ -203,7 +203,7 @@ async function boot(){
  function resetSkids(){skidMesh.count=0;skidIndex=0;skidTime=0;previousSkids=null;}
  function updateSkids(dt){if(!player?.drifting){previousSkids=null;return;}skidTime+=dt;if(skidTime<.06)return;skidTime=0;const rear=player.wheels.slice(2).map(w=>({x:w.position[0],z:w.position[2]}));if(previousSkids)rear.forEach((p,i)=>{const old=previousSkids[i],dx=p.x-old.x,dz=p.z-old.z,len=Math.hypot(dx,dz);if(len<.02||len>6)return;skidObject.position.set((p.x+old.x)/2,groundHeight((p.x+old.x)/2,(p.z+old.z)/2)+.075,(p.z+old.z)/2);skidObject.rotation.set(0,Math.atan2(dx,dz),0);skidObject.scale.set(.18,.009,len+.03);skidObject.updateMatrix();skidMesh.setMatrixAt(skidIndex,skidObject.matrix);skidIndex=(skidIndex+1)%180;skidMesh.count=Math.min(180,skidMesh.count+1);});previousSkids=rear;skidMesh.instanceMatrix.needsUpdate=true;}
  function clearInput(){controlsPreview?.clear();steeringControl?.clear();pedalConsole?.clear();resetGaze();held.clear();pointerZones.clear();keys.clear();Object.keys(input).forEach(k=>input[k]=false);document.querySelectorAll('[data-control]').forEach(b=>{b.classList.remove('pressed');b.setAttribute('aria-pressed','false');});pedalConsole?.paint(input);}
- function readInput(){for(const k of Object.keys(input))input[k]=[...held.values()].includes(k);input.left ||= keys.has('ArrowLeft')||keys.has('KeyA');input.right ||=keys.has('ArrowRight')||keys.has('KeyD');input.throttle ||=keys.has('ArrowUp')||keys.has('KeyW');input.brake ||=keys.has('ArrowDown')||keys.has('KeyS')||keys.has('Space');input.reverse ||=keys.has('KeyX');input.drift ||=keys.has('ShiftLeft')||keys.has('ShiftRight');controlsPreview?.applyInput(input,input.left?1:input.right?-1:(steeringControl?.value||0));pedalConsole?.paint(input);}
+ function readInput(){for(const k of Object.keys(input))input[k]=[...held.values()].includes(k);input.left ||= keys.has('ArrowLeft')||keys.has('KeyA');input.right ||=keys.has('ArrowRight')||keys.has('KeyD');input.throttle ||=keys.has('ArrowUp')||keys.has('KeyW');input.brake ||=keys.has('ArrowDown')||keys.has('KeyS')||keys.has('Space');input.reverse ||=keys.has('KeyX');input.drift ||=keys.has('ShiftLeft')||keys.has('ShiftRight');controlsPreview?.applyInput(input,input.left?1:input.right?-1:(steeringControl?.value||0));raceHud?.input(input,input.left?1:input.right?-1:(steeringControl?.value||0));pedalConsole?.paint(input);}
  function showToast(message){$('toast').textContent=message;$('toast').classList.add('visible');toastTime=2.5;}
  let mapOpen=false;
  function resetRace(){lastRace=null;shopPreview.cancel();garageDrag.cancel();renderShop();
@@ -254,7 +254,9 @@ async function boot(){
   $('rank').innerHTML=rankOf(player,racers)+'<span>/ 4</span>';
   $('progress').innerHTML=Math.floor(clamp(player.distance/length*100,0,100))+'<span>%</span>';
   $('time').textContent=formatTime(elapsed);compactMap.draw(player,racers);if(mapOpen)fullMap.draw(player,racers);
-  controlsPreview?.updateTelemetry({readout,elapsed,rank:rankOf(player,racers),player,racers,track,course:COURSE_NAME});
+  const telemetry={readout,elapsed,rank:rankOf(player,racers),player,racers,track,course:COURSE_NAME};
+  controlsPreview?.updateTelemetry(telemetry);
+  raceHud?.update(telemetry);
   $('race-progress').style.width=clamp(player.distance/length*100,0,100)+'%';
   const near=nearbyCar(player,racers),indicator=$('near-car');indicator.hidden=!near;
   if(near){indicator.dataset.side=near.side;indicator.textContent=near.side==='left'?'◀ 옆 차':'옆 차 ▶';}
@@ -322,6 +324,10 @@ async function boot(){
    if(closing!==null){physics.route=()=>({steer:0});for(let i=0;i<100&&!recentImpact;i++)step(1/120,{steer:0});for(let i=0;i<7;i++)step(1/120,{steer:0});}
    syncVisuals();updateCamera(true);updateHUD();renderScene(true);return recentImpact;
   }};
+ if(!studyName){
+  const {installRaceHud}=await import('./race-interface.mjs?v=gt-main-1');
+  raceHud=installRaceHud();
+ }
  if(controlsStudy){
   const {installControlsHud}=await import('./studies/controls-hud/controls.mjs?v=button-pedals-1');
   controlsPreview=installControlsHud({canDrive:()=>['race','countdown'].includes(mode)});

@@ -1,0 +1,97 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>GT 본게임 검증</title>
+<style>body{font:14px system-ui;background:#15191d;color:white}button{padding:12px}iframe{display:block;border:0}pre{white-space:pre-wrap}</style>
+<button id="run">다섯 코스 검사</button><strong id="status">대기</strong>
+<iframe id="game" width="844" height="390"></iframe><pre id="report"></pre>
+<script type="module">
+const frame=document.querySelector('#game');
+const report={checks:[]};
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const key='hojin-city-gp:save:v1';
+const original=localStorage.getItem(key);
+const courses=[
+ ['tour','city-geometry-1','클럽 서킷'],
+ ['rhythm','geometry-rhythm-1','리듬 링크'],
+ ['braking','geometry-braking-1','브레이크 루프'],
+ ['circuit','speed-ring-circuit-1','스피드 링'],
+ ['marina','marina-city-1','마리나 시티']
+];
+const check=(name,ok,detail)=>{
+ report.checks.push({name,ok,detail});
+ document.querySelector('#report').textContent=JSON.stringify(report,null,2);
+ if(!ok)throw Error(name);
+};
+async function load(course){
+ frame.src='/?course='+course+'&garage=1&screen=race&qa=1&review=1&handling-save=1';
+ await new Promise(resolve=>frame.addEventListener('load',resolve,{once:true}));
+ for(let i=0;i<1200;i++){
+  if(frame.contentWindow.__raceQA && frame.contentDocument.querySelector('#gt-readout') && !frame.contentDocument.querySelector('#enter-garage').disabled){frame.contentWindow.__cockpitReviewSetFrozen(true);return;}
+  await sleep(50);
+ }
+ throw Error('loading timeout');
+}
+function emit(element,type,id=1,yRatio=.5){
+ const w=frame.contentWindow;
+ const rect=element.getBoundingClientRect();
+ element.setPointerCapture=()=>{};
+ element.releasePointerCapture=()=>{};
+ element.hasPointerCapture=()=>false;
+ element.dispatchEvent(new w.PointerEvent(type,{
+  bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',button:0,
+  clientX:rect.x+rect.width/2,clientY:rect.y+rect.height*yRatio
+ }));
+}
+document.querySelector('#run').onclick=async()=>{
+ document.querySelector('#run').disabled=true;
+ try{
+  for(const [course,id,name] of courses){
+   document.querySelector('#status').textContent=name+' 검사 중';
+   await load(course);
+   const w=frame.contentWindow,d=frame.contentDocument,q=s=>d.querySelector(s),qa=w.__raceQA;
+   const before=JSON.parse(w.localStorage.getItem(key));
+   check(name+' 실제 본게임·저장 연결',!qa.snapshot().controlsStudy&&!w.__controlsHudStudy&&before.coins===4321);
+   check(name+' GT 디자인',d.body.dataset.controlsDesign==='gt'&&q('#gt-readout'));
+   check(name+' 코스',qa.snapshot().courseId===id,{actual:qa.snapshot().courseId});
+   q('#start').click();qa.advance(3.6,{});
+   check(name+' 출전',qa.snapshot().mode==='race');
+   const gas=q('[data-control=throttle]'),brake=q('[data-control=brake]');
+   emit(gas,'pointerdown',1,.9);qa.advance(.8,null);
+   check(name+' 가속',qa.snapshot().player.speed>0&&qa.snapshot().input.throttle===true,{speed:qa.snapshot().player.speed});
+   emit(gas,'pointermove',1,.1);qa.advance(.1,null);
+   check(name+' 위치 무관 입력',qa.snapshot().input.throttle===true);
+   emit(gas,'pointerup');qa.advance(1/60,null);
+   const speed=qa.snapshot().player.speed;
+   emit(brake,'pointerdown');qa.advance(.3,null);
+   check(name+' 제동',qa.snapshot().input.brake===true&&qa.snapshot().player.speed<speed);
+   emit(brake,'pointercancel');qa.advance(1/60,null);
+   check(name+' 입력 해제',!qa.snapshot().input.throttle&&!qa.snapshot().input.brake);
+   check(name+' 계기·지도',q('#gt-course').textContent===name&&q('#gt-speed').textContent===q('#speed').textContent&&q('#gt-map-cars').children.length===4);
+   q('#gt-map').click();check(name+' 지도',qa.snapshot().mode==='paused'&&!q('#course-map').hidden);
+   q('#map-resume').click();
+   q('#camera').click();qa.advance(0,{});
+   check(name+' 시점 변경',qa.snapshot().view==='chase');
+   frame.width=402;frame.height=874;await sleep(150);qa.advance(0,{});
+   const selectors=['.gt-instrument','#gt-map','.gt-position','.gt-timing','#thumb-steering','[data-control=throttle]','[data-control=brake]','#drive-lever'];
+   check(name+' 세로 화면',selectors.every(selector=>{
+    const r=q(selector).getBoundingClientRect();return r.x>=0&&r.y>=0&&r.right<=403&&r.bottom<=875;
+   }));
+   frame.width=844;frame.height=390;await sleep(150);qa.advance(0,{});
+   q('#pause').click();q('#back-menu').click();
+   check(name+' 차고 복귀',qa.snapshot().screen==='garage'&&qa.snapshot().mode==='menu');
+   const after=JSON.parse(w.localStorage.getItem(key));
+   check(name+' 기록 보존',JSON.stringify({...before,view:after.view})===JSON.stringify(after));
+   check(name+' 실행 오류 없음',w.__cockpitReviewErrors.length===0,w.__cockpitReviewErrors);
+  }
+  check('실제 저장 보존',localStorage.getItem(key)===original);
+  report.passed=true;
+  document.querySelector('#status').textContent='통과 '+report.checks.length;
+ }catch(error){
+  report.error=error.stack;report.passed=false;
+  document.querySelector('#status').textContent='실패 '+error.message;
+ }finally{
+  document.querySelector('#report').textContent=JSON.stringify(report,null,2);
+  document.querySelector('#run').disabled=false;
+ }
+};
+</script>
