@@ -1,4 +1,4 @@
-import {installGrandTouringHud} from './gt-hud.mjs?v=button-pedals-1';
+import {installGrandTouringHud} from './gt-hud.mjs?v=racing-pedals-1';
 export function pedalAmount(clientY, top, height) {
   return Math.max(0, Math.min(1, (top + height - 12 - clientY) / Math.max(1, height - 24)));
 }

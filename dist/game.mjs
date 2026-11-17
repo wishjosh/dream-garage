@@ -20,7 +20,7 @@ import {installSaveTransfer} from './save-transfer-ui.mjs?v=circuit-lineup-1';
 import {SAVE_KEY,readSnapshot} from './save-transfer.mjs?v=circuit-lineup-1';
 import {createCockpit} from './cockpit-visual.mjs?v=gallardo-cockpit-1';
 import {createRearView} from './rear-view.mjs?v=traffic-1';
-import {createOriginalCockpit} from './studies/mixed-city/cockpit.mjs?v=marina-city-1';
+import {createOriginalCockpit} from './studies/mixed-city/cockpit.mjs?v=racing-pedals-1';
 import {createSteeringState,stepSteering,MAX_LOOK_DEGREES} from './cockpit-study-steering.mjs?v=steering-look-1';
 import {splitWheelVisuals,syncWheelVisuals} from './wheel-visual.mjs?v=wheels-1';
 import * as T from './vendor/three.module.js';
@@ -173,7 +173,7 @@ async function boot(){
 
   cockpit.visible=view==='cockpit'&&selected==='f2002';originalCockpit.group.visible=view==='cockpit'&&selected!=='f2002';document.body.dataset.view=view;document.body.dataset.car=selected;
   originalCockpit.mirrorMount.visible=innerWidth>=innerHeight;
-  originalCockpit.update({player,steeringAmount:clamp(-player.steeringAngle/.46,-1,1),lookDegrees:gazeState.lookDegrees,now:performance.now(),paint:itemById(save.garage[selected].paint).color});
+  originalCockpit.update({player,compactInstruments:document.body.dataset.controlsDesign==='gt',steeringAmount:clamp(-player.steeringAngle/.46,-1,1),lookDegrees:gazeState.lookDegrees,now:performance.now(),paint:itemById(save.garage[selected].paint).color});
   cockpitVisual.update({car:selected,speed:player.speed,forwardSpeed:player.forwardSpeed,driveMode:player.driveMode,steeringAngle:player.steeringAngle,aspect:camera.aspect,paint:itemById(save.garage[selected].paint).color});
   visuals[0].body.visible=view!=='cockpit';
   visuals[0].wheels.forEach(w=>w.visible=view!=='cockpit');visuals[0].calipers.forEach(w=>w.visible=view!=='cockpit');
@@ -325,11 +325,11 @@ async function boot(){
    syncVisuals();updateCamera(true);updateHUD();renderScene(true);return recentImpact;
   }};
  if(!studyName){
-  const {installRaceHud}=await import('./race-interface.mjs?v=gt-main-1');
+  const {installRaceHud}=await import('./race-interface.mjs?v=racing-pedals-1');
   raceHud=installRaceHud();
  }
  if(controlsStudy){
-  const {installControlsHud}=await import('./studies/controls-hud/controls.mjs?v=button-pedals-1');
+  const {installControlsHud}=await import('./studies/controls-hud/controls.mjs?v=racing-pedals-1');
   controlsPreview=installControlsHud({canDrive:()=>['race','countdown'].includes(mode)});
   const setView=name=>{if(!['cockpit','chase'].includes(name))throw Error('Unknown view');if(view!==name)switchView();};
   window.__controlsHudStudy={

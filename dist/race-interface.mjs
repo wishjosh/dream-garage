@@ -1,4 +1,4 @@
-import {installGrandTouringHud} from './studies/controls-hud/gt-hud.mjs?v=gt-main-1';
+import {installGrandTouringHud} from './studies/controls-hud/gt-hud.mjs?v=racing-pedals-1';
 
 export function installRaceHud() {
   const stylesheet = document.createElement('link');

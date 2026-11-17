@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <title>GT 본게임 검증</title>
 <style>body{font:14px system-ui;background:#15191d;color:white}button{padding:12px}iframe{display:block;border:0}pre{white-space:pre-wrap}</style>
-<button id="run">다섯 코스 검사</button><strong id="status">대기</strong>
+<button id="run">다섯 코스 검사</button><button id="preview">디자인 확인</button><button id="preview-gas">가속 누름</button><button id="preview-brake">제동 누름</button><button id="preview-clear">입력 해제</button><select id="preview-size"><option value="landscape">가로</option><option value="portrait">세로</option></select><strong id="status">대기</strong>
 <iframe id="game" width="844" height="390"></iframe><pre id="report"></pre>
 <script type="module">
 const frame=document.querySelector('#game');
@@ -44,6 +44,7 @@ function emit(element,type,id=1,yRatio=.5){
 }
 document.querySelector('#run').onclick=async()=>{
  document.querySelector('#run').disabled=true;
+ document.querySelector('#report').hidden=false;
  try{
   for(const [course,id,name] of courses){
    document.querySelector('#status').textContent=name+' 검사 중';
@@ -54,15 +55,25 @@ document.querySelector('#run').onclick=async()=>{
    check(name+' GT 디자인',d.body.dataset.controlsDesign==='gt'&&q('#gt-readout'));
    check(name+' 코스',qa.snapshot().courseId===id,{actual:qa.snapshot().courseId});
    q('#start').click();qa.advance(3.6,{});
+   const compact=qa.snapshot().cockpitStats;
+   check(name+' 운전석 중복 계기 정리',compact.digitalPanelsVisible===false);
+
    check(name+' 출전',qa.snapshot().mode==='race');
    const gas=q('[data-control=throttle]'),brake=q('[data-control=brake]');
+   const gasFace=q('.gas-face'), brakeFace=q('.brake-face');
+   check(name+' 페달 형태 구분',brakeFace.clientWidth>gasFace.clientWidth && brakeFace.clientHeight<gasFace.clientHeight);
+   check(name+' 그립 패턴',q('.gas-face .racing-pedal-grip')&&q('.brake-face .racing-pedal-grip'));
    emit(gas,'pointerdown',1,.9);qa.advance(.8,null);
+   check(name+' 가속 눌림',w.getComputedStyle(gasFace).transform!=='none' && gas.getAttribute('aria-pressed')==='true');
+
    check(name+' 가속',qa.snapshot().player.speed>0&&qa.snapshot().input.throttle===true,{speed:qa.snapshot().player.speed});
    emit(gas,'pointermove',1,.1);qa.advance(.1,null);
    check(name+' 위치 무관 입력',qa.snapshot().input.throttle===true);
    emit(gas,'pointerup');qa.advance(1/60,null);
    const speed=qa.snapshot().player.speed;
    emit(brake,'pointerdown');qa.advance(.3,null);
+   check(name+' 제동 눌림',w.getComputedStyle(brakeFace).transform!=='none' && brake.getAttribute('aria-pressed')==='true');
+
    check(name+' 제동',qa.snapshot().input.brake===true&&qa.snapshot().player.speed<speed);
    emit(brake,'pointercancel');qa.advance(1/60,null);
    check(name+' 입력 해제',!qa.snapshot().input.throttle&&!qa.snapshot().input.brake);
@@ -83,6 +94,26 @@ document.querySelector('#run').onclick=async()=>{
    check(name+' 기록 보존',JSON.stringify({...before,view:after.view})===JSON.stringify(after));
    check(name+' 실행 오류 없음',w.__cockpitReviewErrors.length===0,w.__cockpitReviewErrors);
   }
+  for (const [width,height] of [[844,390],[568,320],[402,874],[320,568]]) {
+   frame.width=width;frame.height=height;await sleep(150);
+   const w=frame.contentWindow,d=frame.contentDocument,q=s=>d.querySelector(s),qa=w.__raceQA;
+   for (const car of ['tavaculo','porsche','f2002']) {
+    // Car buttons are shared by the garage and its race preparation panel.
+    q('[data-car="'+car+'"]').click();q('#view-select').value='cockpit';q('#view-select').dispatchEvent(new w.Event('change',{bubbles:true}));q('#start').click();qa.advance(3.6,{});
+    for(const view of ['cockpit','chase']) {
+     if(qa.snapshot().view!==view)q('#camera').click();
+     qa.advance(0,{});
+     const selectors=['.gt-instrument','#thumb-steering','[data-control=brake]','[data-control=throttle]','#drive-lever'];
+     const rects=selectors.map(sel=>({sel,r:q(sel).getBoundingClientRect()}));
+     check(car+' '+width+'×'+height+' '+view+' 계기·조작부 배치',rects.every(({r})=>r.x>=-.5&&r.y>=-.5&&r.right<=width+.5&&r.bottom<=height+.5)&&rects.every((a,i)=>rects.slice(i+1).every(b=>!(a.r.x<b.r.right-.5&&b.r.x<a.r.right-.5&&a.r.y<b.r.bottom-.5&&b.r.y<a.r.bottom-.5))));
+     for(const [selector,text] of [['#gt-speed','288'],['#gt-gear','6']])q(selector).textContent=text;
+     const instrument=q('.gt-instrument').getBoundingClientRect();
+     check(car+' '+width+'×'+height+' '+view+' 세 자리 속도', ['#gt-speed','#gt-gear'].every(selector=>{const r=q(selector).getBoundingClientRect();return r.left>=instrument.left&&r.right<=instrument.right+.5;}));
+     check(car+' '+view+' 터치 영역',rects.slice(1).every(({r})=>r.width>=44&&r.height>=44));
+    }
+    q('#pause').click();q('#back-menu').click();
+   }
+  }
   check('실제 저장 보존',localStorage.getItem(key)===original);
   report.passed=true;
   document.querySelector('#status').textContent='통과 '+report.checks.length;
@@ -94,4 +125,34 @@ document.querySelector('#run').onclick=async()=>{
   document.querySelector('#run').disabled=false;
  }
 };
+</script>
+
+<script type="module">
+const frame=document.querySelector('#game');
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const qa=()=>frame.contentWindow.__raceQA;
+const q=selector=>frame.contentDocument.querySelector(selector);
+function emit(pedal,type,id){
+ const rect=pedal.getBoundingClientRect();
+ pedal.setPointerCapture=()=>{};pedal.releasePointerCapture=()=>{};pedal.hasPointerCapture=()=>false;
+ pedal.dispatchEvent(new frame.contentWindow.PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',button:0,clientX:rect.x+rect.width/2,clientY:rect.y+rect.height/2}));
+}
+document.querySelector('#preview').onclick=async()=>{
+ document.querySelector('#report').hidden=true;
+ const portrait=document.querySelector('#preview-size').value==='portrait';
+ frame.width=portrait?402:844;frame.height=portrait?874:390;
+ frame.src='/?course=braking&qa=1&review=1&handling-save=1&garage=1&screen=race';
+ await new Promise(resolve=>frame.addEventListener('load',resolve,{once:true}));
+ for(let i=0;i<1200;i++){
+  if(qa()&&q('#gt-readout')&&!q('#enter-garage').disabled)break;
+  await sleep(50);
+ }
+ frame.contentWindow.__cockpitReviewSetFrozen(true);
+ q('#start').click();qa().advance(3.6,{});
+ document.querySelector('#status').textContent='디자인 확인';
+};
+document.querySelector('#preview-gas').onclick=()=>{if(qa().snapshot().mode==='paused')q('#resume').click();emit(q('[data-control=brake]'),'pointerup',2);emit(q('[data-control=throttle]'),'pointerdown',1);qa().advance(1/60,null);};
+document.querySelector('#preview-brake').onclick=()=>{if(qa().snapshot().mode==='paused')q('#resume').click();emit(q('[data-control=throttle]'),'pointerup',1);emit(q('[data-control=brake]'),'pointerdown',2);qa().advance(1/60,null);};
+document.querySelector('#preview-clear').onclick=()=>{if(qa().snapshot().mode==='paused')q('#resume').click();emit(q('[data-control=throttle]'),'pointerup',1);emit(q('[data-control=brake]'),'pointerup',2);qa().advance(1/60,null);};
+document.querySelector('#preview-size').onchange=event=>{const tall=event.target.value==='portrait';frame.width=tall?402:844;frame.height=tall?874:390;setTimeout(()=>qa()?.advance(0,{}),150);};
 </script>

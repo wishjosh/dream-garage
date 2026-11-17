@@ -1,0 +1,233 @@
+/* Shape and grip surface reference: Tilton 900-Series and 1.60 / 2.60 inch pads.
+   Original screen artwork. Press feedback follows the existing button state. */
+body[data-controls-design=gt] #hud #controls .drive-console {
+  --brake-width: 88px;
+  --gas-width: 60px;
+  --brake-height: 80px;
+  width: 224px;
+  height: 140px;
+}
+body[data-controls-design=gt] #hud .pedal-faces {
+  width: calc(100% - 54px);
+}
+body[data-controls-design=gt] #hud #drive-console .brake,
+body[data-controls-design=gt] #hud #drive-console .brake-face {
+  width: var(--brake-width) !important;
+  height: var(--brake-height) !important;
+}
+body[data-controls-design=gt] #hud #drive-console .throttle {
+  left: auto !important;
+  right: 0 !important;
+  width: var(--gas-width) !important;
+}
+body[data-controls-design=gt] #hud #drive-console .gas-face {
+  left: auto;
+  right: 0;
+  width: var(--gas-width);
+  height: 100%;
+}
+body[data-controls-design=gt] #hud #drive-console :is(.gas-face,.brake-face) {
+  overflow: visible;
+  padding: 5px;
+  border: 1px solid #c2cbd3;
+  border-radius: 7px 7px 5px 5px;
+  background: linear-gradient(110deg,#b6bdc5,#79838d 12%,#4b5661 50%,#909ba6 90%,#c5cdd3);
+  box-shadow: inset 0 1px #f1f5f8aa, inset 0 -3px #2b343e, 0 4px 0 #161c25, 0 6px 8px #0007;
+  filter: none;
+  transform-origin: bottom center;
+  transition: transform 85ms ease-out, box-shadow 85ms ease-out, border-color 85ms;
+}
+body[data-controls-design=gt] .racing-pedal-grip {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 3px;
+  border: 1px solid #111820;
+  background-color: #242b32;
+  background-image:
+    radial-gradient(ellipse at 25% 35%,#aeb7c25c 0 .55px,transparent .9px),
+    radial-gradient(ellipse at 70% 70%,#0009 0 .6px,transparent 1px),
+    linear-gradient(100deg,#303941,#151b22);
+  background-size: 2px 3px, 3px 2px, 100% 100%;
+  box-shadow: inset 0 1px 2px #0009;
+  pointer-events: none;
+}
+body[data-controls-design=gt] .racing-pedal-grip::before,
+body[data-controls-design=gt] .racing-pedal-grip::after {
+  content: '';
+  position: absolute;
+  left: calc(50% - 5px);
+  width: 10px;
+  height: 14px;
+  border: 1px solid #87919b;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 50% 65%,#17202b 0 1.2px,#adb6c0 1.4px 2.6px,#1a242e 2.8px 3.6px,transparent 4px),
+    linear-gradient(90deg,#19232c,#788592 48%,#17212b);
+  box-shadow: 0 1px 1px #000b;
+}
+body[data-controls-design=gt] .racing-pedal-grip::before { top: 7px; }
+body[data-controls-design=gt] .racing-pedal-grip::after { bottom: 7px; }
+body[data-controls-design=gt] #hud #drive-console .brake-text,
+body[data-controls-design=gt] #hud #drive-console .gas-text {
+  bottom: 13px;
+  z-index: 3;
+  padding: 3px 4px;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: .03em;
+  color: #fff;
+  text-shadow: 0 1px 3px #000;
+  background: #141c24d9;
+  border-radius: 2px;
+}
+body[data-controls-design=gt] #hud #drive-console .brake-text {
+  left: calc(var(--brake-width) / 2);
+}
+body[data-controls-design=gt] #hud #drive-console .gas-text {
+  left: auto;
+  right: calc(var(--gas-width) / 2);
+  transform: translateX(50%);
+}
+body[data-controls-design=gt] #hud #controls .drive-console button[data-drive-target].pressed {
+  box-shadow: none !important;
+  background: transparent !important;
+}
+body[data-controls-design=gt] #hud #drive-console[data-throttle=true] .gas-face,
+body[data-controls-design=gt] #hud #drive-console[data-brake=true] .brake-face {
+  transform: translateY(3px) scaleY(.97);
+  border-color: #f7fbff;
+  background: linear-gradient(110deg,#e4edf4,#97a8b5 22%,#b8c7d2 80%,#eaf2f9);
+  box-shadow: inset 0 1px #fff8, inset 0 -1px #394b58, 0 1px 0 #121c27, 0 0 0 2px #dcefff99;
+  filter: none;
+}
+body[data-controls-design=gt] #hud #drive-console[data-throttle=true] .gas-face .racing-pedal-grip {
+  background-color: #3d5361;
+  box-shadow: inset 0 0 14px #d9f3ff44;
+}
+body[data-controls-design=gt] #hud #drive-console[data-brake=true] .brake-face {
+  border-color: #ffcdc4;
+  box-shadow: inset 0 2px 4px #0008, 0 1px 0 #171c23, 0 0 0 2px #f69785cc;
+}
+body[data-controls-design=gt] #hud #drive-console[data-brake=true] .brake-face .racing-pedal-grip {
+  box-shadow: inset 0 0 14px #ff9b7855;
+}
+body[data-controls-design=gt] #hud #drive-console[data-throttle=true] .gas-text { color: #d3f2ff; }
+body[data-controls-design=gt] #hud #drive-console[data-brake=true] .brake-text { color: #ffb7a4; }
+
+/* Keep the car's physical tachometer clear; use one low speed / gear display. */
+body[data-controls-design=gt][data-view=cockpit] .gt-instrument {
+  bottom: max(3px,env(safe-area-inset-bottom));
+  width: 184px;
+  height: 46px;
+  border: 1px solid #c5d5e025;
+  border-radius: 5px;
+  background: linear-gradient(0deg,#07111af0,#101e28c9);
+  box-shadow: 0 1px 8px #0005;
+}
+body[data-controls-design=gt][data-view=cockpit] .gt-speed-group {
+  left: 15px;
+  top: 6px;
+  width: 110px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  text-align: left;
+}
+body[data-controls-design=gt][data-view=cockpit] #gt-speed {
+  font-size: 34px;
+  font-weight: 500;
+}
+body[data-controls-design=gt][data-view=cockpit] .gt-speed-group > span {
+  margin-top: 0;
+  font-size: 8px;
+}
+body[data-controls-design=gt][data-view=cockpit] .gt-gear-group {
+  left: 128px;
+  top: 7px;
+  width: 43px;
+  padding-left: 10px;
+}
+body[data-controls-design=gt][data-view=cockpit] #gt-gear { font-size: 30px; }
+body[data-controls-design=gt][data-view=cockpit] #gt-mode { display: none; }
+body[data-controls-design=gt][data-view=cockpit] .gt-input-bars { display: none; }
+body[data-controls-design=gt][data-view=cockpit] .gt-flat-rpm {
+  top: -9px;
+  left: 10px;
+  right: 10px;
+}
+body[data-controls-design=gt][data-view=cockpit][data-car=tavaculo] .gt-flat-rpm {
+  display: none;
+}
+@media(orientation:landscape) and (max-width:740px) {
+  body[data-controls-design=gt] #hud #controls .drive-console {
+    --brake-width: 66px;
+    --gas-width: 48px;
+    --brake-height: 65px;
+    width: 182px;
+    height: 116px;
+  }
+  body[data-controls-design=gt][data-view=cockpit] .gt-instrument {
+    transform: translateX(-50%) scale(.85);
+    transform-origin: bottom center;
+  }
+  body[data-controls-design=gt] #hud #drive-console .brake-text,
+  body[data-controls-design=gt] #hud #drive-console .gas-text { font-size: 10px; }
+}
+@media(orientation:portrait) {
+  body[data-controls-design=gt] #hud #controls .drive-console {
+    --brake-width: 72px;
+    --gas-width: 52px;
+    --brake-height: 75px;
+    width: 196px;
+    height: 146px;
+  }
+  body[data-controls-design=gt][data-view=cockpit] .gt-instrument {
+    bottom: calc(var(--gt-bottom) + 88px);
+    left: var(--ui-left);
+    width: clamp(100px,calc(50vw - 60px),144px);
+    transform: none;
+  }
+}
+@media(orientation:portrait) {
+  body[data-controls-design=gt][data-view=cockpit] .gt-speed-group {
+    left: 8px;
+    top: 5px;
+    width: calc(100% - 44px);
+    display: block;
+  }
+  body[data-controls-design=gt][data-view=cockpit] #gt-speed { font-size: 31px; }
+  body[data-controls-design=gt][data-view=cockpit] .gt-speed-group > span {
+    position: absolute;
+    left: 1px;
+    top: 30px;
+    font-size: 7px;
+  }
+  body[data-controls-design=gt][data-view=cockpit] .gt-gear-group {
+    left: auto;
+    right: 5px;
+    top: 8px;
+    width: 30px;
+    padding-left: 5px;
+  }
+  body[data-controls-design=gt][data-view=cockpit] #gt-gear { font-size: 25px; }
+}
+@media(orientation:portrait) and (max-width:350px) {
+  body[data-controls-design=gt] #hud #controls .drive-console {
+    --brake-width: 64px;
+    --gas-width: 48px;
+    --brake-height: 68px;
+    width: 174px;
+    height: 132px;
+  }
+  body[data-controls-design=gt][data-view=cockpit] .gt-instrument {
+    bottom: calc(var(--gt-bottom) + 76px);
+    width: 100px;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  body[data-controls-design=gt] #hud #drive-console :is(.gas-face,.brake-face) { transition: none; }
+}

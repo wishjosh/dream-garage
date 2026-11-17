@@ -1,5 +1,5 @@
 import * as T from '../../vendor/three.module.js';
-import {createOriginalCockpit as createFerrari} from '../ferrari-city/cockpit.mjs?v=marina-city-1';
+import {createOriginalCockpit as createFerrari} from '../ferrari-city/cockpit.mjs?v=racing-pedals-1';
 import {loadTemplate} from '../porsche-garage/assets.mjs?v=marina-city-1';
 import {setCabinUp} from '../../cockpit-attitude.mjs';
 import {setPorscheSteering} from './rig.mjs?v=mixed-city-3';

@@ -53,9 +53,10 @@ export async function createOriginalCockpit({scene,camera}){
  const sideMirrors=[[-1,'left'],[1,'right']].map(([sign,id])=>{const surface=lens('ferrari-'+id+'-mirror-lens',p=>p.x*sign>.94&&p.y>.79&&p.y<.93&&p.z>-.49&&p.z<-.35);frame.add(surface);return{id,surface,origin:new T.Vector3(),aspect:1.65,yaw:sign*-.22};});raw.dispose();
 
  let peek=null,lookRequests=0,lastPeek=null,telemetry=drivingReadout({speed:0}),lookDegrees=0,steeringAmount=0;const eye=new T.Vector3(-.346,1.055,.16),eyeWorld=new T.Vector3(),direction=new T.Vector3();
- function update({player,steeringAmount:amount=0,lookDegrees:look=0,now=performance.now(),paint=null}={}){
+ function update({player,steeringAmount:amount=0,lookDegrees:look=0,compactInstruments=false,now=performance.now(),paint=null}={}){
   steeringAmount=clamp(amount,-1,1);lookDegrees=peek??clamp(look,-8,8);setFerrariSteering(steering,steeringBase,steeringAmount);
   if(player){group.position.set(player.x,player.y||0,player.z);group.quaternion.fromArray(player.quaternion||[0,0,0,1]).multiply(flip);telemetry=drivingReadout(player);}
+  display.visible=status.visible=!compactInstruments;
   cabinPaint.material.color.set(paint||'#ff0000');draw(telemetry,now);
  }
  function applyCamera(){
@@ -64,6 +65,6 @@ export async function createOriginalCockpit({scene,camera}){
   camera.fov=innerWidth<innerHeight?72:58;camera.near=.025;camera.far=700;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
  }
  function rect(object){object.updateWorldMatrix(true,false);const box=new T.Box3().setFromObject(object),corners=[];for(const x of[box.min.x,box.max.x])for(const y of[box.min.y,box.max.y])for(const z of[box.min.z,box.max.z]){const p=new T.Vector3(x,y,z).project(camera);corners.push([(p.x+1)/2,(1-p.y)/2]);}return{left:Math.min(...corners.map(p=>p[0])),right:Math.max(...corners.map(p=>p[0])),top:Math.min(...corners.map(p=>p[1])),bottom:Math.max(...corners.map(p=>p[1]))};}
- function stats(){return{construction:'original-ferrari-458',peekActive:peek!==null,lookRequests,lastPeek,telemetry:{...telemetry},instrumentUpdates:updates,instrumentHzCap:10,eyeLocal:eye.toArray(),eyeWorld:eyeWorld.toArray(),steeringAmount,lookDegrees,steeringQuaternion:steering.quaternion.toArray(),glassOpacity:glass.material.opacity,geometryUnchanged:baseline.every(b=>b.node.geometry===b.geometry&&b.node.geometry.attributes.position===b.position),mirrorReady:!!mirrorSurface.material.map,projectedBounds:{instrument:rect(instrument),speed:rect(display),mirror:rect(mirrorSurface)},sourceScale:data.scale,sceneOwned:group.parent===scene};}
+ function stats(){return{construction:'original-ferrari-458',digitalPanelsVisible:display.visible||status.visible,peekActive:peek!==null,lookRequests,lastPeek,telemetry:{...telemetry},instrumentUpdates:updates,instrumentHzCap:10,eyeLocal:eye.toArray(),eyeWorld:eyeWorld.toArray(),steeringAmount,lookDegrees,steeringQuaternion:steering.quaternion.toArray(),glassOpacity:glass.material.opacity,geometryUnchanged:baseline.every(b=>b.node.geometry===b.geometry&&b.node.geometry.attributes.position===b.position),mirrorReady:!!mirrorSurface.material.map,projectedBounds:{instrument:rect(instrument),speed:rect(display),mirror:rect(mirrorSurface)},sourceScale:data.scale,sceneOwned:group.parent===scene};}
  update();return{group,mirrorMount,mirrorSurface,sideMirrors,update,applyCamera,stats,setLook:value=>{peek=value;if(value!==null){lookRequests++;lastPeek=value;}},reset:()=>{peek=null;steeringAmount=lookDegrees=0;steering.quaternion.copy(steeringBase);},dispose:()=>group.removeFromParent()};
 }
