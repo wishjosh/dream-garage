@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>입력량 조절 · 두 디자인 비교</title>
+  <link rel="stylesheet" href="./comparison.css"><link rel="stylesheet" href="./design-comparison.css">
+</head>
+<body data-comparison="designs">
+  <main>
+    <header>
+      <div><a href="../../?course=braking&garage=1&screen=race">드림 개러지</a><h1>같은 조작, 두 가지 운전 감각</h1></div>
+      <p><span id="scene-name">브레이크 루프 · Ferrari 458</span><br>두 안 모두 같은 0~100% 가속·제동을 사용합니다.</p>
+    </header>
+    <nav class="variants" aria-label="조작부 대안">
+      <button data-variant="sport" aria-pressed="true"><b>A · 스포츠카 장치형</b><span>무광 금속 · 통합 계기 · 눌리는 페달</span></button>
+      <button data-variant="digital" aria-pressed="false"><b>B · 디지털 레이싱형</b><span>열린 숫자 · 얇은 레일 · 가벼운 시야</span></button>
+    </nav>
+    <section class="workspace" aria-label="같은 장면 비교">
+      <div class="toolbar">
+        <label>시점 <select id="view"><option value="cockpit">운전석</option><option value="chase">차 뒤</option></select></label>
+        <label>화면 <select id="size"><option value="landscape">가로</option><option value="portrait">세로</option></select></label>
+        <button id="scene" disabled>같은 장면으로</button>
+        <button id="play" disabled>직접 달리기</button>
+        <button id="expand">크게 보기</button>
+      </div>
+      <div id="stage"><iframe id="game" title="드림 개러지 조작부 비교 주행" allow="fullscreen"></iframe></div>
+      <p id="status" role="status">코스와 차량을 준비하고 있습니다…</p>
+    </section>
+    <section class="explanation" aria-label="선택한 안의 특징">
+      <div><h2 id="variant-title">정제된 스포츠카 장치형</h2><p id="description"></p></div>
+      <div><h2>직접 확인할 것</h2><p id="question"></p></div>
+    </section>
+    <p class="help">왼쪽은 조향, 오른쪽 페달은 아래 0%에서 위 100%까지 조절합니다. 손을 떼면 입력이 풀립니다. 보조 레일은 위로 후진, 아래로 드리프트입니다. PC에서는 방향키로도 주행할 수 있습니다.</p>
+    <p class="help"><a href="./">이전 조작 방식 세 안 보기</a></p>
+    <p class="help"><a href="./gt.html">새 그랜드 투어링 경주 시안 보기 →</a></p>
+    <details><summary>비교 범위와 참고 자료</summary><p>두 시각 디자인은 채택 전 시안입니다. 두 안의 입력량 계산과 주행 조건은 같습니다. 비교 기록은 메모리에서만 사용하며 새로고침하면 초기화됩니다. 화면 크기 재현과 실제 아이폰의 터치·지속 성능은 각각 확인해야 합니다.</p><p><a href="https://www.feralinteractive.com/en/faqs/gridautosport/latest/ios/">GRID Autosport 조작 설명</a> · <a href="https://www.sam-game.design/grid-legends-mobile">GRID Legends 모바일 개발 사례</a> · <a href="https://www.gran-turismo.com/us/gt7/manual/race/02">Gran Turismo 7 경기 화면</a></p></details>
+  </main>
+  <script type="module" src="./comparison.mjs"></script>
+</body>
+</html>

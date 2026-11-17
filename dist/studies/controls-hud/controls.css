@@ -1,0 +1,178 @@
+body[data-controls-design] #hud {
+  --ui-left: max(16px, env(safe-area-inset-left));
+  --ui-right: max(16px, env(safe-area-inset-right));
+  --ui-top: max(14px, env(safe-area-inset-top));
+}
+body[data-controls-design] #hud .top-actions button { width: 44px; padding: 8px 3px; }
+body[data-controls-design] #hud .race-stats {
+  padding: 10px 14px; column-gap: 17px; row-gap: 3px;
+  background: linear-gradient(135deg,#18232bef,#11191de8);
+  border: 1px solid #a9bec344; border-radius: 10px;
+}
+body[data-controls-design] #hud .race-stats strong { font-size: 30px; }
+body[data-controls-design] #hud .race-stats #progress { font-size: 17px; }
+body[data-controls-design] #hud .race-stats #time { font-size: 14px; }
+body[data-controls-design] #hud .race-stats small { color: #d4e0e5; font-size: 11px; }
+body[data-controls-design] #hud #speedometer {
+  bottom: max(14px, env(safe-area-inset-bottom)); padding: 10px 15px 15px;
+  background: linear-gradient(135deg,#18232bed,#11191de8); border: 1px solid #a9bec344;
+  border-radius: 10px; min-width: 138px; justify-content: center;
+}
+body[data-controls-design] #hud #speedometer strong { font-size: 40px; }
+body[data-controls-design] #hud #gear { font-size: 26px; color: #d9e9b2; }
+body[data-controls-design] #hud #gear-mode { display: none; }
+body[data-controls-design] #hud .hud-shift { left: 15px; right: 15px; bottom: 6px; height: 3px; }
+body[data-controls-design] #hud #controls {
+  left: max(18px,env(safe-area-inset-left)); right: max(18px,env(safe-area-inset-right));
+  bottom: max(30px,env(safe-area-inset-bottom));
+}
+body[data-controls-design] #hud #thumb-steering {
+  width: clamp(128px,28vw,250px); height: 60px!important;
+  border: 1px solid #bdc8cbaa!important; border-radius: 14px!important;
+  background: linear-gradient(165deg,#697077,#343a40 25%,#1b2128 65%,#333a40)!important;
+  box-shadow: inset 0 2px 1px #ffffff30,0 4px 12px #0006!important;
+}
+body[data-controls-design] #hud #thumb-steering .thumb-knob {
+  width: 34px!important; height: 40px!important; border-radius: 7px!important;
+  background: linear-gradient(100deg,#9ba7af,#e3eaec 40%,#77858e)!important;
+  border: 1px solid #eff7f8!important;
+}
+body[data-controls-design] #hud #thumb-steering.pressed {
+  border-color: #e9efbf!important;
+}
+body[data-controls-design] #hud #thumb-steering .thumb-caption { font-size: 11px; color: #edf1f2; letter-spacing: .03em; }
+body[data-controls-design] #hud #controls .drive-console {
+  width: 238px; height: clamp(112px,35dvh,146px);
+}
+body[data-controls-design] #hud .pedal-faces { width: calc(100% - 54px); }
+body[data-controls-design] #hud #drive-console .gas-face,
+body[data-controls-design] #hud #drive-console .brake-face {
+  background: linear-gradient(150deg,#747c81,#343c43 25%,#1b232b 80%,#3b444b);
+  border: 1px solid #d3dce0b5; border-radius: 11px;
+  box-shadow: inset 0 2px 1px #ffffff33,0 4px 12px #0008;
+}
+body[data-controls-design] #hud #drive-console .gas-face:after,
+body[data-controls-design] #hud #drive-console .brake-face:after { width: 56%; opacity: .85; }
+body[data-controls-design] #hud #drive-console .gas-text,
+body[data-controls-design] #hud #drive-console .brake-text { font-size: 12px; font-weight: 600; color: #fff; }
+body[data-controls-design] #hud #drive-console[data-throttle=true] .gas-face {
+  background: linear-gradient(145deg,#b3c49c,#536c4c 40%,#2b4435);
+  border: 2px solid #e6f4ce;
+  box-shadow: inset 0 3px 5px #0007,0 0 0 2px #d7efb744;
+}
+body[data-controls-design] #hud #drive-console[data-brake=true] .brake-face {
+  background: linear-gradient(145deg,#d4a68d,#865846 40%,#4d3029);
+  border: 2px solid #ffe2c7; box-shadow: inset 0 3px 5px #0007,0 0 0 2px #ffe2c744;
+}
+body[data-controls-design] #hud #controls #drive-lever {
+  width: 44px; height: 118px; border-color: #abb9bf88; background: #14212ade;
+}
+body[data-controls-design] #hud #drive-lever .lever-label { font-size: 10px; color: #f0f4f6; }
+body[data-controls-design] #hud #drive-state {
+  top: auto; bottom: 94px; right: auto; left: 50%; transform: translateX(-50%);
+  width: 190px; text-align: center; font-size: 12px;
+}
+body[data-controls-design] #hud #toast { bottom: 135px; }
+body[data-controls-design] #hud #rescue {
+  top: 106px!important; bottom: auto!important; left: var(--ui-left)!important;
+  min-height: 44px; height: 44px!important; padding: 6px 10px; font-size: 11px;
+}
+body[data-controls-design] #hud #map-open {
+  top: var(--ui-top)!important; right: 120px!important; left: auto!important;
+  width: 44px!important; height: 44px!important; padding: 0;
+}
+body[data-controls-design] #hud #map { display: none!important; }
+body[data-controls-design] #hud #map-open:after { content: '지도'; color: #eef5f7; font: 12px system-ui; }
+body[data-controls-design] #hud #city-look { top: var(--ui-top); }
+#study-inputs {
+  position: absolute; left: 50%; bottom: 102px; transform: translateX(-50%);
+  display: none; grid-template-columns: 1fr 1fr; gap: 6px 12px; padding: 9px 12px;
+  background: #0c1822e8; border-radius: 8px; color: #c5d5df; font-size: 11px;
+  min-width: 175px; font-variant-numeric: tabular-nums; pointer-events: none;
+}
+#study-inputs span:last-child { grid-column: 1/-1; text-align: center; }
+#study-inputs b { color: #f4f7fa; font-weight: 600; }
+#study-pause-time { font-variant-numeric: tabular-nums; }
+body[data-controls-design=minimal] #hud .race-stats {
+  background: none; border: 0; padding: 2px; display: flex; gap: 15px; align-items: baseline;
+}
+body[data-controls-design=minimal] #hud .race-stats > div:nth-child(3) { display: none; }
+body[data-controls-design=minimal] #hud .race-progress { display: none; }
+body[data-controls-design=minimal] #hud #rescue { top: 65px!important; }
+body[data-controls-design=minimal] #hud #speedometer { background: none; border: 0; padding-bottom: 10px; }
+body[data-controls-design=minimal] #hud .hud-shift { display: none; }
+body[data-controls-design=minimal] #hud #thumb-steering {
+  background: #13222b65!important; border-color: #f2f6f777!important; box-shadow: none!important; height: 50px!important;
+}
+body[data-controls-design=minimal] #hud #thumb-steering .thumb-knob {
+  background: #d7e6e8a6!important; border: 1px solid #e9f1f3!important;
+  width: 22px!important; height: 30px!important; box-shadow: none!important;
+}
+body[data-controls-design=minimal] #hud #drive-console .gas-face,
+body[data-controls-design=minimal] #hud #drive-console .brake-face {
+  background: #10222c55; border: 1px solid #ecf4f59c; box-shadow: none;
+}
+body[data-controls-design=minimal] #hud #drive-console .gas-face:after,
+body[data-controls-design=minimal] #hud #drive-console .brake-face:after { display: none; }
+body[data-controls-design=minimal] #hud #controls #drive-lever { background: #10222c55; }
+body[data-controls-design=precision] #hud #study-inputs { display: grid; }
+body[data-controls-design=precision] #hud #drive-state { bottom: 166px; }
+body[data-controls-design=precision] #hud #toast { bottom: 190px; }
+body[data-controls-design=precision] #hud #drive-console .brake,
+body[data-controls-design=precision] #hud #drive-console .brake-face { height: 100%!important; }
+body[data-controls-design=precision] #hud #drive-console .gas-face,
+body[data-controls-design=precision] #hud #drive-console .brake-face { background: #14232ded; border: 1px solid #c3d5df99; }
+body[data-controls-design=precision] #hud #drive-console .gas-face:after,
+body[data-controls-design=precision] #hud #drive-console .brake-face:after {
+  left: 10px; right: 10px; top: 12px; bottom: 35px; width: auto; height: auto;
+  transform: none; border-radius: 3px;
+  background: repeating-linear-gradient(to top, transparent 0 23%, #cde0ea77 23% 24%, transparent 24% 25%);
+}
+body[data-controls-design=precision] #hud #drive-console .gas-face:before,
+body[data-controls-design=precision] #hud #drive-console .brake-face:before {
+  content: ''; position: absolute; left: 10px; right: 10px; bottom: 12px;
+  max-height: calc(100% - 24px); height: calc((100% - 24px) * var(--throttle-amount,0)); background: #a2c893a8; border-radius: 3px;
+}
+body[data-controls-design=precision] #hud #drive-console .brake-face:before { height: calc((100% - 24px) * var(--brake-amount,0)); background: #dfa98ca8; }
+body[data-controls-design=precision] #hud #drive-console[data-throttle=true] .gas-face,
+body[data-controls-design=precision] #hud #drive-console[data-brake=true] .brake-face { box-shadow: inset 0 0 0 1px #fff7; }
+@media(orientation:portrait) {
+ body[data-controls-design] #hud #controls { left: 12px; right: 12px; bottom: 34px; display: flex; height: auto; }
+ body[data-controls-design] #hud #thumb-steering { position: relative; bottom: auto; }
+ body[data-controls-design] #hud #controls .drive-console { position: relative; }
+ body[data-controls-design] #hud #speedometer { left: 50%; transform: translateX(-50%); }
+ body[data-controls-design] #hud #thumb-steering { width: 33vw; }
+ body[data-controls-design] #hud #controls .drive-console { width: 53vw; height: 150px; }
+ body[data-controls-design] #hud #speedometer { bottom: 210px; }
+ body[data-controls-design] #hud #drive-state { bottom: 287px; }
+ body[data-controls-design] #hud #toast { bottom: 330px; max-width: 90%; }
+ body[data-controls-design] #hud #rescue { top: 66px!important; left: auto!important; right: 16px; }
+ body[data-controls-design] #hud #city-look { top: 114px; left: auto; right: 16px; transform: none; }
+ body[data-controls-design] #hud .race-stats { max-width: calc(100% - 185px); column-gap: 8px; padding: 8px; }
+ body[data-controls-design] #hud .race-stats strong { font-size: 25px; }
+ body[data-controls-design] #hud #study-inputs { bottom: 285px; }
+ body[data-controls-design=precision] #hud #drive-state { bottom: 353px; }
+ body[data-controls-design=precision] #hud #toast { bottom: 395px; }
+}
+@media(orientation:landscape) and (max-height:330px) {
+ body[data-controls-design] #hud #controls .drive-console { height: 105px; }
+ body[data-controls-design] #hud #controls #drive-lever { height: 100px; }
+ body[data-controls-design] #hud #thumb-steering { height: 48px!important; }
+ body[data-controls-design] #hud #study-inputs { bottom: 88px; }
+}
+
+@media(orientation:landscape) and (max-width:740px) {
+ body[data-controls-design] #hud #controls .drive-console { width: 205px; }
+ body[data-controls-design] #hud #thumb-steering { width: 24vw; }
+ body[data-controls-design] #hud #speedometer { min-width: 104px; padding-left: 9px; padding-right: 9px; }
+ body[data-controls-design] #hud #speedometer strong { font-size: 32px; }
+ body[data-controls-design] #hud #study-inputs { bottom: 150px; }
+ body[data-controls-design=precision] #hud #drive-state { bottom: 215px; }
+}
+
+@media(orientation:landscape) and (max-width:740px) {
+ body:is([data-controls-design=classic],[data-controls-design=minimal],[data-controls-design=precision]) #hud #speedometer {width:116px;min-width:100px;padding-left:6px;padding-right:6px;gap:4px;}
+ body:is([data-controls-design=classic],[data-controls-design=minimal],[data-controls-design=precision]) #hud #speedometer strong {font-size:30px;}
+ body:is([data-controls-design=classic],[data-controls-design=minimal],[data-controls-design=precision]) #hud #speedometer small {font-size:10px;}
+ body:is([data-controls-design=classic],[data-controls-design=minimal],[data-controls-design=precision]) #hud #gear {font-size:20px;}
+}

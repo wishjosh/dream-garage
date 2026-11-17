@@ -1,0 +1,9 @@
+
+:root {background:#101415;color:#eae9e2;}
+.variants {grid-template-columns:repeat(2,1fr);}
+.variants button {background:#1b2124;border-color:#626a69;}
+.variants button[aria-pressed=true] {background:#e1d9c4;border-color:#e1d9c4;color:#23251f;}
+#play {background:#e1d9c4;color:#23251f;}
+header h1 {letter-spacing:-.04em;}
+body.expanded .variants b {font-size:13px;}
+@media(max-width:600px){.variants b{font-size:14px}.variants span{line-height:1.6}.toolbar{gap:6px}body.expanded .toolbar{font-size:11px}body.expanded .toolbar button,body.expanded .toolbar select{padding:6px 8px}}

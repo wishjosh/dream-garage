@@ -1,0 +1,153 @@
+/* One original, screen-fixed racing instrument family. Scoped to this study. */
+#gt-readout{display:none}
+body[data-controls-design=gt] #gt-readout{display:block;position:absolute;inset:0;pointer-events:none;z-index:1;font-family:Arial,"Segoe UI",sans-serif;color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 1px 4px #0009}
+body[data-controls-design=gt] #hud{--ui-left:max(20px,env(safe-area-inset-left));--ui-right:max(20px,env(safe-area-inset-right));--ui-top:max(16px,env(safe-area-inset-top));--gt-bottom:max(24px,env(safe-area-inset-bottom))}
+body[data-controls-design=gt] #hud:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(#03070e64,transparent 29%,transparent 65%,#03070e88);z-index:0}
+body[data-controls-design=gt] #hud .race-stats,body[data-controls-design=gt] #hud #speedometer,body[data-controls-design=gt] #hud #map-open,body[data-controls-design=gt] #hud #study-inputs{display:none!important}
+body[data-controls-design=gt] .gt-eyebrow{display:block;font-size:9px;letter-spacing:.12em;font-weight:500;color:#e3e9f0}
+body[data-controls-design=gt] .gt-position{position:absolute;top:var(--ui-top);left:var(--ui-left);width:154px;padding:0 0 7px}
+body[data-controls-design=gt] .gt-position>div:not(.gt-progress-rail){display:flex;align-items:baseline;gap:7px;height:45px}
+body[data-controls-design=gt] #gt-rank{font-size:39px;font-weight:500;line-height:1.1;letter-spacing:-.05em}
+body[data-controls-design=gt] #gt-total{font-size:15px;color:#cad2dc}
+body[data-controls-design=gt] .gt-position i{align-self:center;width:1px;height:25px;margin:0 6px;background:#ffffff40}
+body[data-controls-design=gt] .gt-distance{display:flex;align-items:baseline;gap:5px}
+body[data-controls-design=gt] .gt-distance small{font-size:9px;color:#d2d9e2}
+body[data-controls-design=gt] #gt-progress{font-size:19px;font-weight:500}
+body[data-controls-design=gt] #gt-progress span{font-size:10px;margin-left:2px}
+body[data-controls-design=gt] .gt-progress-rail{height:2px;width:154px;background:#ffffff35}
+body[data-controls-design=gt] #gt-progress-fill{display:block;height:100%;background:#f5f8ff}
+body[data-controls-design=gt] .gt-timing{position:absolute;left:50%;transform:translateX(-50%);top:var(--ui-top);text-align:center;width:145px;padding:2px 8px 8px;background:linear-gradient(#070d1925,transparent)}
+body[data-controls-design=gt] #gt-time{display:block;font-size:23px;letter-spacing:.025em;font-weight:400;margin-top:5px}
+body[data-controls-design=gt] #gt-map{position:absolute;right:calc(var(--ui-right) + 55px);top:var(--ui-top);width:125px;height:104px;padding:0;border:0;background:transparent;box-shadow:none;pointer-events:auto;border-radius:0;display:block}
+body[data-controls-design=gt] #gt-map svg{display:block;width:100%;height:80px;overflow:visible;filter:drop-shadow(0 1px 3px #000a)}
+body[data-controls-design=gt] .gt-map-shadow{stroke:#060b1677;stroke-width:6;fill:none;stroke-linejoin:round}
+body[data-controls-design=gt] .gt-map-line{stroke:#f5f8ff;stroke-width:2;fill:none;stroke-linejoin:round}
+body[data-controls-design=gt] .gt-map-player{fill:#ea544c;stroke:white;stroke-width:1.4}
+body[data-controls-design=gt] .gt-map-rival{fill:white;stroke:#141d29;stroke-width:.8}
+body[data-controls-design=gt] #gt-course{display:block;text-align:center;font-size:9px;letter-spacing:.025em;color:#e5eaf1;margin-top:0}
+body[data-controls-design=gt] .gt-instrument{position:absolute;left:50%;bottom:calc(var(--gt-bottom) - 9px);transform:translateX(-50%);width:220px;height:171px;background:radial-gradient(ellipse at 50% 65%,#050a1244,transparent 70%)}
+body[data-controls-design=gt] .gt-tach{position:absolute;inset:0;width:220px;height:145px;overflow:visible;filter:drop-shadow(0 1px 2px #000a)}
+body[data-controls-design=gt] .gt-ticks{stroke:#fff;stroke-width:1;opacity:.8}
+body[data-controls-design=gt] .red{stroke:#f26158!important}
+body[data-controls-design=gt] .gt-rpm-numbers{fill:#edf2f9;text-anchor:middle;font-size:9px}
+body[data-controls-design=gt] .gt-rpm-unit{fill:#c0cbd9;text-anchor:middle;font-size:6px;letter-spacing:1px}
+body[data-controls-design=gt] .gt-rpm-base,body[data-controls-design=gt] #gt-rpm-arc{fill:none;stroke:#ffffff24;stroke-width:3}
+body[data-controls-design=gt] #gt-rpm-arc{stroke:#fff;stroke-dasharray:0 100;stroke-width:3}
+body[data-controls-design=gt] .gt-speed-group{position:absolute;left:36px;top:63px;width:94px;text-align:center}
+body[data-controls-design=gt] #gt-speed{font-size:46px;line-height:1;font-weight:500;letter-spacing:-.055em}
+body[data-controls-design=gt] .gt-speed-group>span{display:block;font-size:9px;color:#d8dfe9;letter-spacing:.08em;margin-top:2px}
+body[data-controls-design=gt] .gt-gear-group{position:absolute;top:65px;left:136px;width:43px;padding-left:11px;border-left:1px solid #ffffff50;text-align:center}
+body[data-controls-design=gt] #gt-gear{font-size:34px;font-weight:400;line-height:1}
+body[data-controls-design=gt] #gt-mode{display:block;font-size:8px;color:#d8dfe9;margin-top:5px}
+body[data-controls-design=gt] .gt-input-bars{position:absolute;left:24px;right:24px;top:143px;display:flex;gap:12px}
+body[data-controls-design=gt] .gt-input-bars>div{width:50%;display:flex;align-items:center;gap:5px}
+body[data-controls-design=gt] .gt-input-bars span{font-size:7px;letter-spacing:.04em;color:#d8dfe9}
+body[data-controls-design=gt] .gt-input-bars i{height:4px;flex:1;background:#ffffff35;overflow:hidden}
+body[data-controls-design=gt] .gt-input-bars b{display:block;height:100%;background:#fff;width:0}
+body[data-controls-design=gt] #gt-brake-bar{background:#f46d62}
+body[data-controls-design=gt] .gt-steer-line{position:absolute;bottom:0;left:67px;right:67px;height:10px;border-top:1px solid #ffffff44}
+body[data-controls-design=gt] .gt-steer-line i{position:absolute;left:50%;top:-3px;width:1px;height:5px;background:#fff9}
+body[data-controls-design=gt] #gt-steer-dot{position:absolute;left:50%;top:-3px;width:5px;height:5px;background:#fff;border-radius:50%;transform:translateX(-50%)}
+/* Quiet utility buttons, kept separate from live race information. */
+body[data-controls-design=gt] #hud .top-actions{position:absolute;top:var(--ui-top);right:var(--ui-right);display:flex;flex-direction:column-reverse;gap:4px;z-index:3}
+body[data-controls-design=gt] #hud .top-actions button,body[data-controls-design=gt] #hud #rescue,body[data-controls-design=gt] #hud #city-look button{width:44px;height:44px;min-height:44px;padding:0;border:1px solid #ffffff25;border-radius:50%;background:#0b14223d;color:white;box-shadow:none;backdrop-filter:none}
+body[data-controls-design=gt] #hud #camera{font-size:10px}
+body[data-controls-design=gt] #hud #pause{font-size:20px}
+body[data-controls-design=gt] #hud #rescue{top:calc(var(--ui-top) + 96px)!important;left:auto!important;right:var(--ui-right)!important;bottom:auto!important;font-size:0;z-index:3}
+body[data-controls-design=gt] #hud #rescue:after{content:'↗';font:22px Arial}
+body[data-controls-design=gt] #hud #city-look{top:calc(var(--ui-top) + 76px);left:var(--ui-left);right:auto;transform:none;gap:5px;z-index:3}
+body[data-controls-design=gt] #hud #city-look button{font-size:0;width:44px;height:44px;background:#0b142226}
+body[data-controls-design=gt] #hud #city-look button:after{content:'‹';font:30px Arial}
+body[data-controls-design=gt] #hud #city-look button:last-child:after{content:'›'}
+body[data-controls-design=gt] #hud #drive-state{bottom:191px;max-width:240px;width:max-content;font-size:11px;color:#f4f7fc;background:#09142170;padding:5px 9px;border-radius:2px;z-index:2}
+body[data-controls-design=gt] #hud #drive-state:empty{display:none}
+body[data-controls-design=gt] #hud #toast{bottom:225px;z-index:4}
+/* Full-size touch areas. Visual rails align with the existing 12 px input endpoints. */
+body[data-controls-design=gt] #hud #controls{left:var(--ui-left);right:var(--ui-right);bottom:var(--gt-bottom);gap:0;z-index:2}
+body[data-controls-design=gt] .console-art img{display:none!important}
+body[data-controls-design=gt] #hud #thumb-steering{width:clamp(130px,25vw,226px);height:64px!important;aspect-ratio:auto;background:linear-gradient(0deg,#0b14223d,transparent)!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+body[data-controls-design=gt] #hud #thumb-steering:before,body[data-controls-design=gt] #hud #thumb-steering:after{position:absolute;top:17px;color:#d4deec;font:24px Arial;opacity:.85}
+body[data-controls-design=gt] #hud #thumb-steering:before{content:'‹';left:3px}
+body[data-controls-design=gt] #hud #thumb-steering:after{content:'›';right:3px}
+body[data-controls-design=gt] #hud #thumb-steering .steering-rail{position:absolute;top:32px;left:20px;width:calc(100% - 40px);height:1px;background:#ffffff60;overflow:visible}
+body[data-controls-design=gt] #hud #thumb-steering .steering-rail:after{content:'';position:absolute;left:50%;top:-5px;height:10px;width:1px;background:#ffffff90}
+body[data-controls-design=gt] #hud #thumb-steering .thumb-knob{top:32px!important;width:26px!important;height:26px!important;min-height:0!important;aspect-ratio:auto;border:1.5px solid #fff!important;border-radius:50%!important;background:#edf5ff22!important;box-shadow:0 0 0 4px #0d182544!important;filter:none;transition:left .09s}
+body[data-controls-design=gt] #hud #thumb-steering .thumb-knob:after{display:none}
+body[data-controls-design=gt] #hud #thumb-steering.pressed .thumb-knob{background:#fff!important;box-shadow:0 0 0 5px #ffffff20!important;transition:none}
+body[data-controls-design=gt] #hud #thumb-steering .thumb-caption{bottom:-10px;color:#dae2ed;font-size:9px;font-weight:400}
+body[data-controls-design=gt] #hud #controls .drive-console{width:220px;height:clamp(115px,34dvh,148px)}
+body[data-controls-design=gt] #hud .pedal-faces{width:calc(100% - 53px)}
+body[data-controls-design=gt] #hud #drive-console .brake,body[data-controls-design=gt] #hud #drive-console .brake-face{height:100%!important}
+body[data-controls-design=gt] #hud #drive-console .gas-face,body[data-controls-design=gt] #hud #drive-console .brake-face{height:100%;width:45%;right:2%;border:0;border-radius:0;background:linear-gradient(0deg,#0b14225c,transparent);box-shadow:none;filter:none;overflow:visible}
+body[data-controls-design=gt] #hud #drive-console .brake-face{left:0;width:48%}
+body[data-controls-design=gt] #hud #drive-console .gas-face:after,body[data-controls-design=gt] #hud #drive-console .brake-face:after{content:'';position:absolute;left:11px;top:12px;bottom:12px;width:11px;height:auto;transform:none;opacity:1;border:0;border-radius:0;background:repeating-linear-gradient(to top,#ffffff9c 0 1px,transparent 1px 25%);border-left:1px solid #fff7}
+body[data-controls-design=gt] #hud #drive-console .gas-face:before,body[data-controls-design=gt] #hud #drive-console .brake-face:before{content:'';position:absolute;left:11px;bottom:12px;width:3px;height:calc((100% - 24px) * var(--throttle-amount,0));background:white;box-shadow:0 0 5px #fff4;z-index:1}
+body[data-controls-design=gt] #hud #drive-console .brake-face:before{height:calc((100% - 24px) * var(--brake-amount,0));background:#ff7d70}
+body[data-controls-design=gt] #hud .pedal-meter{display:block;position:absolute;left:30px;right:0;top:43%;transform:translateY(-50%);text-align:center;color:#fff;line-height:1;font-size:22px;font-weight:400;white-space:nowrap;font-variant-numeric:tabular-nums;text-shadow:0 1px 3px #000a;pointer-events:none}
+body[data-controls-design=gt] #hud .pedal-meter b{font-weight:400}
+body[data-controls-design=gt] #hud .pedal-meter small{font-size:8px;margin-left:2px;color:#c1ccda}
+body[data-controls-design=gt] #hud #drive-console .gas-text,body[data-controls-design=gt] #hud #drive-console .brake-text{bottom:-15px;font-size:9px;font-weight:400;letter-spacing:.04em;color:#e5ecf5}
+body[data-controls-design=gt] #hud #drive-console .gas-text{left:75%}
+body[data-controls-design=gt] #hud #drive-console .brake-text{left:24%}
+body[data-controls-design=gt] #hud #drive-console[data-throttle=true] .gas-face{background:linear-gradient(90deg,#ffffff21,#0b142212);box-shadow:inset 0 -1px #fff6;filter:none}
+body[data-controls-design=gt] #hud #drive-console[data-brake=true] .brake-face{background:linear-gradient(90deg,#f46d622d,#0b142212);box-shadow:inset 0 -1px #f46d6299;filter:none}
+body[data-controls-design=gt] #hud #controls #drive-lever{width:44px;height:100%;border:0;border-radius:0;background:transparent}
+body[data-controls-design=gt] #hud .lever-rail{position:absolute;left:50%;top:13px;bottom:13px;width:1px;height:auto;background:#ffffff50}
+body[data-controls-design=gt] #hud .lever-knob{width:24px;height:6px;background:#d7e3f1;border:0;border-radius:1px;filter:none;transform:translate(-50%,-50%)!important}
+body[data-controls-design=gt] #hud .lever-label{font-size:8px;line-height:10px;color:#c3cfdf}
+body[data-controls-design=gt] #hud .lever-up{bottom:calc(100% - 7px)}
+body[data-controls-design=gt] #hud .lever-down{top:calc(100% + 4px)}
+@media(orientation:landscape) and (max-width:740px){
+ body[data-controls-design=gt] #hud{--ui-left:max(12px,env(safe-area-inset-left));--ui-right:max(12px,env(safe-area-inset-right));--ui-top:max(10px,env(safe-area-inset-top));--gt-bottom:max(23px,env(safe-area-inset-bottom))}
+ body[data-controls-design=gt] .gt-position{width:128px}body[data-controls-design=gt] .gt-progress-rail{width:128px}body[data-controls-design=gt] #gt-rank{font-size:32px}body[data-controls-design=gt] .gt-position i{margin:0 2px}
+ body[data-controls-design=gt] #gt-map{width:98px;height:82px}body[data-controls-design=gt] #gt-map svg{height:64px}
+ body[data-controls-design=gt] .gt-timing{width:120px}body[data-controls-design=gt] #gt-time{font-size:20px}
+ body[data-controls-design=gt] .gt-instrument{transform:translateX(-50%) scale(.75);transform-origin:bottom center}
+ body[data-controls-design=gt] #hud #thumb-steering{width:23vw;height:55px!important}
+ body[data-controls-design=gt] #hud #controls .drive-console{width:174px;height:116px}
+ body[data-controls-design=gt] #hud .pedal-meter{font-size:17px;left:23px}
+ body[data-controls-design=gt] #hud #drive-state{bottom:158px}
+ body[data-controls-design=gt] #hud #toast{bottom:185px}
+}
+@media(orientation:portrait){
+ body[data-controls-design=gt] #hud{--ui-left:max(14px,env(safe-area-inset-left));--ui-right:max(14px,env(safe-area-inset-right));--ui-top:max(18px,env(safe-area-inset-top));--gt-bottom:max(38px,env(safe-area-inset-bottom))}
+ body[data-controls-design=gt] .gt-position{width:130px}body[data-controls-design=gt] .gt-progress-rail{width:130px}body[data-controls-design=gt] #gt-rank{font-size:36px}body[data-controls-design=gt] .gt-position i{margin:0 3px}
+ body[data-controls-design=gt] .gt-timing{left:var(--ui-left);top:calc(var(--ui-top) + 79px);transform:none;text-align:left;width:126px;padding:0;background:none}
+ body[data-controls-design=gt] #gt-time{font-size:22px}
+ body[data-controls-design=gt] #gt-map{right:var(--ui-right);top:calc(var(--ui-top) + 53px);width:111px;height:90px}
+ body[data-controls-design=gt] #gt-map svg{height:70px}
+ body[data-controls-design=gt] #hud .top-actions{flex-direction:row;gap:6px}
+ body[data-controls-design=gt] #hud #rescue{top:calc(var(--ui-top) + 156px)!important}
+ body[data-controls-design=gt] #hud #city-look{top:calc(var(--ui-top) + 178px);right:auto;left:var(--ui-left);transform:none}
+ body[data-controls-design=gt] .gt-instrument{bottom:calc(var(--gt-bottom) + 179px);transform:translateX(-50%) scale(.92);transform-origin:bottom center}
+ body[data-controls-design=gt] #hud #controls{display:flex;align-items:end;height:auto}
+ body[data-controls-design=gt] #hud #thumb-steering{width:32vw;position:relative;bottom:0;height:64px!important}
+ body[data-controls-design=gt] #hud #controls .drive-console{width:51vw;height:155px;position:relative;right:auto}
+ body[data-controls-design=gt] #hud .pedal-meter{font-size:19px;left:24px}
+ body[data-controls-design=gt] #hud #drive-state{bottom:calc(var(--gt-bottom) + 355px);font-size:10px}
+ body[data-controls-design=gt] #hud #toast{bottom:calc(var(--gt-bottom) + 390px)}
+}
+@media(orientation:portrait) and (max-width:350px){
+ body[data-controls-design=gt] #hud{--ui-left:10px;--ui-right:10px;--gt-bottom:30px}
+ body[data-controls-design=gt] #hud #controls .drive-console{width:172px;height:135px}
+ body[data-controls-design=gt] #hud #thumb-steering{width:110px}
+ body[data-controls-design=gt] .gt-instrument{bottom:190px;transform:translateX(-50%) scale(.76)}
+ body[data-controls-design=gt] #hud #drive-state{bottom:276px;max-width:210px}
+ body[data-controls-design=gt] #hud #toast{bottom:353px}
+}
+@media(prefers-reduced-motion:reduce){body[data-controls-design=gt] #hud *{transition:none!important}}
+
+/* In the cockpit, a low strip leaves the car's own round instrument visible. */
+.gt-flat-rpm{display:none}
+body[data-controls-design=gt][data-view=cockpit] .gt-instrument{height:100px;background:linear-gradient(0deg,#060c16d6,#060c1688 78%,transparent);border-radius:2px}
+body[data-controls-design=gt][data-view=cockpit] .gt-tach{display:none}
+body[data-controls-design=gt][data-view=cockpit] .gt-flat-rpm{position:absolute;display:flex;gap:7px;align-items:center;left:24px;right:24px;top:9px}
+body[data-controls-design=gt][data-view=cockpit] .gt-flat-rpm>span{font:7px Arial;letter-spacing:.07em;color:#d8dfe9}
+body[data-controls-design=gt][data-view=cockpit] .gt-flat-rpm i{position:relative;height:4px;flex:1;background:#ffffff40;overflow:hidden}
+body[data-controls-design=gt][data-view=cockpit] .gt-flat-rpm i:after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 9%,#08101b 9% 10%)}
+body[data-controls-design=gt][data-view=cockpit] #gt-rpm-flat{display:block;height:100%;background:#fff;width:0}
+body[data-controls-design=gt][data-view=cockpit] #gt-rpm-flat.red{background:#f26158}
+body[data-controls-design=gt][data-view=cockpit] .gt-speed-group{top:24px}
+body[data-controls-design=gt][data-view=cockpit] .gt-gear-group{top:26px}
+body[data-controls-design=gt][data-view=cockpit] .gt-input-bars{top:86px}
+body[data-controls-design=gt][data-view=cockpit] .gt-steer-line{display:none}
