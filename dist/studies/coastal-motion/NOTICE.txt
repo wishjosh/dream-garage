@@ -1,0 +1,13 @@
+해안 피트 · 브레이크 루프 주행 검토
+2026-11-19
+
+차량·트랙 중심선·조향·페달·타이어·충돌·경주 진행은 드림 개러지의 본게임 모듈을 사용한다. 차고의 빈 정비소 배경과 서킷의 먼 해안, 소나무 이미지는 게임 시안을 바탕으로 내장 이미지 생성 도구로 제작했다. 차체와 바퀴, 가까운 노면·연석·시설과 상대 차는 실시간 3D로 렌더링한다.
+
+Ferrari 458 — vicent091036, Three.js 배포본, CC BY 4.0. 검토본에서 도장·유리·제동등·차체의 시각적 회전 중심과 카메라를 조정했다.
+https://sketchfab.com/models/57bf6cc56931426e87494f554df1dab6
+https://creativecommons.org/licenses/by/4.0/
+차량의 기존 제작자·라이선스 기록 ../../assets/vehicle-compare/ferrari/NOTICE.txt
+Porsche 911 — n.brizitskaya, CC BY 4.0. ../../assets/vehicle-compare/porsche-911/NOTICE.txt
+Venice Sunset — Greg Zaal / Poly Haven, CC0. https://polyhaven.com/a/venice_sunset
+Asphalt012 — ambientCG, CC0. ../../assets/materials/LICENSE.txt
+Concrete Wall 001 / Grass Ground — Poly Haven, CC0. ../circuit-elevation/assets/NOTICE.txt
