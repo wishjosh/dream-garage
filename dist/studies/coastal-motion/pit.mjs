@@ -46,17 +46,9 @@ export function framePit(camera,plate,width,height){
   const targetX=tall?.50:.44,targetY=tall?.55:.524;
   camera.setViewOffset(width,height,width*(.5-targetX),height*(.5-targetY),width,height);camera.updateProjectionMatrix();
 }
-export function installPitUI(track){
+export function installPitUI(){
   document.body.classList.add('coastal-review');
-  const css=document.createElement('link');css.rel='stylesheet';css.href=newAsset('pit.css');document.head.append(css);
-  const menu=document.getElementById('menu'),stage=menu.querySelector('.garage-stage');
-  const info=document.createElement('footer');info.className='coastal-footer';
-  const name=document.createElement('div');name.className='coastal-caption';
-  const h=document.createElement('h1');h.textContent='Ferrari 458';
-  const course=document.createElement('p');course.textContent='브레이크 루프 · '+(track.length/1000).toFixed(2)+' km';
-  name.append(h,course);const start=document.getElementById('start');start.textContent='트랙으로 출전  →';
-  info.append(name,start);menu.append(info);
-  document.getElementById('pause-course-name').after(document.getElementById('resume'),document.getElementById('back-menu'));
-  stage.querySelector('.rotate-buttons').setAttribute('aria-label','차 돌려보기');
-  const label=document.createElement('small');label.textContent='드래그해 차 둘러보기';label.className='coastal-rotate-hint';stage.append(label);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=newAsset('pit.css?v=pit-lab-1');document.head.append(css);
+  const byId=id=>document.getElementById(id);
+  byId('pause-course-name').after(byId('resume'),byId('back-menu'));
 }

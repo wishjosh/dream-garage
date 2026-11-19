@@ -195,10 +195,57 @@ export async function buildCircuit(scene,track,renderer){
     else if(block){if(block.end-block.start>9)corners.push((block.start+block.end)/2);block=null;}
   }
   const boardMats=new Map([[100,makeSign('100','#e9e3ce','#262c2b')],[50,makeSign('50','#e9e3ce','#262c2b')]]);
-  for(const apex of corners){
+  // The standing start has 85 m to turn-in. These boards measure to turn-in,
+  // independent of the apex markers used on the longer approaches.
+  const turnIn=85,apex=125,exit=192;
+  const signSide=-Math.sign(curve(track,apex));
+  const raceInk=mat('#ffffff',{roughness:.72});
+  const amber=new T.MeshBasicMaterial({color:'#e9aa42',toneMapped:false});
+  const seafoam=new T.MeshBasicMaterial({color:'#9fd6b0',toneMapped:false});
+  // Each pair is painted into the road plane. Rivals can cover the racing line
+  // without obscuring both halves. The short bands stay fixed as the car accelerates.
+  const roadMark=(s,offset,sign,colour,turn=0)=>{
+    const f=trackFrame(track,s),yaw=Math.atan2(f.tx,f.tz);
+    batch.box(colour,f.x+offset*f.rx,.085,f.z+offset*f.rz,2.06,.025,.68,yaw+sign*turn);
+  };
+  for(const distance of [75,50,25]){
+    const s=turnIn-distance,offset=signSide*9.48;
+    const ink=distance===25?'#f5ad43':'#f4f4de';
+    const face=makeSign(String(distance),'#192827',ink,1.72);
+    face.emissiveMap=face.map;face.emissive.set('#ffffff');face.emissiveIntensity=.24;
+    at(s,offset,1.05,.13,2.1,.15,dark);
+    at(s,offset,2.28,2.24,1.36,.18,dark);
+    signFace(scene,track,s-.16,offset,2.28,2.17,1.26,face);
+    at(s,offset,1.68,2.24,.105,.22,raceInk,distance===25?'#f7a137':'#f8f6e7');
+  }
+  // Nearby fixed features pass the car in parallax. Amber marks the braking strip;
+  // the alternating inside kerb and the paired exit posts then take over.
+  for(let s=0;s<exit+12;s+=8){
+    for(const side of [-1,1]){
+      const off=side*9.22;
+      at(s,off,.83,.13,1.66,.16,raceInk,'#eef1df');
+      at(s,off,1.39,.145,.30,.18,raceInk,s>=49&&s<=74?'#e48c29':'#394b4c');
+    }
+  }
+  for(const s of [46,54,61,67]){
+    for(const side of [-1,1]){
+      roadMark(s,side*5.93,side,amber,.36);
+      at(s,side*8.72,.76,.24,.32,2.48,amber);
+    }
+  }
+  for(let s=turnIn;s<=178;s+=2.6){
+    at(s,-signSide*7.72,.086,.95,.048,2.55,raceInk,Math.round((s-turnIn)/2.6)%2?'#e8e1c9':'#aa412f');
+  }
+  for(const s of [165,175,185,195]){
+    roadMark(s,signSide*6.37,signSide,seafoam,-.32);
+    at(s,signSide*8.79,.74,.22,.20,2.58,seafoam);
+  }
+  for(const s of [187,194]){at(s,signSide*9.35,1.22,.24,2.44,.24,dark);at(s,signSide*9.35,2.03,.255,.60,.26,raceInk,'#b2e2bc');}
+  for(const apex of corners.slice(1)){
     const side=Math.sign(curve(track,apex))||-1;
     for(const d of [100,50]){
       const s=apex-d;
+      if(s>0&&s<exit+6)continue;
       at(s,-side*9.65,.78,.10,1.56,.13,steel);
       at(s,-side*9.65,1.76,1.40,.77,.12,concrete);
       signFace(scene,track,s-.075,-side*9.65,1.76,1.37,.74,boardMats.get(d));

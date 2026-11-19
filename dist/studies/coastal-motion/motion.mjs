@@ -17,10 +17,10 @@ export function shellPose(racer,limitMotion=false){
   };
 }
 
-export function prepareCar(body,kind,{player=false,garage=false}={}){
+export function prepareCar(body,kind,{player=false,garage=false,paint,wheels}={}){
   const bodyPaint=body.getObjectByName('body')?.material;
   if(kind==='tavaculo'&&bodyPaint&&body.userData.dreamOwned){
-    bodyPaint.color.set(player?'#83c7b0':'#b13e2c');
+    if(!player||paint==='paint-mint')bodyPaint.color.set(player?'#83c7b0':'#b13e2c');
     bodyPaint.metalness=.65;
     bodyPaint.roughness=.25;
     bodyPaint.clearcoat=1;
@@ -34,7 +34,7 @@ export function prepareCar(body,kind,{player=false,garage=false}={}){
     }
     for(const name of ['rim_fl','rim_fr','rim_rl','rim_rr']){
       const rim=body.getObjectByName(name);
-      if(rim?.material){rim.material.color.set('#b6b6ab');rim.material.metalness=.90;rim.material.roughness=.29;}
+      if(rim?.material){if(!player||wheels==='wheels-stock')rim.material.color.set('#b6b6ab');rim.material.metalness=.90;rim.material.roughness=.29;}
     }
   }
   if(garage){
@@ -77,7 +77,8 @@ export function createCameraRig(){
   return function setView({camera,racer,view,dt,snap,reduce}){
     const {pitch,roll}=shellPose(racer,reduce);
     const speed=Math.min(Math.abs(racer.forwardSpeed||0),55);
-    const speedRatio=speed/55;
+    const blend=clamp(speed/31,0,1);
+    const speedRatio=reduce?0:blend*blend*(3-2*blend);
     const portrait=camera.aspect<1;
     if(snap||previousView!==view||heading===null)heading=racer.heading;
     else heading+=angleDelta(racer.heading,heading)*(-Math.expm1(-dt*(reduce?16:9)));
@@ -86,20 +87,20 @@ export function createCameraRig(){
     if(view==='chase'){
       // Follow in car space. Filtering an absolute position used to leave the car farther away at high speed.
       forward.set(Math.sin(heading),0,Math.cos(heading));side.set(forward.z,0,-forward.x);
-      const distance=(portrait?6.8:5.58)+(reduce?0:speedRatio*.63);
+      const distance=(portrait?6.8:5.58)+speedRatio*.34;
       const cornerOffset=clamp(angleDelta(racer.heading,heading)*2.15,-.48,.48);
-      camera.position.set(racer.x,(racer.y||0)+(portrait?2.03:1.83)+pitch*.85,racer.z)
+      camera.position.set(racer.x,(racer.y||0)+(portrait?2.03:1.83)+pitch*.85-speedRatio*.17,racer.z)
         .addScaledVector(forward,-distance).addScaledVector(side,reduce?0:-cornerOffset);
       target.set(racer.x,(racer.y||0)+(portrait?.84:.69),racer.z)
         .addScaledVector(forward,4.5).addScaledVector(side,cornerOffset*.85);
-      camera.fov=(portrait?49:48)+(reduce?0:speedRatio*5.5);
+      camera.fov=(portrait?49:48)+speedRatio*6.8;
     }else if(view==='hood'){
       forward.set(Math.sin(racer.heading),0,Math.cos(racer.heading));side.set(forward.z,0,-forward.x);
       camera.position.set(racer.x,(racer.y||0)+1.00-pitch*.27,racer.z).addScaledVector(forward,.88).addScaledVector(side,.18);
       target.copy(camera.position).addScaledVector(forward,25).addScaledVector(side,clamp(racer.steeringAngle*speed*.11,-1.0,1.0));
       target.y-=.34+pitch*8;
       camera.up.addScaledVector(side,-roll*.23).normalize();
-      camera.fov=(portrait?60:61)+(reduce?0:speedRatio*3);
+      camera.fov=(portrait?60:61)+speedRatio*4.2;
     }else return;
     camera.lookAt(target);camera.updateProjectionMatrix();
   };
