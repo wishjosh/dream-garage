@@ -1,4 +1,4 @@
-import {steeringGrip} from './drive-console.mjs?v=graphite-1';
+import {steeringGrip} from './drive-console.mjs?v=coastal-motion-1';
 const clamp=v=>Math.max(-1,Math.min(1,v));
 export function createSlide(){return{id:null,origin:0,range:1,value:0};}
 export function beginSlide(s,id,x,width){if(s.id!==null)return false;s.id=id;s.origin=x;s.range=72;s.value=0;return true;}
