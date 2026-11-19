@@ -1,5 +1,5 @@
 import {ALIGNMENT,LENGTH} from './alignment.mjs';
-export const COURSES=Object.freeze([{id:'city-geometry',name:'시티 투어',type:'코너 연결',tag:'곡률을 따라 부드럽게',description:'넓은 첫 코너에서 감속하고, 가운데 반대 방향 코너를 연결한 뒤 큰 곡선을 따라 돌아와요.',sectors:[[0,'출발 대로','CITY TOUR'],[.09,'첫 감속','C1 / BRAKE'],[.32,'반대 방향 코너','C3 / CHANGE DIRECTION'],[.58,'큰 복귀 곡선','C5 / HOME SWEEP']]}]);
+export const COURSES=Object.freeze([{id:'city-geometry',name:'시티 투어',type:'코너 연결',tag:'곡률을 따라 부드럽게',description:'넓은 첫 코너에서 감속하세요. 여섯 코너를 지나 큰 곡선을 따라 출발선으로 돌아와요.',sectors:[[0,'출발 대로','CITY TOUR'],[.09,'첫 감속','C1 / BRAKE'],[.32,'반대 방향 코너','C3 / CHANGE DIRECTION'],[.58,'큰 복귀 곡선','C5 / HOME SWEEP']]}]);
 export const getCourse=()=>COURSES[0];
 export function createCourse(){
  const n=Math.ceil(LENGTH/2.5);let j=0;

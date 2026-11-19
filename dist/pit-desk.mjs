@@ -1,7 +1,7 @@
 import {CARS,CATEGORIES,CATALOG} from './garage-core.mjs?v=circuit-lineup-1';
 import {CAR_NAMES,presentItem} from './vehicle-presentation.mjs?v=porsche-main-1';
-import {RACE_COURSES} from './race-courses.mjs?v=circuit-lineup-1';
-import {courseDiagram} from './race-course-ui.mjs?v=pit-lab-1';
+import {RACE_COURSES} from './race-courses.mjs?v=course-guide-1';
+import {courseDiagram} from './race-course-ui.mjs?v=course-guide-1';
 import {LEVELS} from './opponent-difficulty.mjs?v=pit-lab-1';
 
 const paths={
@@ -33,7 +33,7 @@ function upgrade(item){
 
 export function installPitDesk({course,track,read,selectCar,applySetup,enterLab,exitLab,previewItem,applyItem,rotate}){
  const $=id=>document.getElementById(id),menu=$('menu'),stage=menu.querySelector('.garage-stage');
- const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('pit-desk.css?v=pit-lab-1',import.meta.url);document.head.append(css);
+ const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('pit-desk.css?v=course-guide-1',import.meta.url);document.head.append(css);
  document.body.classList.add('pit-ui');
  let page='home',sheet='',group='paint',itemIndex=0,courseIndex=0,level,settingsPage=0;
  const tracks=new Map([[course.key,track]]);
@@ -76,12 +76,43 @@ export function installPitDesk({course,track,read,selectCar,applySetup,enterLab,
  function toLab(){
   page='lab';menu.dataset.pitPage=page;enterLab();selectGroup('paint');desk.querySelector('[data-pit=home]').focus({preventScroll:true});
  }
+ function showCourse(){
+  const selected=RACE_COURSES[courseIndex];
+  if(!tracks.has(selected.key))tracks.set(selected.key,selected.create());
+  const layout=tracks.get(selected.key);
+  $('pit-track-map').innerHTML=courseDiagram(layout);
+  $('pit-track-count').textContent=(courseIndex+1)+' / '+RACE_COURSES.length;
+  $('pit-track-name').textContent=selected.shortName;
+  $('pit-track-length').textContent=(layout.length/1000).toFixed(2)+' km · 1바퀴';
+  $('pit-track-type').textContent=selected.type;
+  $('pit-track-description').textContent=selected.description;
+ }
  function renderSheet(){
   const state=read(),body=$('pit-sheet-body');
   if(sheet==='setup'){
-   const c=RACE_COURSES[courseIndex];if(!tracks.has(c.key))tracks.set(c.key,c.create());
-   const t=tracks.get(c.key);
-   body.innerHTML='<div class="pit-track-row">'+arrow('prev-course','이전 코스','left')+'<div class="pit-track">'+courseDiagram(t)+'<div aria-live="polite"><small>코스 '+(courseIndex+1)+' / '+RACE_COURSES.length+'</small><strong>'+c.shortName+'</strong><small>'+(t.length/1000).toFixed(2)+' km · 1바퀴</small></div></div>'+arrow('next-course','다음 코스','right')+'</div><fieldset><legend>상대차 난이도</legend><div class="pit-levels">'+Object.entries(LEVELS).map(([k,l])=>'<button data-pit="level-'+k+'" aria-pressed="'+(k===level)+'">'+l.name+'</button>').join('')+'</div></fieldset><button class="pit-primary pit-wide" data-pit="save-setup">적용</button>';
+   body.innerHTML=`<div class="pit-setup">
+    <section class="pit-course-picker" aria-label="코스 선택">
+     <div class="pit-track-row">
+      ${arrow('prev-course','이전 코스','left')}
+      <button type="button" data-pit="overview" class="pit-track" aria-labelledby="pit-track-name pit-overview-label" aria-expanded="true" aria-controls="pit-track-overview">
+       <span id="pit-track-map" aria-hidden="true"></span>
+       <span class="pit-track-copy">
+        <small class="pit-track-hint"><span id="pit-track-count"></span> · <span id="pit-overview-label">코스 소개</span><span class="pit-disclosure" aria-hidden="true"></span></small>
+        <strong id="pit-track-name" aria-live="polite"></strong><small id="pit-track-length"></small>
+       </span>
+      </button>
+      ${arrow('next-course','다음 코스','right')}
+     </div>
+     <div id="pit-track-overview">
+      <b id="pit-track-type"></b><p id="pit-track-description"></p>
+     </div>
+    </section>
+    <div class="pit-race-options">
+     <fieldset><legend>상대차 난이도</legend><div class="pit-levels">${Object.entries(LEVELS).map(([key,preset])=>`<button data-pit="level-${key}" aria-pressed="${key===level}">${preset.name}</button>`).join('')}</div></fieldset>
+     <button class="pit-primary pit-wide" data-pit="save-setup">적용</button>
+    </div>
+   </div>`;
+   showCourse();
   }else if(sheet==='cars'){
    body.innerHTML='<div class="pit-car-list">'+CARS.map(k=>'<button data-pit="car-'+k+'" aria-pressed="'+(k===state.car)+'">'+icon('cars')+'<strong>'+CAR_NAMES[k]+'</strong><span>'+(k===state.car?'✓':'›')+'</span></button>').join('')+'</div>';
   }else{
@@ -99,6 +130,7 @@ export function installPitDesk({course,track,read,selectCar,applySetup,enterLab,
  }
  function openSheet(name){
   sheet=name;courseIndex=RACE_COURSES.findIndex(c=>c.key===course.key);level=read().difficulty;settingsPage=0;
+  dialog.dataset.sheet=name;
   $('pit-sheet-title').textContent=title[name];renderSheet();dialog.showModal();$('pit-sheet-title').focus({preventScroll:true});
  }
  const localFocus=key=>dialog.querySelector('[data-pit="'+key+'"]')?.focus({preventScroll:true});
@@ -112,8 +144,16 @@ export function installPitDesk({course,track,read,selectCar,applySetup,enterLab,
   else if(key.startsWith('orbit-'))rotate((key.endsWith('left')?-1:1)*Math.PI/4);
   else if(key.endsWith('-item')){const list=articles();itemIndex=(itemIndex+list.length+(key==='prev-item'?-1:1))%list.length;previewItem(list[itemIndex].id);update();}
   else if(key==='apply'){applyItem();update();}
-  else if(key.endsWith('-course')){courseIndex=(courseIndex+RACE_COURSES.length+(key==='prev-course'?-1:1))%RACE_COURSES.length;renderSheet();localFocus(key);}
-  else if(key.startsWith('level-')){level=key.slice(6);renderSheet();localFocus(key);}
+  else if(key==='overview'){
+   const overview=$('pit-track-overview');
+   overview.hidden=!overview.hidden;
+   event.target.closest('button').setAttribute('aria-expanded',String(!overview.hidden));
+  }
+  else if(key.endsWith('-course')){courseIndex=(courseIndex+RACE_COURSES.length+(key==='prev-course'?-1:1))%RACE_COURSES.length;showCourse();}
+  else if(key.startsWith('level-')){
+   level=key.slice(6);
+   for(const button of dialog.querySelectorAll('.pit-levels button'))button.setAttribute('aria-pressed',String(button.dataset.pit===key));
+  }
   else if(key==='save-setup'){dialog.close();applySetup(RACE_COURSES[courseIndex].key,level);update();}
   else if(key.startsWith('car-')){selectCar(key.slice(4));update();dialog.close();}
   else if(key.endsWith('-settings')){settingsPage=(settingsPage+(key==='prev-settings'?2:1))%3;renderSheet();localFocus(key);}

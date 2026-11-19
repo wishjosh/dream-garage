@@ -1,4 +1,4 @@
-import {RACE_COURSES,courseURL} from './race-courses.mjs?v=circuit-lineup-1';
+import {RACE_COURSES,courseURL} from './race-courses.mjs?v=course-guide-1';
 import {mapProjection} from './race-hud.mjs?v=race-hud-1';
 export {diagram as courseDiagram};
 const time=value=>{const m=Math.floor(value/60),s=(value%60).toFixed(2).padStart(5,'0');return m+':'+s;};

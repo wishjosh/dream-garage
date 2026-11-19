@@ -1,8 +1,8 @@
 import {ALIGNMENTS} from './alignment.mjs';
 export const COURSES=Object.freeze([
  {id:'speed',name:'스피드 링',type:'속도형',tag:'큰 곡선에서 속도를 유지해요',description:'긴 직선 뒤 큰 곡선과 넓은 S를 연결해요. 미리 감속하고 일정한 조향을 유지해 보세요.',sectors:[[0,'출발 직선','SPEED RING'],[.18,'큰 곡선','WIDE CORNER'],[.40,'넓은 S','HOLD THE LINE'],[.74,'복귀 곡선','HOME SWEEP']]},
- {id:'rhythm',name:'리듬 링크',type:'리듬형',tag:'중속에서 좌우를 연결해요',description:'중속 코너 사이에서 조향을 풀고 반대 방향을 준비해요. 급한 드래그보다 다음 코너를 바라보세요.',sectors:[[0,'출발 직선','RHYTHM LINK'],[.12,'첫 좌우 연결','CHANGE DIRECTION'],[.46,'중속 코너','FIND THE RHYTHM'],[.55,'다음 전환','LOOK AHEAD']]},
- {id:'braking',name:'브레이크 루프',type:'제동형',tag:'감속하고 다시 가속해요',description:'두 저속 구간을 향해 충분히 감속해요. 이어지는 코너를 빠져나온 뒤 다시 가속해 보세요.',sectors:[[0,'출발 직선','BRAKE LOOP'],[.24,'첫 저속 구간','BRAKE / CONNECT'],[.45,'두 번째 저속 구간','BRAKE / EXIT'],[.65,'재가속 직선','BUILD SPEED']]}
+ {id:'rhythm',name:'리듬 링크',type:'리듬형',tag:'중속에서 좌우를 연결해요',description:'중속 코너가 좌우로 이어져요. 방향을 바꾸기 전에 핸들을 잠깐 풀어 주세요.',sectors:[[0,'출발 직선','RHYTHM LINK'],[.12,'첫 좌우 연결','CHANGE DIRECTION'],[.46,'중속 코너','FIND THE RHYTHM'],[.55,'다음 전환','LOOK AHEAD']]},
+ {id:'braking',name:'브레이크 루프',type:'제동형',tag:'감속하고 다시 가속해요',description:'짧은 직선 끝에 첫 우회전이 있어요. 코너에 들어가기 전에 감속하고 출구에서 다시 가속하세요.',sectors:[[0,'출발 직선','BRAKE LOOP'],[.24,'첫 저속 구간','BRAKE / CONNECT'],[.45,'두 번째 저속 구간','BRAKE / EXIT'],[.65,'재가속 직선','BUILD SPEED']]}
 ]);
 export const getCourse=id=>COURSES.find(c=>c.id===id)||COURSES[0];
 export function createCourse(id='speed'){

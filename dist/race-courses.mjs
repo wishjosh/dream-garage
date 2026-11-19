@@ -1,7 +1,7 @@
-import {MARINA_COURSE} from './marina-city/plan.mjs';
-import {CIRCUIT_COURSE} from './circuit-course.mjs?v=circuit-lineup-1';
-import {createCourse as createTour,COURSES as TOUR} from './studies/city-geometry/courses.mjs';
-import {COURSES,createCourse} from './studies/course-geometry/courses.mjs';
+import {MARINA_COURSE} from './marina-city/plan.mjs?v=course-guide-1';
+import {CIRCUIT_COURSE} from './circuit-course.mjs?v=course-guide-1';
+import {createCourse as createTour,COURSES as TOUR} from './studies/city-geometry/courses.mjs?v=course-guide-1';
+import {COURSES,createCourse} from './studies/course-geometry/courses.mjs?v=course-guide-1';
 const tour=TOUR[0];
 function flatCircuit(create,name){
  return ()=>({...create(),name,waterAt:()=>false});
