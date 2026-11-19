@@ -60,7 +60,9 @@ if(renderer)boot().catch(e=>{console.error(e);fail('차량이나 코스를 불�
 async function boot(){
  const trafficOptimized=new URLSearchParams(location.search).get('traffic')!=='original',mirrorSchedule=createMirrorSchedule();
  const reducedRecoveryMotion=matchMedia('(prefers-reduced-motion: reduce)');
- renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);
+ const coastalScreenRatio=()=>Math.min(devicePixelRatio,2,Math.max(1,2880/Math.max(innerWidth,innerHeight)));
+ let coastalRaceLimit=Infinity;
+ renderer.setPixelRatio(coastalStudy?coastalScreenRatio():Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);
  renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;
  const scene=new T.Scene();scene.background=new T.Color('#101e34');scene.fog=new T.FogExp2('#1b2e47',.003);
  const camera=new T.PerspectiveCamera(65,innerWidth/innerHeight,.12,700);
@@ -131,7 +133,17 @@ async function boot(){
   const cabinVisible=mode!=='menu'&&!wheelInspection&&view==='cockpit'&&fx.carVisible;
   originalCockpit.group.visible=cabinVisible&&selected!=='f2002';cockpit.visible=cabinVisible&&selected==='f2002';
  }
- function renderScene(forceMirror=false,now=performance.now()){if(daylight&&camera.far!==2400){camera.far=2400;camera.updateProjectionMatrix();}paintRecovery();if(mode!=='menu')renderMirror(forceMirror,now);if(mode==='menu')camera.updateMatrixWorld(true);renderer.render(mode==='menu'?garageScene:scene,camera);}
+ function renderScene(forceMirror=false,now=performance.now()){
+  if(coast){
+   // Re-evaluate the display scale after rotation or a monitor change. The pit can always use it.
+   const ratio=mode==='menu'?coastalScreenRatio():Math.min(coastalScreenRatio(),coastalRaceLimit);
+   if(renderer.getPixelRatio()!==ratio)renderer.setPixelRatio(ratio);
+  }
+  if(daylight&&camera.far!==2400){camera.far=2400;camera.updateProjectionMatrix();}
+  paintRecovery();if(mode!=='menu')renderMirror(forceMirror,now);
+  if(mode==='menu')camera.updateMatrixWorld(true);
+  renderer.render(mode==='menu'?garageScene:scene,camera);
+ }
  const cameraTarget=new T.Vector3(),lookTarget=new T.Vector3(),desired=new T.Vector3();
  function syncGarageView(){
   const draft=shopPreview.loadout(save,selected),pending=shopPreview.pending;
@@ -289,7 +301,7 @@ async function boot(){
  for(const id of ['restart','again'])$(id).onclick=resetRace;for(const id of ['back-menu','result-menu'])$(id).onclick=toMenu;
  $('rescue').onclick=()=>{if(mode==='race'){const recovered=physics.recover(player);clearInput();syncVisuals();updateCamera(true);showToast(recovered?'도로에서 다시 출발해요':'다른 차가 지나가면 다시 눌러요');}};
  installRaceTouchGuard({isPlaying:()=>['race','countdown'].includes(mode)});
- steeringControl=installCitySteering({canDrive:()=>['race','countdown'].includes(mode),onChange:clearInput});
+ steeringControl=installCitySteering({canDrive:()=>['race','countdown'].includes(mode),onChange:clearInput,followRail:coastalStudy});
  const controlButtons=[...document.querySelectorAll('[data-control]')];
  function paintControls(){for(const b of controlButtons){const on=[...held.values()].includes(b.dataset.control);b.classList.toggle('pressed',on);b.setAttribute('aria-pressed',String(on));}}
  for(const b of controlButtons.filter(b=>!b.dataset.driveTarget)){
@@ -297,7 +309,7 @@ async function boot(){
   b.onpointermove=e=>{if(!pointerZones.has(e.pointerId))return;e.preventDefault();const hit=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-control]');const zone=hit?(hit.closest('.steering')?'steering':'pedals'):null;held.set(e.pointerId,zone===pointerZones.get(e.pointerId)?hit.dataset.control:null);paintControls();};
   const release=e=>{held.delete(e.pointerId);pointerZones.delete(e.pointerId);paintControls();};b.onpointerup=release;b.onpointercancel=release;b.onlostpointercapture=release;b.oncontextmenu=e=>e.preventDefault();
  }
- pedalConsole=installDriveConsole({canDrive:()=>['race','countdown'].includes(mode),onPointer:(id,key,active)=>{if(active)held.set(id,key);else held.delete(id);paintControls();}});
+ pedalConsole=installDriveConsole({canDrive:()=>['race','countdown'].includes(mode),followRail:coastalStudy,onPointer:(id,key,active)=>{if(active)held.set(id,key);else held.delete(id);paintControls();}});
  addEventListener('keydown',e=>{if(e.target.matches('input,select,textarea')||document.querySelector('dialog[open]'))return;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','KeyW','KeyA','KeyS','KeyD','KeyX','ShiftLeft','ShiftRight'].includes(e.code)){if(['race','countdown'].includes(mode)){e.preventDefault();keys.add(e.code);}}if(e.repeat)return;if(e.code==='KeyC' && ['race','countdown','paused'].includes(mode))switchView();if(['KeyP','Escape'].includes(e.code)){if(mode==='paused')resume();else setPause();}if(e.code==='KeyR' && mode==='race')$('rescue').click();});
  addEventListener('pagehide',()=>drivingSound.stop());addEventListener('visibilitychange',()=>{if(document.hidden)drivingSound.stop();});
  addEventListener('keyup',e=>keys.delete(e.code));installPageActivity({onRelease:clearInput,onSuspend:setPause});
@@ -311,9 +323,24 @@ async function boot(){
  installRaceCourses({course:COURSE_META,track,onReady:()=>flowUI.race(),getSave:()=>save,getCar:()=>selected,canChoose:()=>mode==='menu'||mode==='result',onOpen:()=>{if(shopPreview.pending)cancelShop();},onChoose:()=>{shopPreview.cancel();save.car=selected;save.view=view;persist();},navigate:url=>{clearInput();if(garageStudy||controlsStudy){const next=new URL(url,location.href);next.searchParams.set('study',studyName);if(artStudy)next.searchParams.set('look',daylight?'daylight':'before');next.searchParams.set('layout',flowUI.modern?'new':'classic');location.assign(next.href);}else location.assign(url);}});
  if(coast)coast.installPitUI(track);
  if((garageStudy||coast)&&atWelcome)$('enter-garage').click();
- let last=performance.now(),lastDt=1/60,frameCount=0,avgFrame=16,poorFrames=0;
+ let last=performance.now(),lastDt=1/60,frameCount=0,avgFrame=16,poorFrames=0,clearFrames=0;
  function frame(now){lastDt=clamp((now-last)/1000,0,.05);last=now;if(controlsPreview?.frozen)readInput();else step(lastDt);if(mode!=='menu'){syncVisuals();if(frameCount%3===0)updateHUD();}updateCamera();courseScene.tick(lastDt);courseScene.update(physics?.merge,player);if(toastTime>0){toastTime-=lastDt;if(toastTime<=0)$('toast').classList.remove('visible');}renderScene(false,now);frameCount++;drivingSound.update({player,active:(mode==='race'||mode==='countdown')&&!document.hidden&&!controlsPreview?.frozen,throttle:mode==='race'&&(input.throttle||(save.auto&&!input.brake&&!input.reverse)),view});driveMeasure.tick(now,{active:mode==='race',visible:!document.hidden,focused:document.hasFocus(),car:selected,view,width:innerWidth,height:innerHeight,ratio:renderer.getPixelRatio(),speed:player?.speed||0});
-  avgFrame=avgFrame*.98+lastDt*1000*.02;if(mode==='race' && avgFrame>34)poorFrames++;else poorFrames=Math.max(0,poorFrames-1);if(poorFrames>200 && renderer.getPixelRatio()>1){renderer.setPixelRatio(1);renderer.setSize(innerWidth,innerHeight);poorFrames=0;}requestAnimationFrame(frame);
+  avgFrame=avgFrame*.98+lastDt*1000*.02;
+  if(mode==='race' && avgFrame>34)poorFrames++;else poorFrames=Math.max(0,poorFrames-1);
+  if(poorFrames>(coast?90:200) && renderer.getPixelRatio()>1){
+   if(coast)coastalRaceLimit=Math.max(1,renderer.getPixelRatio()-.5);
+   else {renderer.setPixelRatio(1);renderer.setSize(innerWidth,innerHeight);}
+   poorFrames=0;
+  }
+  if(coast){
+   clearFrames=mode==='race' && avgFrame<19 && coastalRaceLimit<coastalScreenRatio()?clearFrames+1:0;
+   if(clearFrames>=300){
+    coastalRaceLimit+=.25;
+    if(coastalRaceLimit>=coastalScreenRatio())coastalRaceLimit=Infinity;
+    clearFrames=0;
+   }
+  }
+  requestAnimationFrame(frame);
  }
  let mirrorProbeObject=null;
  if(controlsStudy||new URLSearchParams(location.search).get('qa')==='1')window.__raceQA={snapshot:()=>({controlsStudy:controlsPreview?.snapshot(),courseScene:courseScene.stats(),...(coast&&visuals[0]?{coastalPose:{quaternion:visuals[0].body.quaternion.toArray(),position:visuals[0].body.position.toArray(),lamp:visuals[0].lamps[0]?.emissiveIntensity}}:{}),trafficRendering:{optimized:trafficOptimized,vehicles:visuals.map(v=>v.rendering?.stats())},audio:drivingSound.stats(),performance:driveMeasure.report(),shopPreview:shopPreview.pending,previewAngle,displayLoadout:shopPreview.loadout(save,selected),vehicleName:CAR_NAMES[selected],appearance:{dimensions:selected==='porsche'?fleet.porsche.dimensions:selected==='tavaculo'?fleet.dimensions:null,...vehicleAppearance(preview),exposure:renderer.toneMappingExposure,environment:daylight?'Kloofendal 48d Partly Cloudy':'Venice Sunset 1K',garage:garage.userData.art||{id:'before'},sharedEnvironment:garageScene.environment===scene.environment},recentImpact,mode,input:{...input},touches:held.size+(steeringControl?.active?1:0),steeringControl:steeringControl?.snapshot(),driveConsole:pedalConsole?.snapshot(),recovery:physics?.recoveryStats(),recoveryCarVisible:visuals[0]?.root.visible,skidCount:skidMesh.count,screen:mode==='menu'?(atWelcome?'welcome':'garage'):mode,loadout:{...save.garage[selected]},owned:[...save.owned],tuning:tuning(save,selected),physicalTuning:physics?.entries[0]?.config,previewMaterials:preview?(()=>{const result=[];preview.traverse(o=>{if(o.isMesh&&(o.material.name==='CarSurface'||o.name==='body'||o.material.name==='study-body'))result.push(o.material.color.getHexString());});return result;})():[],customWheels:preview?.getObjectsByProperty('name','dream-wheel-trim').length,car:selected,view,engine:courseRuntime.description,elapsed,coins:save.coins,races:save.races,best:{...save.best},courseBest:structuredClone(save.courseBest||{}),courseId:COURSE_ID,length,player:player?{...player}:null,racers:racers.map(r=>({...r})),camera:camera.position.toArray(),cameraDirection:camera.getWorldDirection(new T.Vector3()).toArray(),cameraFov:camera.fov,cameraAspect:camera.aspect,cameraNear:camera.near,cameraFar:camera.far,cockpitVisible:cockpit.visible||originalCockpit.group.visible,originalCockpitVisible:originalCockpit.group.visible,proceduralCockpitVisible:cockpit.visible,cockpitStats:selected!=='f2002'?{...originalCockpit.stats(),steering:{...gazeState,target:gazeTarget,follow:gazeFollow,maxLookDegrees:MAX_LOOK_DEGREES,wheelAmount:clamp(-(player?.steeringAngle||0)/.46,-1,1)}}:cockpitVisual.stats(),mirrorStats:rearView.stats(),sideMirrorStats:sideViews.map(s=>({id:s.id,...s.view.stats()})),frameMs:avgFrame,pixelRatio:renderer.getPixelRatio(),carVisible:visuals[0]?.body.visible,wheelCount:visuals[0]?.wheels.length,caliperCounts:visuals[0]?.calipers.map(c=>c.children.length),wheelVisuals:visuals[0]?.wheels.map(w=>({position:w.position.toArray(),quaternion:w.quaternion.toArray()})),caliperVisuals:visuals[0]?.calipers.map(w=>({position:w.position.toArray(),quaternion:w.quaternion.toArray(),visible:w.visible})),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,storageOK}),advance:(seconds,drive={throttle:true})=>{for(let t=0;t<seconds;t+=1/60)step(1/60,drive);syncVisuals();updateCamera(true);updateHUD();renderScene(true);},advanceDriver:seconds=>{for(let t=0;t<seconds;t+=1/60){const guide=physics?.route(physics.entries[0]);step(1/60,guide?{...guide,wheelCommand:true}:{brake:1});}syncVisuals();updateCamera(true);updateHUD();renderScene(true);},mirrorPixels:()=>rearView.pixels(),inspectSideMirror:id=>{const side=sideViews.find(s=>s.id===id);if(!side)throw Error("Unknown side mirror");side.view.update({player,enabled:true,force:true,inspect:true,hide:[visuals[0]?.root,cockpit]});return{stats:side.view.stats(),pixels:side.view.pixels()};},mirrorProbe:options=>{

@@ -79,3 +79,62 @@ body.coastal-review:not([data-view=cockpit]) #gt-readout .gt-input-bars>div {wid
 @media(orientation:portrait){
   body.coastal-review:not([data-view=cockpit]) #gt-readout .gt-instrument {bottom:max(16px,env(safe-area-inset-bottom));}
 }
+
+/* Touch input measures these tracks directly, including after an orientation change. */
+body.coastal-review #hud #controls #thumb-steering {min-width:182px;}
+body.coastal-review #hud #controls #thumb-steering .steering-rail {
+  position:absolute;left:50%;top:50%;width:144px!important;height:2px!important;
+  margin:0;padding:0;border:0;overflow:visible;transform:translate(-50%,-50%);
+  background:#d9e4e695;box-shadow:0 1px 2px #06101888;
+}
+body.coastal-review #hud #controls #thumb-steering .steering-rail::after {
+  left:50%;top:50%;width:2px;height:12px;transform:translate(-50%,-50%);background:#e6efeea3;
+}
+body.coastal-review #hud #controls #thumb-steering .thumb-knob {
+  top:50%!important;box-sizing:border-box;margin:0;
+}
+body.coastal-review #hud #controls #thumb-steering::before,
+body.coastal-review #hud #controls #thumb-steering::after {
+  content:'';top:50%;width:8px;height:8px;border:0;border-top:2px solid #e4edec;border-right:2px solid #e4edec;
+  background:none;box-sizing:border-box;
+}
+body.coastal-review #hud #controls #thumb-steering::before {left:6px;transform:translateY(-50%) rotate(-135deg);}
+body.coastal-review #hud #controls #thumb-steering::after {right:6px;transform:translateY(-50%) rotate(45deg);}
+body.coastal-review #hud #controls #drive-lever {
+  right:0;width:50px!important;height:100%;padding:0;border:0;box-shadow:none;
+}
+body.coastal-review #hud #controls #drive-lever::before,
+body.coastal-review #hud #controls #drive-lever::after {content:none;}
+body.coastal-review #hud #controls #drive-lever .lever-rail {
+  position:absolute;left:50%;top:50%;bottom:auto;
+  height:clamp(64px,64%,104px)!important;width:2px!important;margin:0;padding:0;border:0;overflow:visible;
+  transform:translate(-50%,-50%);background:#d9e4e695;box-shadow:none;
+}
+body.coastal-review #hud #controls #drive-lever .lever-knob {
+  left:50%;width:24px!important;height:10px!important;margin:0;
+  border:1px solid #e0e9e9;border-radius:3px;background:#9dabae;
+}
+body.coastal-review #hud #controls #drive-lever .lever-knob::after {inset:3px 5px;background:#e1e9e7;}
+body.coastal-review #hud #controls #drive-console .shift-end {
+  display:grid;place-items:center;right:0;left:auto;bottom:auto;z-index:1;
+  width:50px!important;height:44px!important;box-sizing:border-box;margin:0;
+  text-align:center;white-space:nowrap;font:600 10px/1.15 system-ui,sans-serif;letter-spacing:0;color:#f1f3ee;
+  isolation:isolate;
+}
+body.coastal-review #hud #controls #drive-console .shift-end::before {
+  content:'';position:absolute;inset:8px 1px;z-index:-1;border:1px solid #cad9d983;border-radius:5px;
+  background:#172629de;box-shadow:0 1px 3px #07111485;
+}
+body.coastal-review #hud #controls #drive-console .lever-up {top:0;bottom:auto;}
+body.coastal-review #hud #controls #drive-console .lever-down {bottom:0;top:auto;}
+body.coastal-review #hud #controls #drive-console .shift-end[aria-pressed=true] {color:#162529;}
+body.coastal-review #hud #controls #drive-console .shift-end[aria-pressed=true]::before {background:#dfede7;border-color:#fff;}
+@media(orientation:portrait) {
+  body.coastal-review #hud #controls #thumb-steering {width:160px;min-width:160px;flex:0 0 160px;}
+  body.coastal-review #hud #controls #thumb-steering::before {left:-2px;}
+  body.coastal-review #hud #controls #thumb-steering::after {right:-2px;}
+}
+@media(orientation:portrait) and (max-width:389px) {
+  /* Keep the full 72 px of physical travel on each side, clear of the brake below. */
+  body.coastal-review #hud #controls #thumb-steering {bottom:85px;}
+}

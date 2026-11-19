@@ -1,4 +1,5 @@
 import * as T from '../../vendor/three.module.js';
+import {sunDirection} from './sky.mjs';
 import {angleDelta,clamp} from '../../race-core.mjs';
 
 const deg=T.MathUtils.degToRad;
@@ -127,5 +128,6 @@ export function attachRoadShade(contact){
 export function lightOnGround(contact,heading){
   const c=Math.cos(heading),s=Math.sin(heading);
   // Sunlight comes from the same world direction as the highlights on the body.
-  contact.userData.penumbra.position.set(.57*c-.34*s,-.57*s-.34*c,.003);
+  const x=-sunDirection.x*.74,z=-sunDirection.z*.74;
+  contact.userData.penumbra.position.set(x*c-z*s,-x*s-z*c,.003);
 }

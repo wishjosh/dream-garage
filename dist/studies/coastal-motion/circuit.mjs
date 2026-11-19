@@ -1,6 +1,7 @@
 import * as T from '../../vendor/three.module.js';
 import {trackFrame,nearestTrack,angleDelta} from '../../race-core.mjs';
 import {coastalTerrain} from './landscape.mjs';
+import {addCoastalSky,sunDirection} from './sky.mjs';
 
 const materialRoot=new URL('../../studies/circuit-elevation/assets/',import.meta.url);
 const assets=new URL('../../assets/',import.meta.url);
@@ -15,22 +16,6 @@ async function texture(base,file,{color=true,repeat=false}={}){
   return tex;
 }
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.82,...extra});
-function skyDome(scene,image){
-  const material=new T.ShaderMaterial({
-    side:T.BackSide,depthWrite:false,depthTest:false,fog:false,uniforms:{image:{value:image}},
-    vertexShader:'varying vec3 direction; void main(){direction=position; vec4 p=projectionMatrix*vec4(mat3(viewMatrix)*position,1.);gl_Position=p.xyww;}',
-    fragmentShader:[
-      'uniform sampler2D image;varying vec3 direction;',
-      'void main(){vec3 d=normalize(direction);float u=.5+.478*cos(atan(d.x,d.z)+1.95);',
-      'float v=clamp(.482+.84*asin(clamp(d.y,-1.,1.)),.006,.994);',
-      'vec3 c=texture2D(image,vec2(u,v)).rgb;gl_FragColor=vec4(mix(c,vec3(.66,.72,.74),.065),1.);',
-      '#include <colorspace_fragment>','}'
-    ].join('\n'),
-  });
-  const dome=new T.Mesh(new T.SphereGeometry(1,56,20),material);
-  dome.name='Distant coastal bay';dome.renderOrder=-1000;dome.frustumCulled=false;scene.add(dome);
-}
-
 function surface(scene,track,offsets,surfaceHeight,material,tile,shade=()=>1){
   const pos=[],uv=[],colors=[],idx=[];const n=track.frames.length;
   for(let i=0;i<=n;i++){
@@ -126,17 +111,18 @@ function vegetation(scene,track,image,heightAt){
 }
 
 export async function buildCircuit(scene,track,renderer){
-  const [coast,asphalt,normal,rough,grassMap,concreteMap,pine]=await Promise.all([
+  const horizonFile=renderer.capabilities.maxTextureSize>=8192?'coast-horizon-8k.webp':'coast-horizon-4k.webp';
+  const [coast,asphalt,normal,rough,grassMap,concreteMap,pine,horizon]=await Promise.all([
     texture(here,'coast.webp'),texture(assets,'materials/asphalt-color.jpg',{repeat:true}),
     texture(assets,'materials/asphalt-normal.jpg',{color:false,repeat:true}),texture(assets,'materials/asphalt-roughness.jpg',{color:false,repeat:true}),
     texture(materialRoot,'grass_ground/Diffuse.jpg',{repeat:true}),texture(materialRoot,'concrete_wall_001/Diffuse.jpg',{repeat:true}),
-    texture(here,'stone-pine.webp'),
+    texture(here,'stone-pine.webp'),texture(here,horizonFile),
   ]);
   for(const tx of [asphalt,normal,rough,grassMap,concreteMap])tx.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
   scene.background=new T.Color('#c6cfd1');scene.fog=new T.Fog('#c7c6b9',165,640);scene.environmentIntensity=.83;
-  skyDome(scene,coast);
+  addCoastalSky(scene,coast,horizon);
   scene.add(new T.HemisphereLight('#f7ecd4','#6a6252',1.56));
-  const sun=new T.DirectionalLight('#ffdeb0',2.75);sun.position.set(-60,39,-27);scene.add(sun);
+  const sun=new T.DirectionalLight('#ffdeb0',2.75);sun.position.copy(sunDirection).multiplyScalar(70);scene.add(sun);
   const pavement=mat('#afa99f',{map:asphalt,normalMap:normal,normalScale:new T.Vector2(.21,.21),roughness:.97,roughnessMap:rough,vertexColors:true});
   const grass=mat('#d1cfad',{map:grassMap,vertexColors:true});
   const gravel=mat('#c6b89a',{map:concreteMap,vertexColors:true}),concrete=mat('#c6beb1',{map:concreteMap});
@@ -221,5 +207,5 @@ export async function buildCircuit(scene,track,renderer){
     at(apex,side*9.13,1.34,.15,.18,.16,oxide);
   }
   vegetation(scene,track,pine,heightAt);batch.flush();
-  return {groundHeight:()=>0,update(){},tick(){},stats:()=>({kind:'coastal-brake-loop',corners:corners.length,length:track.length})};
+  return {groundHeight:()=>0,update(){},tick(){},stats:()=>({kind:'coastal-brake-loop',corners:corners.length,length:track.length,horizonWidth:horizon.image.width})};
 }
