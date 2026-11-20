@@ -20,11 +20,10 @@
 }
 .entry-art img {
   object-fit: cover;
-  transform: scale(1.19);
-  transform-origin: 49% 86%;
+  object-position: 56% 50%;
 }
 .entry-shade {
-  background: linear-gradient(0deg, #101b23fa 0%, #101b23c7 11%, #101b2336 29%, transparent 48%);
+  background: linear-gradient(0deg, #101b23b8, #101b2380 10%, transparent 31%);
 }
 .entry-mark {
   position: absolute;
@@ -92,10 +91,9 @@
 .entry-transfer[hidden] { display: none; }
 #welcome button:focus-visible { outline: 2px solid var(--entry-paper); outline-offset: 3px; }
 @media (orientation: portrait) {
-  .entry-art img { transform-origin: 51% 57%; }
   .entry-shade {
-    background: linear-gradient(0deg, #101b23ee, #101b2396 14%, transparent 39%),
-                linear-gradient(180deg, #101b23c4, #101b2370 19%, transparent 46%);
+    background: linear-gradient(0deg, #101b23bd, transparent 25%),
+                linear-gradient(180deg, #101b2359, transparent 27%);
   }
   .entry-mark { left: 7.5%; top: max(13%, env(safe-area-inset-top)); bottom: auto; width: 85%; }
   .entry-action { left: 8%; right: 8%; bottom: max(7.4%, env(safe-area-inset-bottom)); width: auto; }
