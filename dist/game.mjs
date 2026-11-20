@@ -26,7 +26,7 @@ import {createCockpit} from './cockpit-visual.mjs?v=gallardo-cockpit-1';
 import {createRearView} from './rear-view.mjs?v=traffic-1';
 import {createOriginalCockpit} from './studies/mixed-city/cockpit.mjs?v=racing-pedals-1';
 import {createSteeringState,stepSteering,MAX_LOOK_DEGREES} from './cockpit-study-steering.mjs?v=steering-look-1';
-import {createCupCockpits} from './cup-cockpit.mjs';
+import {createCupCockpits} from './cup-cockpit.mjs?v=cup-cabin-2';
 import {splitWheelVisuals,syncWheelVisuals} from './wheel-visual.mjs?v=wheels-1';
 import * as T from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';

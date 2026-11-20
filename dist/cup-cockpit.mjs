@@ -64,7 +64,7 @@ function createCabin({scene,camera},id,{wheel,dash},bonnetGeometry){
   const bonnet=put(group,bonnetGeometry,paint);bonnet.rotation.y=Math.PI;
   bonnetGeometry.computeBoundingBox();
   const bonnetLength=bonnetGeometry.boundingBox.max.z-bonnetGeometry.boundingBox.min.z;
-  const near=eye.z-.64,far=-p.front,top=eye.y-.265;
+  const near=eye.z-.81,far=-p.front,top=eye.y-.265;
   const curvature=u=>.048*(1-(2*u-1)**2);
   skin(group,trim,24,4,(u,v)=>[(2*u-1)*half,mix(top,p.sill,v)+curvature(u)*.35, mix(near,far,v)-curvature(u)]);
   const face=new T.MeshBasicMaterial({map:dash,side:T.DoubleSide,color:0xd3d7dc});
