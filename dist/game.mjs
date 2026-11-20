@@ -59,7 +59,7 @@ if(!saveWriteBlocked)persist();
 // The transfer tools work before the 3D assets finish loading.
 let refreshTransferredSave=null;
 if(!isolatedStudy)installSaveTransfer({getSave:()=>save,onSaveChanged:next=>{save=resetRetiredRecords(next);storageOK=true;saveWriteBlocked=false;persist();refreshTransferredSave?.();}});
-function fail(message){$('fatal-message').textContent=message;$('fatal').hidden=false;}
+function fail(message){$('welcome').hidden=true;$('fatal-message').textContent=message;$('fatal').hidden=false;}
 let renderer;
 try{renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});}catch{fail('Safari 또는 Chrome 최신 버전에서 다시 열어 주세요.');}
 if(renderer)boot().catch(e=>{console.error(e);fail('차량이나 코스를 불러오지 못했어요. 인터넷 연결을 확인한 뒤 다시 열어 주세요.');});
@@ -352,8 +352,7 @@ async function boot(){
  addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;clearInput();updateCamera(true);camera.updateProjectionMatrix();});
  refreshTransferredSave=()=>{selected=save.car;view=save.view;toMenu();$('shop-status').textContent='저장 기록을 반영했어요. 옮겨 온 차로 달려 보세요.';};
  flowUI=installGarageFlow({study:garageStudy,artStudy,look:daylight?'daylight':'before',onLook:look=>{shopPreview.cancel();persist();const url=new URL(location.href);url.searchParams.set('look',look);url.searchParams.set('garage','1');location.assign(url.href);},getState:()=>({carName:CAR_NAMES[selected],pending:shopPreview.pending,storageOK,notice:lastRace?lastRace.prize.toLocaleString()+' C 획득 · 내 차를 꾸미고 다시 도전해요.':''}),cancel:cancelShop,selectCategory:value=>{category=value;},refresh:renderShop,reset:()=>{save=freshStudySave();selected=save.car;previewAngle=0;shopPreview.cancel();persist();refreshPreview();syncOptions();},onScreen:screen=>{previewAngle=0;preview.rotation.y=0;if(daylight)renderer.shadowMap.needsUpdate=true;}});
- syncOptions();$('enter-garage').disabled=false;$('enter-garage').textContent='차고 문 열기 →';$('welcome-status').textContent='준비 완료 · 너만의 레이스를 시작해 봐!';$('start').disabled=false;$('start').textContent='레이스 출발  →';$('load-status').textContent='준비 완료 · 스마트폰은 가로 화면을 추천해요';
- installRaceCourses({course:COURSE_META,track,onReady:()=>flowUI.race(),getSave:()=>save,getCar:()=>selected,canChoose:()=>mode==='menu'||mode==='result',onOpen:()=>{if(shopPreview.pending)cancelShop();},onChoose:()=>{shopPreview.cancel();save.car=selected;save.view=view;persist();},navigate:url=>{clearInput();if(garageStudy||controlsStudy){const next=new URL(url,location.href);next.searchParams.set('study',studyName);if(artStudy)next.searchParams.set('look',daylight?'daylight':'before');next.searchParams.set('layout',flowUI.modern?'new':'classic');location.assign(next.href);}else location.assign(url);}});
+ syncOptions();$('start').disabled=false;$('start').textContent='레이스 출발  →';$('load-status').textContent='준비 완료 · 스마트폰은 가로 화면을 추천해요';
  if(coast)coast.installPitUI();
  if(pitEnabled){
   const switchRoom=active=>{
@@ -370,7 +369,6 @@ async function boot(){
    applyItem:()=>{$('shop-confirm').click();},rotate:rotateGarage
   });
  }
- if((garageStudy||coast)&&atWelcome)$('enter-garage').click();
  let last=performance.now(),lastDt=1/60,frameCount=0,avgFrame=16,poorFrames=0,clearFrames=0;
  function frame(now){lastDt=clamp((now-last)/1000,0,.05);last=now;if(controlsPreview?.frozen)readInput();else step(lastDt);if(mode!=='menu'){syncVisuals();if(frameCount%3===0)updateHUD();}updateCamera();courseScene.tick(lastDt);courseScene.update(physics?.merge,player);if(toastTime>0){toastTime-=lastDt;if(toastTime<=0)$('toast').classList.remove('visible');}renderScene(false,now);frameCount++;drivingSound.update({player,active:(mode==='race'||mode==='countdown')&&!document.hidden&&!controlsPreview?.frozen,throttle:mode==='race'&&(input.throttle||(save.auto&&!input.brake&&!input.reverse)),view});driveMeasure.tick(now,{active:mode==='race',visible:!document.hidden,focused:document.hasFocus(),car:selected,view,width:innerWidth,height:innerHeight,ratio:renderer.getPixelRatio(),speed:player?.speed||0});
   avgFrame=avgFrame*.98+lastDt*1000*.02;
@@ -436,6 +434,13 @@ async function boot(){
  }
  // Asset loading can span a phone rotation before the resize listener exists.
  renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;
- updateCamera(true);requestAnimationFrame(frame);
+ updateCamera(true);
+ // Keep the opening on screen until the first frame and its controls are ready.
+ requestAnimationFrame(frame);
+ await new Promise(resolve=>requestAnimationFrame(resolve));
+ $('welcome').classList.add('entry-ready');
+ $('enter-garage').disabled=false;
+ installRaceCourses({course:COURSE_META,track,onReady:()=>flowUI.race(),getSave:()=>save,getCar:()=>selected,canChoose:()=>mode==='menu'||mode==='result',onOpen:()=>{if(shopPreview.pending)cancelShop();},onChoose:()=>{shopPreview.cancel();save.car=selected;save.view=view;persist();},navigate:url=>{clearInput();if(garageStudy||controlsStudy){const next=new URL(url,location.href);next.searchParams.set('study',studyName);if(artStudy)next.searchParams.set('look',daylight?'daylight':'before');next.searchParams.set('layout',flowUI.modern?'new':'classic');location.assign(next.href);}else location.assign(url);}});
+ if((garageStudy||pitEnabled)&&atWelcome)$('enter-garage').click();
 }
 function formatTime(seconds){const minutes=Math.floor(seconds/60);return minutes+':'+(seconds%60).toFixed(2).padStart(5,'0');}

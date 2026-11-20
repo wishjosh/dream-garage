@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-  <meta name="theme-color" content="#08192c">
+  <meta name="theme-color" content="#13212b">
   <meta name="description" content="꿈꾸던 차를 만들고, 도시를 달려라! 차고에서 차를 고르고 경주 상금으로 도색·휠·파츠를 꾸미는 스마트폰 레이싱.">
   <title>드림 개러지: 스피드 그랑프리</title>
   <link rel="icon" type="image/png" sizes="192x192" href="./assets/app-icon/icon-192.png?v=road-icon-1">
   <link rel="apple-touch-icon" sizes="180x180" href="./assets/app-icon/apple-touch-icon.png?v=road-icon-1">
   <meta name="apple-mobile-web-app-title" content="드림 개러지">
-  <link rel="manifest" href="./manifest.webmanifest?v=road-icon-1">
+  <link rel="manifest" href="./manifest.webmanifest?v=skid-intro-b1">
   <link rel="stylesheet" href="./style.css?v=wheels-1">
   <link rel="stylesheet" href="./design-v1.css?v=city-tour-1">
   <link rel="stylesheet" href="./save-transfer.css?v=save-transfer-1">
@@ -18,11 +18,12 @@
   <link rel="stylesheet" href="./drive-console.css?v=graphite-1">
   <link rel="stylesheet" href="./race-safety.css?v=race-safety-1">
   <link rel="stylesheet" href="./race-palette.css?v=brake-kerb-b1">
-  <script type="module" src="./game.mjs?v=brake-kerb-b1"></script>
+  <script type="module" src="./game.mjs?v=skid-intro-b1"></script>
   <link rel="stylesheet" href="./ferrari-main.css?v=porsche-main-1">
   <link rel="stylesheet" href="./garage-preview.css?v=porsche-main-1">
   <link rel="stylesheet" href="./game-controls.css?v=game-controls-3">
 <link rel="stylesheet" href="./race-courses.css?v=circuit-main-1">
+  <link rel="stylesheet" href="./opening.css?v=skid-intro-b1">
 </head>
 <body>
   <canvas id="world" aria-label="드림 개러지 경주 코스"></canvas>
@@ -44,18 +45,25 @@
     <button id="rescue">도로로 복귀 ↗</button>
   </div>
   <div id="countdown" hidden aria-live="assertive"></div>
-  <main id="welcome" class="overlay welcome-overlay">
-    <section class="welcome-card">
-      <div class="eyebrow">YOUR GARAGE. YOUR GRAND PRIX.</div>
-      <h1>드림 개러지<span>스피드 그랑프리</span></h1>
-      <p class="tagline">꿈꾸던 차를 만들고,<br>도시를 달려라!</p>
-      <p class="invitation">경주장과 마리나 시티에서 달려 보세요.<br>너만의 차로 첫 번째 그랑프리에 도전해 봐!</p>
-      <button id="enter-garage" class="primary" disabled>차고를 준비하고 있어요…</button>
-      <button class="save-transfer-entry" data-save-transfer-open>저장 기록 옮기기</button>
-      <p class="ferrari-update">상금으로 내 차를 꾸며 보세요. 경주 준비 화면에서 달릴 코스를 고를 수 있어요.</p><p class="welcome-loop">나만의 차고 <span>→</span> 경주 <span>→</span> 상금으로 꾸미기</p>
-      <p class="save-note">로그인 없이 바로 플레이 · 진행은 이 브라우저에 저장돼요</p>
-      <div id="welcome-status" role="status">코스와 자동차를 불러오는 중</div>
-    </section>
+  <main id="welcome" aria-labelledby="opening-title">
+    <picture class="entry-art">
+      <source media="(orientation: portrait)" srcset="./assets/ui/opening-portrait.webp">
+      <img src="./assets/ui/opening-landscape.webp" alt="" fetchpriority="high">
+    </picture>
+    <div class="entry-shade" aria-hidden="true"></div>
+    <h1 id="opening-title" class="entry-mark">
+      <img src="./assets/ui/dream-garage-skid.svg" width="707" height="60" alt="DREAM GARAGE" fetchpriority="high">
+    </h1>
+    <div class="entry-action">
+      <div class="entry-loading">
+        <span class="entry-status" role="status">차고 준비 중</span>
+        <span class="entry-track" aria-hidden="true"></span>
+      </div>
+      <button id="enter-garage" type="button" disabled>차고 열기</button>
+    </div>
+    <button type="button" class="entry-transfer" data-save-transfer-open aria-label="저장 기록 옮기기" title="저장 기록 옮기기">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h15m-4-4 4 4-4 4M20 16H5m4-4-4 4 4 4"/></svg>
+    </button>
   </main>
   <main id="menu" class="overlay garage-overlay" hidden>
     <div class="garage-stage" aria-label="좌우로 끌어 돌리는 차량 미리보기">

@@ -7,7 +7,7 @@ const reviewPage=fileURLToPath(new URL('./cockpit-review.html',import.meta.url))
 const saveReviewPage=fileURLToPath(new URL('./save-review.html',import.meta.url));
 const studyReviewPage=fileURLToPath(new URL('./study-review.html',import.meta.url));
 const port=Number(process.env.PORT||4177);
-const types={'.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.glb':'model/gltf-binary','.png':'image/png','.webp':'image/webp','.txt':'text/plain; charset=utf-8'};
+const types={'.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.glb':'model/gltf-binary','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.txt':'text/plain; charset=utf-8'};
 // This fixture is injected only by the local server's explicit review query.
 // It is never written into dist or shipped with a public site.
 const reviewBootstrap=`<script>
