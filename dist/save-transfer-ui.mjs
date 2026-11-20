@@ -1,8 +1,8 @@
 import {RACE_COURSES} from './race-courses.mjs?v=circuit-lineup-1';
-import {CARS,CATEGORIES,itemById} from './garage-core.mjs?v=marina-city-1';
-import {SAVE_KEY,BACKUP_KEY,MAX_TRANSFER_BYTES,createTransfer,readSnapshot,prepareImport,applyImport,prepareRestore,applyRestore} from './save-transfer.mjs?v=marina-city-1';
+import {CARS,CATEGORIES,itemById} from './garage-core.mjs?v=cup-cabin-1';
+import {SAVE_KEY,BACKUP_KEY,MAX_TRANSFER_BYTES,createTransfer,readSnapshot,prepareImport,applyImport,prepareRestore,applyRestore} from './save-transfer.mjs?v=cup-cabin-1';
 
-import {CAR_NAMES as carNames,presentItem} from './vehicle-presentation.mjs?v=porsche-main-1';
+import {CAR_NAMES as carNames,presentItem} from './vehicle-presentation.mjs?v=cup-cabin-1';
 const amount=value=>value.toLocaleString('ko-KR')+' C';
 const time=value=>Number.isFinite(value)?Math.floor(value/60)+':'+(value%60).toFixed(2).padStart(5,'0'):'아직 없어요';
 function el(tag,text,className){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;}

@@ -76,7 +76,8 @@ body.pit-ui #menu[data-pit-page=lab]>.garage-stage:active{cursor:grabbing}
 .pit-levels,.pit-extra{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
 #pit-sheet button[aria-pressed=true]{background:var(--race-action);border-color:var(--paper);color:var(--paper)}
 #pit-sheet .pit-wide{width:100%}
-.pit-car-list{display:grid;gap:6px;margin-top:10px}#pit-sheet .pit-car-list button{justify-content:flex-start;min-height:48px}.pit-car-list button span{margin-left:auto}
+.pit-car-list{display:grid;gap:6px;margin-top:10px}
+@media(orientation:landscape) and (max-height:500px){#pit-sheet[data-sheet=cars]{width:min(540px,90vw)}.pit-car-list{grid-template-columns:repeat(2,minmax(0,1fr))}}#pit-sheet .pit-car-list button{justify-content:flex-start;min-height:48px}.pit-car-list button span{margin-left:auto}
 .pit-pager b{font-size:15px}.pit-pager small{display:inline-block;margin-left:6px}
 .pit-options label,.pit-record{min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #ffffff1c;margin:0;color:var(--paper);font-size:13px}
 #pit-sheet .pit-options select{max-width:67%;padding:5px;font-size:13px}

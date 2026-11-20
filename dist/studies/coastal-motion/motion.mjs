@@ -46,6 +46,8 @@ export function prepareCar(body,kind,{player=false,garage=false,paint,wheels}={}
     }
   }
   const lamps=[];
+  const coachLens=body.getObjectByName('Brake lenses');
+  if(coachLens)lamps.push(coachLens.material);
   if(kind==='tavaculo'){
     for(const name of ['lights_red','brakes']){
       const mesh=body.getObjectByName(name);

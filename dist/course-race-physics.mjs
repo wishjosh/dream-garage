@@ -1,4 +1,4 @@
-import {RacePhysics as CityPhysics,FIXED_DT} from './studies/mixed-city/physics.mjs?v=circuit-lineup-1';
+import {RacePhysics as CityPhysics,FIXED_DT} from './studies/mixed-city/physics.mjs?v=cup-cabin-1';
 import {trackFrame,nearestTrack,angleDelta,clamp} from './race-core.mjs';
 import {LEVELS} from './opponent-difficulty.mjs?v=pit-lab-1';
 export {FIXED_DT};

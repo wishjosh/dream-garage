@@ -1,5 +1,5 @@
-import {CARS,CATEGORIES,CATALOG} from './garage-core.mjs?v=circuit-lineup-1';
-import {CAR_NAMES,presentItem} from './vehicle-presentation.mjs?v=porsche-main-1';
+import {CARS,CATEGORIES,CATALOG} from './garage-core.mjs?v=cup-cabin-1';
+import {CAR_NAMES,presentItem,stockColor} from './vehicle-presentation.mjs?v=cup-cabin-1';
 import {RACE_COURSES} from './race-courses.mjs?v=course-guide-1';
 import {courseDiagram} from './race-course-ui.mjs?v=course-guide-1';
 import {LEVELS} from './opponent-difficulty.mjs?v=pit-lab-1';
@@ -33,7 +33,7 @@ function upgrade(item){
 
 export function installPitDesk({course,track,read,selectCar,applySetup,enterLab,exitLab,previewItem,applyItem,rotate}){
  const $=id=>document.getElementById(id),menu=$('menu'),stage=menu.querySelector('.garage-stage');
- const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('pit-desk.css?v=brake-kerb-b1',import.meta.url);document.head.append(css);
+ const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('pit-desk.css?v=cup-cabin-1',import.meta.url);document.head.append(css);
  document.body.classList.add('pit-ui');
  let page='home',sheet='',group='paint',itemIndex=0,courseIndex=0,level,settingsPage=0;
  const tracks=new Map([[course.key,track]]);
@@ -61,7 +61,7 @@ export function installPitDesk({course,track,read,selectCar,applySetup,enterLab,
   const label=equipped?'장착 중':owned?'장착':state.save.coins<item.price?'잔액 부족':'구매 · 장착';
   for(const tab of desk.querySelectorAll('.pit-tabs button'))tab.setAttribute('aria-pressed',String(tab.dataset.pit==='group-'+group));
   const sample=$('pit-sample');sample.innerHTML=group==='paint'?'':icon(group);
-  sample.style.setProperty('--sample',item.color||(group==='paint'?(state.car==='porsche'?'#e1e4df':'#be3231'):'#bdc9c6'));sample.dataset.group=group;
+  sample.style.setProperty('--sample',item.color||(group==='paint'?stockColor(state.car):'#bdc9c6'));sample.dataset.group=group;
   $('pit-item-name').textContent=item.name;
   $('pit-item-detail').textContent=(itemIndex+1)+' / '+options.length+'  ·  '+(upgrade(item)||'')+(upgrade(item)?'  ·  ':'')+(owned?'보유':dollars(item.price));
   $('pit-apply').textContent=label;$('pit-apply').disabled=equipped||(!owned&&state.save.coins<item.price);

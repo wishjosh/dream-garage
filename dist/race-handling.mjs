@@ -31,7 +31,7 @@ export class RacePhysics{
   racers.forEach((r,index)=>{
    const config=vehicleConfig(r.car,index===0?playerTuning||{}:{}),rig=rigs[r.car];
    const body=new C.Body({mass:config.mass,linearDamping:0,angularDamping:0});
-   body.addShape(new C.Box(new C.Vec3(r.car==='f2002'?.88:.98,.26,r.car==='f2002'?2.37:2.14)));
+   body.addShape(new C.Box(new C.Vec3(rig.collision?.halfWidth??(r.car==='f2002'?.88:.98),.26,rig.collision?.halfLength??(r.car==='f2002'?2.37:2.14))));
    body.linearFactor.set(1,0,1);body.angularFactor.set(0,1,0);
    body.invInertia.set(0,1/config.inertia,0);body.updateInertiaWorld(true);
    body.raceKind='car';body.racerId=r.id;this.world.addBody(body);

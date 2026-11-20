@@ -1,5 +1,5 @@
 import {COURSE_IDS} from './race-course-ids.mjs?v=marina-city-1';
-import {CARS,CATEGORIES,CATALOG,DEFAULT_LOADOUT,normalizeSave,itemById} from './garage-core.mjs?v=marina-city-1';
+import {CARS,CATEGORIES,CATALOG,DEFAULT_LOADOUT,normalizeSave,itemById} from './garage-core.mjs?v=cup-cabin-1';
 
 export const SAVE_KEY='hojin-city-gp:save:v1';
 export const BACKUP_KEY='hojin-city-gp:save:before-import:v1';
@@ -37,8 +37,10 @@ function checkSave(value,legacy=false){
  }
  if(own(value,'garage')){
   shape(value.garage,CARS,legacy?[]:['tavaculo','f2002']);
-  // Original version-1 exports have two garages. Only the new slot may be absent.
-  if(!legacy&&!own(value.garage,'porsche')&&(value.car==='porsche'||own(value.best,'porsche')||Object.values(value.courseBest||{}).some(times=>own(times,'porsche'))))invalid();
+  // Older exports omit vehicles that had not shipped. Referenced slots must exist.
+  if(!legacy)for(const car of CARS){
+   if(!own(value.garage,car)&&(value.car===car||own(value.best,car)||Object.values(value.courseBest||{}).some(times=>own(times,car))))invalid();
+  }
   for(const car of Object.keys(value.garage)){
    const loadout=value.garage[car];shape(loadout,Object.keys(CATEGORIES),legacy?[]:Object.keys(CATEGORIES));
    for(const [category,id] of Object.entries(loadout))if(typeof id!=='string'||!owned.has(id)||itemById(id)?.category!==category)invalid();

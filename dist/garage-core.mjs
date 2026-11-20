@@ -1,5 +1,5 @@
 import {COURSE_IDS} from './race-course-ids.mjs?v=marina-city-1';
-export const CARS=['tavaculo','f2002','porsche'];
+export const CARS=['tavaculo','f2002','porsche','rally-hatch','muscle-coupe'];
 export const CATEGORIES={paint:'도색',wheels:'휠',engine:'엔진',tires:'타이어',brakes:'브레이크'};
 export const CATALOG=[
  {id:'paint-stock',category:'paint',name:'원래 도색',price:0,description:'처음 만난 모습 그대로',color:null},

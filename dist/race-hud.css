@@ -66,3 +66,11 @@ body #hud #rescue{font-size:11px;}
  body #hud #drive-state{left:calc(var(--ui-left) + 144px);right:auto;text-align:left;}
  body #hud .near-car{top:40%;}
 }
+
+/* The cup cars have a live instrument in the dash. Keep the pedal input bars. */
+body[data-view=cockpit]:is([data-car=rally-hatch],[data-car=muscle-coupe]) #hud .gt-instrument {
+  background:none!important;border:0;box-shadow:none;
+}
+body[data-view=cockpit]:is([data-car=rally-hatch],[data-car=muscle-coupe]) #hud :is(#speedometer,.gt-speed-group,.gt-gear-group,.gt-flat-rpm,.gt-tach) {
+  position:absolute;clip-path:inset(50%);height:1px;width:1px;overflow:hidden;
+}
