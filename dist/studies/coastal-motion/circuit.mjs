@@ -64,6 +64,26 @@ function makeSign(canvasText,background,ink,ratio=2){
   const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;
   return new T.MeshStandardMaterial({map:tex,roughness:.77,side:T.DoubleSide});
 }
+// Metres along Brake Loop, shared by fixed scenery and the in-car approach cue.
+const firstTurn={turnIn:85,apex:125,kerbEnd:177,exit:192};
+export function firstTurnCue(track,racer){
+  if(racer.s<firstTurn.turnIn-50 || racer.s>firstTurn.kerbEnd || racer.forwardSpeed<=1 || racer.finished)return '';
+  const f=trackFrame(track,racer.s);
+  if(Math.sin(racer.heading)*f.tx+Math.cos(racer.heading)*f.tz<=0)return '';
+  return racer.s<firstTurn.turnIn-7?'brake':'kerb';
+}
+function brakingBoard(distance){
+  const c=document.createElement('canvas');c.width=512;c.height=300;
+  const ctx=c.getContext('2d'),urgent=distance===25;
+  ctx.fillStyle='#13212b';ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle=distance===75?'#a7b6bb':'#ff7925';ctx.fillRect(0,0,20,c.height);
+  ctx.fillStyle=urgent?'#ff7925':'#f4eada';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font='bold '+(urgent?186:218)+'px Arial, sans-serif';
+  ctx.fillText(String(distance),260,urgent?116:156);
+  if(urgent){ctx.font='bold 66px system-ui, sans-serif';ctx.fillText('▼ 제동',260,247);}
+  const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;
+  return new T.MeshBasicMaterial({map:tex,toneMapped:false});
+}
 function curve(track,s){
   const a=trackFrame(track,s-5),b=trackFrame(track,s+5);
   return angleDelta(Math.atan2(b.tx,b.tz),Math.atan2(a.tx,a.tz))/10;
@@ -149,12 +169,14 @@ export async function buildCircuit(scene,track,renderer){
   const at=(s,off,h,w,height,d,material,color=null)=>{
     const f=trackFrame(track,s);batch.box(material,f.x+f.rx*off,h,f.z+f.rz*off,w,height,d,Math.atan2(f.tx,f.tz),color);
   };
+  const {turnIn,apex,kerbEnd,exit}=firstTurn;
+  const inside=Math.sign(curve(track,apex)),outside=-inside;
   const steps=Math.ceil(track.length/3.65),step=track.length/steps;
   for(let i=0;i<steps;i++){
     const s=(i+.5)*step,k=curve(track,s);
     for(const sign of [-1,1]){
       at(s,sign*7.70,.051,.105,.011,step+.018,enamel);
-      if(k*sign>.0058)at(s,sign*7.98,.075,.40,.057,step-.025,enamel,i%2?'#b04a37':'#f1e7ce');
+      if(k*sign>.0058 && !(sign===inside && s>=turnIn && s<kerbEnd))at(s,sign*7.98,.075,.40,.057,step-.025,enamel,i%2?'#b04a37':'#f1e7ce');
       const pit=s<74&&sign===1;
       if(pit){at(s,sign*8.85,.53,.43,1.04,step+.025,concrete);at(s,sign*8.85,1.066,.47,.050,step+.04,oxide);}
       else{
@@ -197,50 +219,32 @@ export async function buildCircuit(scene,track,renderer){
   const boardMats=new Map([[100,makeSign('100','#e9e3ce','#262c2b')],[50,makeSign('50','#e9e3ce','#262c2b')]]);
   // The standing start has 85 m to turn-in. These boards measure to turn-in,
   // independent of the apex markers used on the longer approaches.
-  const turnIn=85,apex=125,exit=192;
-  const signSide=-Math.sign(curve(track,apex));
-  const raceInk=mat('#ffffff',{roughness:.72});
-  const amber=new T.MeshBasicMaterial({color:'#e9aa42',toneMapped:false});
-  const seafoam=new T.MeshBasicMaterial({color:'#9fd6b0',toneMapped:false});
-  // Each pair is painted into the road plane. Rivals can cover the racing line
-  // without obscuring both halves. The short bands stay fixed as the car accelerates.
-  const roadMark=(s,offset,sign,colour,turn=0)=>{
-    const f=trackFrame(track,s),yaw=Math.atan2(f.tx,f.tz);
-    batch.box(colour,f.x+offset*f.rx,.085,f.z+offset*f.rz,2.06,.025,.68,yaw+sign*turn);
-  };
+  const raceInk=mat('#ffffff',{roughness:.82});
   for(const distance of [75,50,25]){
-    const s=turnIn-distance,offset=signSide*9.48;
-    const ink=distance===25?'#f5ad43':'#f4f4de';
-    const face=makeSign(String(distance),'#192827',ink,1.72);
-    face.emissiveMap=face.map;face.emissive.set('#ffffff');face.emissiveIntensity=.24;
-    at(s,offset,1.05,.13,2.1,.15,dark);
-    at(s,offset,2.28,2.24,1.36,.18,dark);
-    signFace(scene,track,s-.16,offset,2.28,2.17,1.26,face);
-    at(s,offset,1.68,2.24,.105,.22,raceInk,distance===25?'#f7a137':'#f8f6e7');
+    const s=turnIn-distance,offset=outside*9.48;
+    const w=distance===25?2.65:2.36,h=w*300/512;
+    at(s,offset,1.14,.13,2.28,.15,dark);
+    at(s,offset,2.36,w+.08,h+.08,.18,dark);
+    signFace(scene,track,s-.16,offset,2.36,w,h,brakingBoard(distance));
   }
-  // Nearby fixed features pass the car in parallax. Amber marks the braking strip;
-  // the alternating inside kerb and the paired exit posts then take over.
+  // Keep the road and far rail quiet on approach. The outside boards pass out of
+  // view before the wider ivory kerb leads the eye around the inside of the turn.
   for(let s=0;s<exit+12;s+=8){
     for(const side of [-1,1]){
       const off=side*9.22;
-      at(s,off,.83,.13,1.66,.16,raceInk,'#eef1df');
-      at(s,off,1.39,.145,.30,.18,raceInk,s>=49&&s<=74?'#e48c29':'#394b4c');
+      at(s,off,.83,.13,1.66,.16,raceInk,'#b4bec0');
+      at(s,off,1.39,.145,.30,.18,raceInk,'#3d4b52');
     }
   }
-  for(const s of [46,54,61,67]){
-    for(const side of [-1,1]){
-      roadMark(s,side*5.93,side,amber,.36);
-      at(s,side*8.72,.76,.24,.32,2.48,amber);
-    }
+  const segments=30,pitch=(kerbEnd-turnIn)/segments;
+  for(let i=0;i<segments;i++){
+    const s=turnIn+(i+.5)*pitch;
+    const emphasis=Math.max(0,Math.min(1,(s-turnIn)/22,(kerbEnd-s)/28));
+    const width=.50+.78*emphasis;
+    // Grow inwards from the same edge, clear of the guardrail.
+    at(s,inside*(8.16-width/2),.084,width,.052,pitch-.035,raceInk,
+      i%2===0?'#f4eada':'#9d4e3c');
   }
-  for(let s=turnIn;s<=178;s+=2.6){
-    at(s,-signSide*7.72,.086,.95,.048,2.55,raceInk,Math.round((s-turnIn)/2.6)%2?'#e8e1c9':'#aa412f');
-  }
-  for(const s of [165,175,185,195]){
-    roadMark(s,signSide*6.37,signSide,seafoam,-.32);
-    at(s,signSide*8.79,.74,.22,.20,2.58,seafoam);
-  }
-  for(const s of [187,194]){at(s,signSide*9.35,1.22,.24,2.44,.24,dark);at(s,signSide*9.35,2.03,.255,.60,.26,raceInk,'#b2e2bc');}
   for(const apex of corners.slice(1)){
     const side=Math.sign(curve(track,apex))||-1;
     for(const d of [100,50]){

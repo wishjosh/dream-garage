@@ -33,7 +33,7 @@ function upgrade(item){
 
 export function installPitDesk({course,track,read,selectCar,applySetup,enterLab,exitLab,previewItem,applyItem,rotate}){
  const $=id=>document.getElementById(id),menu=$('menu'),stage=menu.querySelector('.garage-stage');
- const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('pit-desk.css?v=course-guide-1',import.meta.url);document.head.append(css);
+ const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('pit-desk.css?v=brake-kerb-b1',import.meta.url);document.head.append(css);
  document.body.classList.add('pit-ui');
  let page='home',sheet='',group='paint',itemIndex=0,courseIndex=0,level,settingsPage=0;
  const tracks=new Map([[course.key,track]]);
