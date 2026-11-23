@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#14201f">
+  <title>첫 코너 무게감 비교 · 드림 개러지</title>
+  <link rel="icon" href="../../assets/app-icon/icon-192.png">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <canvas id="world" aria-label="브레이크 루프 해안 서킷의 첫 우회전"></canvas>
+  <canvas id="still" aria-hidden="true" hidden></canvas>
+  <main id="hud" hidden>
+    <header>
+      <div class="readout"><h1>브레이크 루프 <span>첫 코너</span></h1>
+        <div class="telemetry"><strong id="speed">90</strong><small>km/h</small><span id="phase"></span></div>
+      </div>
+      <div class="views"><button id="motion" hidden>기울기 켜기</button><button id="view" aria-label="보닛 시점으로 전환">보닛 보기</button><button id="pause" aria-label="일시정지">Ⅱ</button></div>
+    </header>
+    <section id="console" aria-label="비교 주행">
+      <div class="cars" role="group" aria-label="차를 선택하면 같은 위치에서 다시 출발합니다">
+        <button data-car="tavaculo" aria-pressed="true">페라리 458</button>
+        <button data-car="muscle-coupe" aria-pressed="false">머슬 쿠페</button>
+      </div>
+      <div class="actions"><button id="restart">다시 달리기</button><button id="mode">직접 운전</button></div>
+    </section>
+    <div id="drive" hidden aria-label="직접 운전 조작">
+      <div><button data-input="left" aria-label="왼쪽으로 조향">◀</button><button data-input="right" aria-label="오른쪽으로 조향">▶</button></div>
+      <div><button data-input="brake">제동</button><button data-input="throttle">가속</button></div>
+    </div>
+    <div id="message" role="status" aria-live="polite" hidden></div>
+  </main>
+  <div id="loading" role="status"><strong>브레이크 루프</strong><span id="load-note">첫 코너와 두 차를 불러오는 중…</span><button id="retry" hidden>다시 열기</button></div>
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>

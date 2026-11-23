@@ -62,8 +62,8 @@ export function prepareCar(body,kind,{player=false,garage=false,paint,wheels}={}
   return lamps;
 }
 
-export function moveShell(body,lamps,racer,reduce){
-  const {pitch,roll}=shellPose(racer,reduce);
+export function moveShell(body,lamps,racer,reduce,pose=shellPose(racer,reduce)){
+  const {pitch,roll}=pose;
   yaw.setFromAxisAngle(worldUp,racer.heading);
   tilt.setFromEuler(angles.set(pitch,0,roll,'XYZ'));
   body.quaternion.copy(yaw).multiply(tilt);
@@ -82,11 +82,11 @@ const hoodMounts = {
   'muscle-coupe':{height:1.25, forward:.76, lateral:.08},
 };
 
-export function createCameraRig(){
+export function createCameraRig(readPose=shellPose){
   let heading=null,previousView=null;
   const forward=new T.Vector3(),side=new T.Vector3(),target=new T.Vector3();
   return function setView({camera,racer,view,dt,snap,reduce}){
-    const {pitch,roll}=shellPose(racer,reduce);
+    const {pitch,roll}=readPose(racer,reduce);
     const speed=Math.min(Math.abs(racer.forwardSpeed||0),55);
     const blend=clamp(speed/31,0,1);
     const speedRatio=reduce?0:blend*blend*(3-2*blend);
@@ -120,7 +120,7 @@ export function createCameraRig(){
   };
 }
 
-export {nextView,viewNames} from '../../../../race-views.mjs';
+export {nextView,viewNames} from '../../race-views.mjs';
 
 
 let directionalShade;
