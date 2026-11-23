@@ -42,7 +42,7 @@ function ellipsoid(parent,material,x,y,z,rx,ry,rz){
   const g=new T.SphereGeometry(1,22,12);g.scale(rx,ry,rz);const mesh=new T.Mesh(g,material);
   mesh.position.set(x,y,z);parent.add(mesh);return mesh;
 }
-function buildModel(id,maps,rearFascia){
+function buildModel(id,maps,{rearFascia,fitWindow}){
   const spec=LINEUP[id],hatch=id==='rally-hatch';
   const body=new T.Group();body.name=id;
   const w=spec.width*.5,[left,right]=spec.bounds,mid=(left+right)/2;
@@ -134,6 +134,10 @@ function buildModel(id,maps,rearFascia){
     const imageView=glass?.end||lid;
     const xs=stations.filter(x=>x>=start&&x<=stop);
     const across=fractions(18).map(t=>t*2-1);
+    if(glass && fitWindow){
+      fitWindow({body,end:glass.end,xs,top,paint,rubber,chrome,surface,addTube});
+      continue;
+    }
     const panelUV=(k,x)=>{
       if(lid){
         const front=lid==='front';
@@ -209,13 +213,13 @@ function buildModel(id,maps,rearFascia){
   return {exterior:body,rig,dimensions,bonnetGeometry};
 }
 
-export async function loadLineupModel(id,{rearFascia}={}){
+export async function loadLineupModel(id,options={}){
   const loader=new T.TextureLoader();
   const entries=await Promise.all(['side','front','rear'].map(async view=>{
     const map=await loader.loadAsync(new URL('./assets/lineup/'+id+'-'+view+'.webp',import.meta.url).href);
     map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;return [view,map];
   }));
-  return buildModel(id,Object.fromEntries(entries),rearFascia);
+  return buildModel(id,Object.fromEntries(entries),options);
 }
 export function dressLineup(root,loadout){
   const paint=itemById(loadout.paint)?.color,rim=itemById(loadout.wheels)?.color,owned=new Map();

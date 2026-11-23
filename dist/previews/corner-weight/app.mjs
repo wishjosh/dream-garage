@@ -1,9 +1,10 @@
 import * as T from '../../vendor/three.module.js';
 import {raceCourse} from '../../race-courses.mjs';
 import {loadFerrari,dressCar} from '../../studies/ferrari-city/asset.mjs';
-import {loadLineupModel} from '../../lineup-models.mjs?v=coupe-rear-1';
+import {loadLineupModel} from '../../lineup-models.mjs?v=coupe-glass-1';
 import {buildMuscleRear} from './muscle-rear.mjs';
-import {buildCircuit} from '../../studies/coastal-motion/circuit.mjs';
+import {createCoupeGlazing} from './muscle-glazing.mjs';
+import {buildCircuit} from '../../studies/coastal-motion/circuit.mjs?v=coupe-glass-1';
 import {prepareRaceVisual} from '../../race-rendering.mjs';
 import {splitWheelVisuals,syncWheelVisuals} from '../../wheel-visual.mjs';
 import {createCameraRig,moveShell,prepareCar} from '../hood-view/studies/coastal-motion/motion.mjs';
@@ -26,7 +27,9 @@ async function openComparison(){
   const scene = new T.Scene();
   const camera = new T.PerspectiveCamera(52,1,.12,700);
   const track = raceCourse('braking').create();
-  const [ferrari,muscle] = await Promise.all([loadFerrari(),loadLineupModel('muscle-coupe',{rearFascia:buildMuscleRear}),buildCircuit(scene,track,renderer)]);
+  const glazing = createCoupeGlazing();
+  const [ferrari,muscle,circuit] = await Promise.all([loadFerrari(),loadLineupModel('muscle-coupe',{rearFascia:buildMuscleRear,fitWindow:glazing.fitWindow}),buildCircuit(scene,track,renderer)]);
+  glazing.panorama.value = circuit.panorama;
   scene.environment = ferrari.assets.environment;
   const models = new Map();
   for (const [car,model] of [['tavaculo',ferrari],['muscle-coupe',muscle]]){

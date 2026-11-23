@@ -258,5 +258,5 @@ export async function buildCircuit(scene,track,renderer){
     at(apex,side*9.13,1.34,.15,.18,.16,oxide);
   }
   vegetation(scene,track,pine,heightAt);batch.flush();
-  return {groundHeight:()=>0,update(){},tick(){},stats:()=>({kind:'coastal-brake-loop',corners:corners.length,length:track.length,horizonWidth:horizon.image.width})};
+  return {panorama:coast,groundHeight:()=>0,update(){},tick(){},stats:()=>({kind:'coastal-brake-loop',corners:corners.length,length:track.length,horizonWidth:horizon.image.width})};
 }

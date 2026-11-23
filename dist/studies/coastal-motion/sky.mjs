@@ -1,7 +1,7 @@
 import * as T from '../../vendor/three.module.js';
 
 // The photographed sun is at 65.7% of the full turn. The city and bay face the grid.
-const gridLongitude = 0.812;
+export const gridLongitude = 0.812;
 const sunBearing = (gridLongitude - 0.657) * 2 * Math.PI;
 export const sunDirection = new T.Vector3(Math.sin(sunBearing), 0.20, Math.cos(sunBearing));
 
