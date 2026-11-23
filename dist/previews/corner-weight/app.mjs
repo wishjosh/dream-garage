@@ -1,7 +1,8 @@
 import * as T from '../../vendor/three.module.js';
 import {raceCourse} from '../../race-courses.mjs';
 import {loadFerrari,dressCar} from '../../studies/ferrari-city/asset.mjs';
-import {loadLineupModel} from '../../lineup-models.mjs';
+import {loadLineupModel} from '../../lineup-models.mjs?v=coupe-rear-1';
+import {buildMuscleRear} from './muscle-rear.mjs';
 import {buildCircuit} from '../../studies/coastal-motion/circuit.mjs';
 import {prepareRaceVisual} from '../../race-rendering.mjs';
 import {splitWheelVisuals,syncWheelVisuals} from '../../wheel-visual.mjs';
@@ -25,7 +26,7 @@ async function openComparison(){
   const scene = new T.Scene();
   const camera = new T.PerspectiveCamera(52,1,.12,700);
   const track = raceCourse('braking').create();
-  const [ferrari,muscle] = await Promise.all([loadFerrari(),loadLineupModel('muscle-coupe'),buildCircuit(scene,track,renderer)]);
+  const [ferrari,muscle] = await Promise.all([loadFerrari(),loadLineupModel('muscle-coupe',{rearFascia:buildMuscleRear}),buildCircuit(scene,track,renderer)]);
   scene.environment = ferrari.assets.environment;
   const models = new Map();
   for (const [car,model] of [['tavaculo',ferrari],['muscle-coupe',muscle]]){
@@ -50,7 +51,8 @@ async function openComparison(){
   contact.rotation.x = -Math.PI/2;
   scene.add(contact);
 
-  let car = 'tavaculo', view = 'chase', manual = false, paused = false, ended = false;
+  let car = new URLSearchParams(location.search).get('car')==='muscle-coupe' ? 'muscle-coupe' : 'tavaculo';
+  let view = 'chase', manual = false, paused = false, ended = false;
   let allowTilt = !motionPreference.matches, run, carry = 0, leadIn = .75, last = null;
   const keys = new Set(), pointers = new Map();
   const driveButtons = [...document.querySelectorAll('[data-input]')];

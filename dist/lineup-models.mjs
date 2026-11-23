@@ -42,7 +42,7 @@ function ellipsoid(parent,material,x,y,z,rx,ry,rz){
   const g=new T.SphereGeometry(1,22,12);g.scale(rx,ry,rz);const mesh=new T.Mesh(g,material);
   mesh.position.set(x,y,z);parent.add(mesh);return mesh;
 }
-function buildModel(id,maps){
+function buildModel(id,maps,rearFascia){
   const spec=LINEUP[id],hatch=id==='rally-hatch';
   const body=new T.Group();body.name=id;
   const w=spec.width*.5,[left,right]=spec.bounds,mid=(left+right)/2;
@@ -169,6 +169,11 @@ function buildModel(id,maps){
     }
     const uv=(k,t)=>rectUV(spec[end+'Rect'],mix(photo[0],photo[1],(1+(front?k:-k))/2),mix(photo[3],photo[2],t));
     const grid=fractions(28).map(t=>t*2-1);
+    if(!front && rearFascia){
+      surface(body,paint,grid,fractions(14),face,basicUV,new T.Vector3(0,0,-1));
+      rearFascia({body,face,rubber,chrome,tail});
+      continue;
+    }
     surface(body,panels[end],grid,fractions(14),face,uv,new T.Vector3(0,0,dir));
     if(!front)for(const [a,b,t] of spec.tailLights){
       const lens=(k,v)=>{const p=face(k,v);p[2]-=.004;return p;};
@@ -204,13 +209,13 @@ function buildModel(id,maps){
   return {exterior:body,rig,dimensions,bonnetGeometry};
 }
 
-export async function loadLineupModel(id){
+export async function loadLineupModel(id,{rearFascia}={}){
   const loader=new T.TextureLoader();
   const entries=await Promise.all(['side','front','rear'].map(async view=>{
     const map=await loader.loadAsync(new URL('./assets/lineup/'+id+'-'+view+'.webp',import.meta.url).href);
     map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;return [view,map];
   }));
-  return buildModel(id,Object.fromEntries(entries));
+  return buildModel(id,Object.fromEntries(entries),rearFascia);
 }
 export function dressLineup(root,loadout){
   const paint=itemById(loadout.paint)?.color,rim=itemById(loadout.wheels)?.color,owned=new Map();
